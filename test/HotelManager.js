@@ -194,7 +194,8 @@ describe('HotelManager', function() {
       await lib.removeImageHotel(address, 0);
       hotel = await lib.getHotel(address);
 
-      assert.equal(hotel.images.length, 0);
+      assert.equal(hotel.images.length, 1);
+      assert.equal(hotel.images[0], '');
     })
   });
 
@@ -309,7 +310,8 @@ describe('HotelManager', function() {
       await lib.removeImageUnitType(address, typeName, 0);
       hotel = await lib.getHotel(address);
 
-      assert.equal(hotel.unitTypes[typeName].images.length, 0);
+      assert.equal(hotel.unitTypes[typeName].images.length, 1);
+      assert.equal(hotel.unitTypes[typeName].images[0], '');
     });
 
   });

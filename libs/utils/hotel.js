@@ -202,10 +202,9 @@ async function getHotelInfo(wtHotel, context){
       const length = await instance.methods.getImagesLength().call();
       const images = await jsArrayFromSolidityArray(
         instance.methods.images,
-        parseInt(length),
-        isZeroString
+        parseInt(length)
       );
-      unitTypes[name].images = images.filter(item => !isZeroString(item));
+      unitTypes[name].images = images;
     };
   }
 
@@ -213,8 +212,7 @@ async function getHotelInfo(wtHotel, context){
   const imagesLength = await wtHotel.methods.getImagesLength().call();
   const images = await jsArrayFromSolidityArray(
     wtHotel.methods.images,
-    parseInt(imagesLength),
-    isZeroString
+    parseInt(imagesLength)
   );
 
   // Hotel Units
