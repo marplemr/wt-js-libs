@@ -10,7 +10,7 @@ const LifTokenContract = require('../../build/contracts/LifToken.json');
 const abiDecoder = require('abi-decoder');
 const moment = require('moment');
 const currencyCodes = require('currency-codes');
-const countryCodes = require('country-code-lookup');
+const countryCodes = require('country-data').lookup;
 const print = JSON.stringify;
 
 // -------------------------- ABI Decoder / ABI Tables / Binaries ----------------------------------
