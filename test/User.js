@@ -26,6 +26,8 @@ describe('User', function(){
   let hotelAddress;
   let unitAddress;
 
+  const sync = true;
+
   before(async function(){
     accounts = await web3.eth.getAccounts();
     ({
@@ -86,7 +88,7 @@ describe('User', function(){
       data = new BookingData(web3);
       hotel = utils.getInstance('Hotel', hotelAddress, {web3: web3});
 
-      await Manager.setRequireConfirmation(hotelAddress, true);
+      await Manager.setRequireConfirmation(hotelAddress, true, sync);
     });
 
     it('should initiate a booking: CallStarted event fired / Book event not fired', async () => {
@@ -119,7 +121,7 @@ describe('User', function(){
       const callStartedEvents = await hotel.getPastEvents('CallStarted');
       const dataHash = callStartedEvents[0].returnValues.dataHash;
 
-      await Manager.confirmBooking(hotelAddress, dataHash);
+      await Manager.confirmBooking(hotelAddress, dataHash, sync);
 
       const events = await hotel.getPastEvents('allEvents', {fromBlock: 0});
       const bookEvents = events.filter(item => item.event === 'Book');
@@ -148,7 +150,7 @@ describe('User', function(){
 
       const callStartedEvents = await hotel.getPastEvents('CallStarted');
       const dataHash = callStartedEvents[0].returnValues.dataHash;
-      await Manager.confirmBooking(hotelAddress, dataHash);
+      await Manager.confirmBooking(hotelAddress, dataHash, sync);
 
       // Post confirmation
       isAvailable = await data.unitIsAvailable(unitAddress, fromDate, daysAmount);
@@ -180,7 +182,7 @@ describe('User', function(){
       data = new BookingData(web3);
       hotel = utils.getInstance('Hotel', hotelAddress, {web3: web3});
 
-      await Manager.setDefaultLifPrice(hotelAddress, unitAddress, price);
+      await Manager.setDefaultLifPrice(hotelAddress, unitAddress, price, sync);
     });
 
     it('should make a booking: event fired', async () => {
@@ -282,7 +284,7 @@ describe('User', function(){
       ];
 
       await user.bookWithLif(...args)
-      await Manager.setUnitActive(hotelAddress, unitAddress, false);
+      await Manager.setUnitActive(hotelAddress, unitAddress, false, sync);
       args[2] = secondDate;
 
       try {
@@ -297,7 +299,7 @@ describe('User', function(){
       // Augusto's total balance is set to 500 in the before();
       // Total price for this booking will be 2500;
       const newPrice = 500;
-      await Manager.setDefaultLifPrice(hotelAddress, unitAddress, newPrice);
+      await Manager.setDefaultLifPrice(hotelAddress, unitAddress, newPrice, sync);
 
       const args = [
         hotelAddress,
@@ -316,4 +318,3 @@ describe('User', function(){
     });
   });
 });
-

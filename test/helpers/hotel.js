@@ -21,7 +21,8 @@ async function generateCompleteHotel(
   indexAddress,
   ownerAccount,
   gasMargin,
-  web3
+  web3,
+  sync=true
 ){
   const hotelName = help.randomString(10);
   const hotelDescription = help.randomString(15);
@@ -34,15 +35,15 @@ async function generateCompleteHotel(
     web3: web3
   })
 
-  await lib.createHotel(hotelName, hotelDescription);
+  await lib.createHotel(hotelName, hotelDescription, sync);
   const hotels = await lib.getHotels();
 
   const hotelsArray = Object.keys(hotels);
   const latest = hotelsArray.length - 1;
   hotelAddress = hotelsArray[latest];
 
-  await lib.addUnitType(hotelAddress, typeName);
-  await lib.addUnit(hotelAddress, typeName);
+  await lib.addUnitType(hotelAddress, typeName, sync);
+  await lib.addUnit(hotelAddress, typeName, sync);
   hotel = await lib.getHotel(hotelAddress);
   unitAddress = hotel.unitAddresses[0];
 
@@ -56,4 +57,3 @@ async function generateCompleteHotel(
 module.exports = {
   generateCompleteHotel: generateCompleteHotel
 }
-

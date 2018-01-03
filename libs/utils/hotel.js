@@ -23,9 +23,10 @@ const {
  * @param  {String} data    hex string: output of `instance.method.xyz().encodeABI()`
  * @param  {Number} index   position of hotel in the WTIndex registry
  * @param  {Object} context Hotel class context
- * @return {Promievent}
+ * @param  {Object} callbacks   object with callback functions
+ * @return {Promievent} or options object
  */
-async function execute(data, index, context){
+async function execute(data, index, context, callbacks){
   const callData = await context.WTIndex.methods
     .callHotel(index, data)
     .encodeABI();
@@ -39,7 +40,13 @@ async function execute(data, index, context){
   const estimate = await context.web3.eth.estimateGas(options);
   options.gas = await addGasMargin(estimate, context);
 
-  return context.web3.eth.sendTransaction(options);
+  if(callbacks)
+    return context.web3.eth.sendTransaction(options)
+      .once('transactionHash', callbacks.transactionHash)
+      .once('receipt', callbacks.receipt)
+      .on('error', callbacks.error);
+
+  return await context.web3.eth.sendTransaction(options);
 }
 
 /**

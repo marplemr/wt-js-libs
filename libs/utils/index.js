@@ -40,5 +40,6 @@ module.exports = {
   jsArrayFromSolidityArray: misc.jsArrayFromSolidityArray,
   getDecodedTransactions: misc.getDecodedTransactions,
   pretty: misc.pretty,
-  currencyCodes: misc.currencyCodes
+  currencyCodes: misc.currencyCodes,
+  decodeTxInput: misc.decodeTxInput
 }

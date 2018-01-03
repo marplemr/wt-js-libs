@@ -22,6 +22,7 @@ class HotelManager {
     this.hotelsAddrs = [];
     this.owner = options.owner || null;
     this.web3 = options.web3 || {};
+    this.sync = options.sync || false;
     this.context = options;
 
     this.WTIndex = utils.getInstance('WTIndex', options.indexAddress, this.context);
@@ -141,11 +142,12 @@ class HotelManager {
 
   /**
    * Creates a Hotel contract instance and registers it with the HotelManager's WTIndex contract
-   * @param  {String} name         name
-   * @param  {String} description  description
+   * @param  {String}  name         name
+   * @param  {String}  description  description
+   * @param  {Boolean} callbacks    object with callback functions
    * @return {Promievent}
    */
-  async createHotel(name, description){
+  async createHotel(name, description, callbacks){
     const estimate = await this.WTIndex.methods
       .registerHotel(name, description)
       .estimateGas();
@@ -161,15 +163,22 @@ class HotelManager {
       data: data
     }
 
-    return this.web3.eth.sendTransaction(options);
+    if(callbacks)
+      return this.web3.eth.sendTransaction(options)
+        .once('transactionHash', callbacks.transactionHash)
+        .once('receipt', callbacks.receipt)
+        .on('error', callbacks.error);
+
+    return await this.web3.eth.sendTransaction(options);
   }
 
   /**
    * Removes a hotel from the WTIndex registry
    * @param  {Address} address address of Hotel contract to de-list
+   * @param  {Boolean} callbacks    object with callback functions
    * @return {Promievent}
    */
-  async removeHotel(address){
+  async removeHotel(address, callbacks){
     const {
       hotel,
       index
@@ -188,7 +197,13 @@ class HotelManager {
     const estimate = await this.web3.eth.estimateGas(options);
     options.gas = await utils.addGasMargin(estimate, this.context);
 
-    return this.web3.eth.sendTransaction(options);
+    if(callbacks)
+      return this.web3.eth.sendTransaction(options)
+        .once('transactionHash', callbacks.transactionHash)
+        .once('receipt', callbacks.receipt)
+        .on('error', callbacks.error);
+
+    return await this.web3.eth.sendTransaction(options);
   }
 
   /**
@@ -197,8 +212,10 @@ class HotelManager {
    * proceed.
    * @param {Address} hotelAddress  Contract address of the hotel to edit.
    * @param {Boolean} value         t/f: require confirmation
+   * @param  {Boolean} callbacks    object with callback functions
+   * @return {Promievent}
    */
-  async setRequireConfirmation(hotelAddress, value){
+  async setRequireConfirmation(hotelAddress, value, callbacks){
     const {
       hotel,
       index
@@ -208,7 +225,7 @@ class HotelManager {
       .changeConfirmation(value)
       .encodeABI();
 
-    return utils.execute(data, index, this.context);
+    return utils.execute(data, index, this.context, callbacks);
   }
 
   /**
@@ -216,9 +233,10 @@ class HotelManager {
    * @param  {Address} hotelAddress contract address
    * @param  {String}  name         hotel name
    * @param  {String}  description  hotel description
+   * @param  {Boolean} callbacks    object with callback functions
    * @return {Promievent}
    */
-  async changeHotelInfo(hotelAddress, name, description){
+  async changeHotelInfo(hotelAddress, name, description, callbacks){
     const {
       hotel,
       index
@@ -228,7 +246,7 @@ class HotelManager {
       .editInfo(name, description)
       .encodeABI();
 
-    return utils.execute(data, index, this.context);
+    return utils.execute(data, index, this.context, callbacks);
   }
 
   /**
@@ -238,9 +256,10 @@ class HotelManager {
    * @param  {String} lineTwo       physical address data
    * @param  {String} zipCode       physical address data
    * @param  {String} country       physical address data
+   * @param  {Boolean} callbacks    object with callback functions
    * @return {Promievent}
    */
-  async changeHotelAddress(hotelAddress, lineOne, lineTwo, zipCode, country){
+  async changeHotelAddress(hotelAddress, lineOne, lineTwo, zipCode, country, callbacks){
     const {
       hotel,
       index
@@ -250,7 +269,7 @@ class HotelManager {
       .editAddress(lineOne, lineTwo, zipCode, country)
       .encodeABI();
 
-    return utils.execute(data, index, this.context);
+    return utils.execute(data, index, this.context, callbacks);
   }
 
   /**
@@ -259,9 +278,10 @@ class HotelManager {
    * @param  {Number} timezone      positive integer timezone relative to GMT
    * @param  {Number} latitude      GPS latitude location data e.g `-3.703578`
    * @param  {Number} longitude     GPS longitude location data e.g `40.426371`
+   * @param  {Boolean} callbacks    object with callback functions
    * @return {Promievent}
    */
-  async changeHotelLocation(hotelAddress, timezone, latitude, longitude){
+  async changeHotelLocation(hotelAddress, timezone, latitude, longitude, callbacks){
     const {
       hotel,
       index
@@ -273,16 +293,17 @@ class HotelManager {
       .editLocation(timezone, long, lat)
       .encodeABI();
 
-    return utils.execute(data, index, this.context);
+    return utils.execute(data, index, this.context, callbacks);
   }
 
   /**
    * Adds an image to a hotel
    * @param  {Address} hotelAddress contract address
    * @param  {String} url           url of the image to add
+   * @param  {Boolean} callbacks    object with callback functions
    * @return {Promievent}
    */
-  async addImageHotel(hotelAddress, url){
+  async addImageHotel(hotelAddress, url, callbacks){
     const {
       hotel,
       index
@@ -292,16 +313,17 @@ class HotelManager {
       .addImage(url)
       .encodeABI();
 
-    return utils.execute(data, index, this.context);
+    return utils.execute(data, index, this.context, callbacks);
   }
 
   /**
    * Removes an image from a hotel
    * @param  {Address} hotelAddress contract address
    * @param  {Number}  imageIndex   index of the image to remove
+   * @param  {Boolean} callbacks    object with callback functions
    * @return {Promievent}
    */
-  async removeImageHotel(hotelAddress, imageIndex){
+  async removeImageHotel(hotelAddress, imageIndex, callbacks){
     const {
       hotel,
       index
@@ -311,7 +333,7 @@ class HotelManager {
       .removeImage(imageIndex)
       .encodeABI();
 
-    return utils.execute(data, index, this.context);
+    return utils.execute(data, index, this.context, callbacks);
   }
 
   /**
@@ -319,9 +341,10 @@ class HotelManager {
    * from the `CallStarted` event fired when a booking that requires confirmation is initiated.
    * @param  {Address} hotelAddress  Hotel contract address that controls unit requested
    * @param  {String}  reservationId data hash.
+   * @param  {Boolean} callbacks    object with callback functions
    * @return {Promievent}
    */
-  async confirmBooking(hotelAddress, reservationId){
+  async confirmBooking(hotelAddress, reservationId, callbacks){
     const {
       hotel,
       index
@@ -331,16 +354,17 @@ class HotelManager {
       .continueCall(reservationId)
       .encodeABI();
 
-    return utils.execute(data, index, this.context);
+    return utils.execute(data, index, this.context, callbacks);
   }
 
   /**
    * Deploys a UnitType contract and registers it to an existing Hotel contract
    * @param  {Address} hotelAddress Hotel contract that will control created UnitType contract
    * @param  {String} unitType      unique plain text id of UnitType, ex: 'BASIC_ROOM'
+   * @param  {Boolean} callbacks    object with callback functions
    * @return {Promievent}
    */
-  async addUnitType(hotelAddress, unitType){
+  async addUnitType(hotelAddress, unitType, callbacks){
     const {
       hotel,
       index
@@ -352,16 +376,17 @@ class HotelManager {
       .addUnitType(instance.options.address)
       .encodeABI();
 
-    return utils.execute(data, index, this.context);
+    return utils.execute(data, index, this.context, callbacks);
   }
 
   /**
    * Unregisters a UnitType contract from an existing Hotel contract
    * @param  {Address} hotelAddress Hotel contract that controls the UnitType contract to remove
    * @param  {String}  unitType     unique plain text id of UnitType, ex: 'BASIC_ROOM'
+   * @param  {Boolean} callbacks    object with callback functions
    * @return {Promievent}
    */
-  async removeUnitType(hotelAddress, unitType){
+  async removeUnitType(hotelAddress, unitType, callbacks){
     const {
       hotel,
       index
@@ -374,7 +399,7 @@ class HotelManager {
       .removeUnitType(typeHex, typeIndex)
       .encodeABI();
 
-    return utils.execute(data, index, this.context);
+    return utils.execute(data, index, this.context, callbacks);
   }
 
   /**
@@ -385,9 +410,10 @@ class HotelManager {
    * @param  {Number} minGuests     minimum number of guests that can stay in UnitType
    * @param  {Number} maxGuests     maximum number of guests that can stay in UnitType
    * @param  {String} price         price of UnitType: e.g '50 euros'
+   * @param  {Boolean} callbacks    object with callback functions
    * @return {Promievent}
    */
-  async editUnitType(hotelAddress, unitType, description, minGuests, maxGuests, price){
+  async editUnitType(hotelAddress, unitType, description, minGuests, maxGuests, price, callbacks){
     const {
       hotel,
       index
@@ -405,7 +431,7 @@ class HotelManager {
       .callUnitType(typeHex, editData)
       .encodeABI();
 
-    return utils.execute(hotelData, index, this.context);
+    return utils.execute(hotelData, index, this.context, callbacks);
   }
 
   /**
@@ -413,9 +439,10 @@ class HotelManager {
    * @param  {Address} hotelAddress Hotel contract that controls the UnitType contract to edit
    * @param  {String} unitType      unique plain text id of UnitType, ex: 'BASIC_ROOM'
    * @param  {Number} amenity       integer code of amenity to add: ex: 23
+   * @param  {Boolean} callbacks    object with callback functions
    * @return {Promievent}
    */
-  async addAmenity(hotelAddress, unitType, amenity){
+  async addAmenity(hotelAddress, unitType, amenity, callbacks){
     const {
       hotel,
       index
@@ -433,7 +460,7 @@ class HotelManager {
       .callUnitType(typeHex, amenityData)
       .encodeABI();
 
-    return utils.execute(hotelData, index, this.context);
+    return utils.execute(hotelData, index, this.context, callbacks);
   }
 
   /**
@@ -441,9 +468,10 @@ class HotelManager {
    * @param  {Address} hotelAddress   Hotel contract that controls the UnitType contract to edit
    * @param  {String}  unitType       unique plain text id of UnitType, ex: 'BASIC_ROOM'
    * @param  {Number}  amenity        integer code of amenity to remove: ex: 23
+   * @param  {Boolean} callbacks    object with callback functions
    * @return {Promievent}
    */
-  async removeAmenity(hotelAddress, unitType, amenity){
+  async removeAmenity(hotelAddress, unitType, amenity, callbacks){
     const {
       hotel,
       index
@@ -461,7 +489,7 @@ class HotelManager {
       .callUnitType(typeHex, amenityData)
       .encodeABI();
 
-    return utils.execute(hotelData, index, this.context);
+    return utils.execute(hotelData, index, this.context, callbacks);
   }
 
   /**
@@ -469,9 +497,10 @@ class HotelManager {
    * @param  {Address} hotelAddress Hotel contract that controls the UnitType contract to edit
    * @param  {String} unitType      unique plain text id of UnitType, ex: 'BASIC_ROOM'
    * @param  {String} url           url of the image to add
+   * @param  {Boolean} callbacks    object with callback functions
    * @return {Promievent}
    */
-  async addImageUnitType(hotelAddress, unitType, url){
+  async addImageUnitType(hotelAddress, unitType, url, callbacks){
     const {
       hotel,
       index
@@ -489,7 +518,7 @@ class HotelManager {
       .callUnitType(typeHex, imageData)
       .encodeABI();
 
-    return utils.execute(hotelData, index, this.context);
+    return utils.execute(hotelData, index, this.context, callbacks);
   }
 
   /**
@@ -497,9 +526,10 @@ class HotelManager {
    * @param  {Address} hotelAddress Hotel contract that controls the UnitType contract to edit
    * @param  {String} unitType      unique plain text id of UnitType, ex: 'BASIC_ROOM'
    * @param  {Number} imageIndex    index of the image to remove
+   * @param  {Boolean} callbacks    object with callback functions
    * @return {Promievent}
    */
-  async removeImageUnitType(hotelAddress, unitType, imageIndex){
+  async removeImageUnitType(hotelAddress, unitType, imageIndex, callbacks){
     const {
       hotel,
       index
@@ -517,16 +547,17 @@ class HotelManager {
       .callUnitType(typeHex, imageData)
       .encodeABI();
 
-    return utils.execute(hotelData, index, this.context);
+    return utils.execute(hotelData, index, this.context, callbacks);
   }
 
   /**
    * Deploys a Unit contract and registers it to an existing Hotel contract
    * @param {Address} hotelAddress  Hotel contract that will control created Unit contract
    * @param {String}  unitType      unique plain text id of this units UnitType, ex: 'BASIC_ROOM'
+   * @param  {Boolean} callbacks    object with callback functions
    * @return {Promievent}
    */
-  async addUnit(hotelAddress, unitType){
+  async addUnit(hotelAddress, unitType, callbacks){
     const {
       hotel,
       index
@@ -538,16 +569,17 @@ class HotelManager {
       .addUnit(instance.options.address)
       .encodeABI();
 
-    return utils.execute(data, index, this.context);
+    return utils.execute(data, index, this.context, callbacks);
   }
 
   /**
    * Unregisters a Unit contract from an existing Hotel contract
    * @param  {Address} hotelAddress   Hotel contract that controls the Unit contract to remove
    * @param  {Address} unitAddress    Unit contract to remove
+   * @param  {Boolean} callbacks    object with callback functions
    * @return {Promievent}
    */
-  async removeUnit(hotelAddress, unitAddress){
+  async removeUnit(hotelAddress, unitAddress, callbacks){
     const {
       hotel,
       index
@@ -557,7 +589,7 @@ class HotelManager {
       .removeUnit(unitAddress)
       .encodeABI();
 
-    return utils.execute(data, index, this.context);
+    return utils.execute(data, index, this.context, callbacks);
   }
 
   /**
@@ -565,8 +597,10 @@ class HotelManager {
    * @param {Address} hotelAddress  Hotel contract that controls the Unit contract to edit
    * @param {Address} unitAddress   Unit contract to edit
    * @param {Boolean} active        Unit is locked when false.
+   * @param  {Boolean} callbacks    object with callback functions
+   * @return {Promievent}
    */
-  async setUnitActive(hotelAddress, unitAddress, active){
+  async setUnitActive(hotelAddress, unitAddress, active, callbacks){
     const {
       hotel,
       index
@@ -582,7 +616,7 @@ class HotelManager {
       .callUnit(unit.options.address, unitData)
       .encodeABI();
 
-    return utils.execute(hotelData, index, this.context);
+    return utils.execute(hotelData, index, this.context, callbacks);
   }
 
   /**
@@ -590,9 +624,10 @@ class HotelManager {
    * @param {Address}   hotelAddress  Hotel contract that controls the Unit being edited
    * @param {Address}   unitAddress   Unit contract to edit
    * @param {Number}    price         Integer or floating point price
+   * @param  {Boolean} callbacks    object with callback functions
    * @return {Promievent}
    */
-  async setDefaultPrice(hotelAddress, unitAddress, price){
+  async setDefaultPrice(hotelAddress, unitAddress, price, callbacks){
     const {
       hotel,
       index
@@ -609,7 +644,7 @@ class HotelManager {
       .callUnit(unit.options.address, unitData)
       .encodeABI();
 
-    await utils.execute(hotelData, index, this.context);
+    return utils.execute(hotelData, index, this.context, callbacks);
   }
 
   /**
@@ -617,9 +652,10 @@ class HotelManager {
    * @param  {Address}          hotelAddress Hotel contract that controls the Unit contract to edit
    * @param  {Address}          unitAddress  Unit contract to edit
    * @param  {String|Number|BN} price        Lif 'ether' (converted to wei by web3.utils.toWei)
+   * @param  {Boolean} callbacks    object with callback functions
    * @return {Promievent}
   */
-  async setDefaultLifPrice(hotelAddress, unitAddress, price){
+  async setDefaultLifPrice(hotelAddress, unitAddress, price, callbacks){
     const {
       hotel,
       index
@@ -636,7 +672,7 @@ class HotelManager {
       .callUnit(unit.options.address, unitData)
       .encodeABI();
 
-    await utils.execute(hotelData, index, this.context);
+    return utils.execute(hotelData, index, this.context, callbacks);
   }
 
   /**
@@ -647,9 +683,10 @@ class HotelManager {
    * @param {Function}  converter     ex `euro = kroneToEuro(krone)`
    * @param {Date}      convertStart  date to begin search of specialPrices
    * @param {Date}      convertEnd    date (inclusive) to end search of specialPrices
+   * @param  {Boolean} callbacks    object with callback functions
    * @return {Promievent}
    */
-  async setCurrencyCode(hotelAddress, unitAddress, code, converter, convertStart, convertEnd){
+  async setCurrencyCode(hotelAddress, unitAddress, code, callbacks, converter, convertStart, convertEnd){
     const {
       hotel,
       index
@@ -669,7 +706,7 @@ class HotelManager {
       .callUnit(unit.options.address, unitData)
       .encodeABI();
 
-    await utils.execute(hotelData, index, this.context);
+    return utils.execute(hotelData, index, this.context, callbacks);
 
     // -------------------------------- NB ----------------------------------------
     // We probably need to iterate through a range of dates and
@@ -685,9 +722,10 @@ class HotelManager {
    * @param  {Number}  price        integer or floating point price
    * @param  {Date}    fromDate     check-in date
    * @param  {Number}  amountDays   integer number of days to book.
+   * @param  {Boolean} callbacks    object with callback functions
    * @return {Promievent}
    */
-  async setUnitSpecialPrice(hotelAddress, unitAddress, price, fromDate, amountDays){
+  async setUnitSpecialPrice(hotelAddress, unitAddress, price, fromDate, amountDays, callbacks){
     const {
       hotel,
       index
@@ -706,7 +744,7 @@ class HotelManager {
       .callUnit(unit.options.address, unitData)
       .encodeABI();
 
-    return utils.execute(hotelData, index, this.context);
+    return utils.execute(hotelData, index, this.context, callbacks);
   }
 
   /**
@@ -717,9 +755,10 @@ class HotelManager {
    * @param  {String|Number|BN} price        Lif 'ether' (converted to wei by web3.utils.toWei)
    * @param  {Date}             fromDate     check-in date
    * @param  {Number}           amountDays   integer number of days to book.
+   * @param  {Boolean} callbacks    object with callback functions
    * @return {Promievent}
    */
-  async setUnitSpecialLifPrice(hotelAddress, unitAddress, price, fromDate, amountDays){
+  async setUnitSpecialLifPrice(hotelAddress, unitAddress, price, fromDate, amountDays, callbacks){
     const {
       hotel,
       index
@@ -737,7 +776,7 @@ class HotelManager {
       .callUnit(unit.options.address, unitData)
       .encodeABI();
 
-    return utils.execute(hotelData, index, this.context);
+    return utils.execute(hotelData, index, this.context, callbacks);
   }
 };
 

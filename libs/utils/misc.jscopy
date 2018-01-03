@@ -213,16 +213,14 @@ async function jsArrayFromSolidityArray(getAtIndex, length, zeroComparator){
 /**
   Decodes the method called for a single TX
 */
-async function decodeTxInput(txHash, indexAddress, walletAddress, web3) {
+async function decodeTxInput(tx, indexAddress, walletAddress, web3) {
   let wtIndex = getInstance('WTIndex', indexAddress, {web3: web3});
   let hotelsAddrs = await wtIndex.methods
       .getHotelsByManager(walletAddress)
       .call();
   let hotelInstances = [];
 
-  let tx = await web3.eth.getTransaction(txHash);
-  let txData = {hash: txHash};
-  txData.status = tx.blockNumber ? 'mined' : 'pending';
+  let txData = {};
   let method = abiDecoder.decodeMethod(tx.input);
   if(method.name == 'callHotel') {
     let hotelIndex = method.params.find(call => call.name === 'index').value;
@@ -272,6 +270,7 @@ async function getDecodedTransactions(walletAddress, indexAddress, startBlock, w
       .getHotelsByManager(walletAddress)
       .call();
   let hotelInstances = [];
+  let wtAddresses = [indexAddress].concat(hotelsAddrs);
 
   //Obtain TX data, either from etherscan or from local chain
   if(networkName != 'test') {
@@ -293,7 +292,7 @@ async function getDecodedTransactions(walletAddress, indexAddress, startBlock, w
   //Decode the TXs
   const start = async () => {
     await Promise.all(rawTxs.map(async tx => {
-      if(tx.to == indexAddress) {
+      if(tx.to && wtAddresses.includes(web3.utils.toChecksumAddress(tx.to))) {
         let txData = {};
         txData.timeStamp = tx.timeStamp;
         let method = abiDecoder.decodeMethod(tx.input);
@@ -313,6 +312,11 @@ async function getDecodedTransactions(walletAddress, indexAddress, startBlock, w
             method = abiDecoder.decodeMethod(publicCallData);
           }
         }
+        if(method.name == 'beginCall') {
+          method = abiDecoder.decodeMethod(method.params.find(call => call.name === 'publicCallData').value);
+          if(method.name == 'book') method.name = 'requestToBook';
+          if(method.name == 'bookWithLif') method.name = 'requestToBookWithLif';
+        }
         if(method.name == 'bookWithLif') {
           method.name = 'confirmLifBooking';
           let receipt = await web3.eth.getTransactionReceipt(tx.hash);
@@ -321,6 +325,7 @@ async function getDecodedTransactions(walletAddress, indexAddress, startBlock, w
         if(method.name == 'book') {
           method.name = 'confirmBooking';
         }
+        if(!txData.hotel) txData.hotel = tx.to;
         method.name = splitCamelCaseToString(method.name);
         txData.method = method;
         txs.push(txData);

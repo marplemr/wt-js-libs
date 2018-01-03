@@ -138,7 +138,21 @@ describe('HotelManager', function() {
       const newName = 'Awesome WTHotel';
       const newDescription = 'Awesome Winding Tree Hotel';
 
-      await lib.changeHotelInfo(address, newName, newDescription);
+      let callBacks = {};
+      callBacks.transactionHash = (hash) => {
+        console.log('got transactionHash');
+        console.log(hash);
+      };
+      callBacks.error = (error) => {
+        console.log('got error');
+        console.log(error);
+      };
+      callBacks.receipt = (receipt) => {
+        console.log('got receipt');
+        console.log(receipt);
+      };
+
+      await lib.changeHotelInfo(address, newName, newDescription, true);
       const hotel = await lib.getHotel(address);
 
       assert.equal(hotel.name, newName);
@@ -476,4 +490,27 @@ describe('HotelManager', function() {
       } catch(e){}
     });
   });
+
+  describe('Asynchronous calls', () => {
+
+    it('should perform TX asynchronously when passing callbacks object', (done) => {
+      let callbacks = {
+        transactionHash: (hash) => {
+          assert(true);
+        },
+        receipt: async (receipt) => {
+          let hotels = await lib.getHotels();
+          assert.equal(lib.hotelsAddrs.length, 1);
+          done();
+        },
+        error: (error) => {
+          assert(false);
+        }
+      }
+      let txPromise = lib.createHotel(hotelName, hotelDescription, callbacks);
+      assert(txPromise.then);
+    });
+
+  });
+
 });
