@@ -513,4 +513,44 @@ describe('HotelManager', function() {
 
   });
 
+  describe.only('Decoding TX', () => {
+
+    it('should decode a single TX to create a hotel', async () => {
+      let createHotelTx = await lib.createHotel(hotelName, hotelDescription);
+      let decodedTx = await utils.decodeTxInput(createHotelTx.transactionHash, index.options.address, ownerAccount, web3);
+      assert(!decodedTx.hotel);
+      assert.equal(decodedTx.method.name, 'Register Hotel');
+      assert.equal(decodedTx.method.params.find(e => e.name == 'name').value, hotelName);
+      assert.equal(decodedTx.method.params.find(e => e.name == 'description').value, hotelDescription);
+    });
+
+    it('should decode multiple TXs to create and edit a hotel', async () => {
+      let createHotelTx = await lib.createHotel(hotelName, hotelDescription);
+
+      const hotels = await lib.getHotels();
+      let hotelAddress = Object.keys(hotels)[0];
+
+      const newName = 'Awesome WTHotel';
+      const newDescription = 'Awesome Winding Tree Hotel';
+      let editInfoTx = await lib.changeHotelInfo(hotelAddress, newName, newDescription);
+
+      let decodedTxs = await utils.getDecodedTransactions(ownerAccount, index.options.address, 0, web3, 'test');
+
+      let decodedCreateHotelTx = decodedTxs.find(tx => tx.hash == createHotelTx.transactionHash);
+      assert(!decodedCreateHotelTx.hotel);
+      assert.equal(decodedCreateHotelTx.method.name, 'Register Hotel');
+      assert.equal(decodedCreateHotelTx.method.params.find(e => e.name == 'name').value, hotelName);
+      assert.equal(decodedCreateHotelTx.method.params.find(e => e.name == 'description').value, hotelDescription);
+
+      let decodedEditInfoTx = decodedTxs.find(tx => tx.hash == editInfoTx.transactionHash);
+      assert.equal(decodedEditInfoTx.method.name, 'Edit Info');
+      assert.equal(decodedEditInfoTx.hotel, hotelAddress);
+      assert.equal(decodedEditInfoTx.method.params.find(e => e.name == '_name').value, newName);
+      assert.equal(decodedEditInfoTx.method.params.find(e => e.name == '_description').value, newDescription);
+    });
+
+  });
+
+
+
 });

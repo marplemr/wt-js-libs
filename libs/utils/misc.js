@@ -238,15 +238,21 @@ async function decodeTxInput(txHash, indexAddress, walletAddress, web3) {
       }
       let publicCallData = await hotelInstances[txData.hotel].methods.getPublicCallData(msgDataHash).call();
       method = abiDecoder.decodeMethod(publicCallData);
+      if(method.name == 'bookWithLif') {
+        method.name = 'confirmLifBooking';
+        let receipt = await web3.eth.getTransactionReceipt(tx.hash);
+        txData.lifAmount = abiDecoder.decodeLogs(receipt.logs).find(log => log.name == 'Transfer').events.find(e => e.name == 'value').value
+      }
+      if(method.name == 'book') {
+        method.name = 'confirmBooking';
+      }
     }
   }
-  if(method.name == 'bookWithLif') {
-    method.name = 'confirmLifBooking';
-    let receipt = await web3.eth.getTransactionReceipt(tx.hash);
-    txData.lifAmount = abiDecoder.decodeLogs(receipt.logs).find(log => log.name == 'Transfer').events.find(e => e.name == 'value').value
-  }
-  if(method.name == 'book') {
-    method.name = 'confirmBooking';
+  if(method.name == 'beginCall') {
+    method = abiDecoder.decodeMethod(method.params.find(call => call.name === 'publicCallData').value);
+    if(method.name == 'book') method.name = 'requestToBook';
+    if(method.name == 'bookWithLif') method.name = 'requestToBookWithLif';
+    txData.hotel = tx.to;
   }
   method.name = splitCamelCaseToString(method.name);
   txData.method = method;
@@ -272,6 +278,7 @@ async function getDecodedTransactions(walletAddress, indexAddress, startBlock, w
       .getHotelsByManager(walletAddress)
       .call();
   let hotelInstances = [];
+  let wtAddresses = [indexAddress].concat(hotelsAddrs);
 
   //Obtain TX data, either from etherscan or from local chain
   if(networkName != 'test') {
@@ -293,8 +300,9 @@ async function getDecodedTransactions(walletAddress, indexAddress, startBlock, w
   //Decode the TXs
   const start = async () => {
     await Promise.all(rawTxs.map(async tx => {
-      if(tx.to == indexAddress) {
+      if(tx.to && wtAddresses.includes(web3.utils.toChecksumAddress(tx.to))) {
         let txData = {};
+        txData.hash = tx.hash;
         txData.timeStamp = tx.timeStamp;
         let method = abiDecoder.decodeMethod(tx.input);
         if(method.name == 'callHotel') {
@@ -311,15 +319,22 @@ async function getDecodedTransactions(walletAddress, indexAddress, startBlock, w
             }
             let publicCallData = await hotelInstances[txData.hotel].methods.getPublicCallData(msgDataHash).call();
             method = abiDecoder.decodeMethod(publicCallData);
+            if(method.name == 'bookWithLif') {
+              method.name = 'confirmLifBooking';
+              let receipt = await web3.eth.getTransactionReceipt(tx.hash);
+              txData.lifAmount = abiDecoder.decodeLogs(receipt.logs).find(log => log.name == 'Transfer').events.find(e => e.name == 'value').value;
+            }
+            if(method.name == 'book') {
+              method.name = 'confirmBooking';
+            }
           }
         }
-        if(method.name == 'bookWithLif') {
-          method.name = 'confirmLifBooking';
-          let receipt = await web3.eth.getTransactionReceipt(tx.hash);
-          txData.lifAmount = abiDecoder.decodeLogs(receipt.logs).find(log => log.name == 'Transfer').events.find(e => e.name == 'value').value
-        }
-        if(method.name == 'book') {
-          method.name = 'confirmBooking';
+        //Only called when requesting to book a unit
+        if(method.name == 'beginCall') {
+          method = abiDecoder.decodeMethod(method.params.find(call => call.name === 'publicCallData').value);
+          if(method.name == 'book') method.name = 'requestToBook';
+          if(method.name == 'bookWithLif') method.name = 'requestToBookWithLif';
+          txData.hotel = tx.to;
         }
         method.name = splitCamelCaseToString(method.name);
         txData.method = method;
