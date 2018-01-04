@@ -34,7 +34,8 @@ async function execute(data, index, context, callbacks){
   const options = {
     from: context.owner,
     to: context.WTIndex.options.address,
-    data: callData
+    data: callData,
+    nonce: await context.web3.eth.getTransactionCount(context.owner, 'pending')
   };
 
   const estimate = await context.web3.eth.estimateGas(options);

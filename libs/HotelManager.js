@@ -160,6 +160,7 @@ class HotelManager {
       from: this.owner,
       to: this.WTIndex.options.address,
       gas: await utils.addGasMargin(estimate, this.context),
+      nonce: await this.web3.eth.getTransactionCount(this.owner, 'pending'),
       data: data
     }
 
@@ -191,7 +192,8 @@ class HotelManager {
     const options = {
       from: this.owner,
       to: this.WTIndex.options.address,
-      data: data
+      data: data,
+      nonce: await this.web3.eth.getTransactionCount(this.owner, 'pending')
     };
 
     const estimate = await this.web3.eth.estimateGas(options);
