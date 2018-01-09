@@ -186,6 +186,17 @@ describe('HotelManager', function() {
       assert.equal(hotel.latitude, latitude);
     });
 
+    it('changeHotelLocation: timezone can be 0', async function(){
+      const timezone = 0;
+      const longitude = 50;
+      const latitude = 15;
+
+      await lib.changeHotelLocation(address, timezone, latitude, longitude);
+      const hotel = await lib.getHotel(address);
+
+      assert.equal(hotel.timezone, timezone);
+    });
+
     it('addImageHotel: adds an image to the hotel', async function() {
       const url = "image.jpeg";
 
