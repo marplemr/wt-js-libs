@@ -84,6 +84,33 @@ class BookingData {
     return true;
   }
 
+  async unitAvailability(unitAddress, fromDate, daysAmount) {
+    const unit = utils.getInstance('HotelUnit', unitAddress, this.context);
+    const fromDay = utils.formatDate(fromDate);
+    const range = _.range(fromDay, fromDay + daysAmount);
+    const defaultPrice = (await unit.methods.defaultPrice().call()) / 100;
+    const defaultLifPrice = utils.lifWei2Lif(await unit.methods.defaultLifPrice().call(), this.context);
+    let availability = [];
+
+    for (let day of range) {
+
+      const {
+        specialPrice,
+        specialLifPrice,
+        bookedBy
+      } = await this.manager.getReservation(unitAddress, day);
+
+      availability.push({
+        day: day,
+        price: (specialPrice > 0) ? specialPrice : defaultPrice,
+        lifPrice: (specialLifPrice > 0) ? specialLifPrice : defaultLifPrice,
+        available: utils.isZeroAddress(bookedBy) ? true : false
+      });
+    }
+
+    return availability;
+  }
+
   /**
    * Gets the bookings history for hotel(s). If `fromBlock` is ommitted, method will search from the
    * creation block of each Hotel contract.

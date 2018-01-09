@@ -90,6 +90,34 @@ describe('BookingData', function() {
     })
   });
 
+  describe('unit availability', () => {
+
+    const fromDate = new Date('10/10/2020');
+    const daysAmount = 5;
+    const price = 100.00;
+    const lifPrice = 1;
+    const specialPrice = 200.00;
+    const specialLifPrice = 2;
+
+    it('unitAvailability: returns a unit\'s price and availability for a range of dates', async () => {
+      await Manager.setDefaultPrice(hotelAddress, unitAddress, price);
+      await Manager.setDefaultLifPrice(hotelAddress, unitAddress, lifPrice);
+      await Manager.setUnitSpecialPrice(hotelAddress, unitAddress, specialPrice, fromDate, 1);
+      await Manager.setUnitSpecialLifPrice(hotelAddress, unitAddress, specialLifPrice, fromDate, 1);
+
+      let availability = await data.unitAvailability(unitAddress, fromDate, daysAmount);
+      for(let date of availability) {
+        if(date.day == utils.formatDate(fromDate)) {
+          assert.equal(date.price, specialPrice);
+          assert.equal(date.lifPrice, specialLifPrice);
+        } else {
+          assert.equal(date.price, price);
+          assert.equal(date.lifPrice, lifPrice);
+        }
+      }
+    })
+  })
+
   describe('getBookings', function() {
     const fromDate = new Date('10/10/2020');
     const daysAmount = 5;
