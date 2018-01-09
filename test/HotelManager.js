@@ -524,7 +524,7 @@ describe('HotelManager', function() {
 
   });
 
-  describe.only('Decoding TX', () => {
+  describe('Decoding TX', () => {
 
     it('should decode a single TX to create a hotel', async () => {
       let createHotelTx = await lib.createHotel(hotelName, hotelDescription);
