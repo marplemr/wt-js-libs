@@ -13040,6 +13040,7 @@ module.exports = {
   fundAccount: misc.fundAccount,
   jsArrayFromSolidityArray: misc.jsArrayFromSolidityArray,
   getDecodedTransactions: misc.getDecodedTransactions,
+  getBookingTransactions: misc.getBookingTransactions,
   pretty: misc.pretty,
   currencyCodes: misc.currencyCodes,
   decodeTxInput: misc.decodeTxInput
@@ -13296,19 +13297,27 @@ async function decodeTxInput(txHash, indexAddress, walletAddress, web3) {
       }
       var publicCallData = await hotelInstances[txData.hotel].methods.getPublicCallData(msgDataHash).call();
       method = abiDecoder.decodeMethod(publicCallData);
+      if (method.name == 'bookWithLif') {
+        method.name = 'confirmLifBooking';
+        var receipt = await web3.eth.getTransactionReceipt(tx.hash);
+        txData.lifAmount = abiDecoder.decodeLogs(receipt.logs).find(function (log) {
+          return log.name == 'Transfer';
+        }).events.find(function (e) {
+          return e.name == 'value';
+        }).value;
+      }
+      if (method.name == 'book') {
+        method.name = 'confirmBooking';
+      }
     }
   }
-  if (method.name == 'bookWithLif') {
-    method.name = 'confirmLifBooking';
-    var receipt = await web3.eth.getTransactionReceipt(tx.hash);
-    txData.lifAmount = abiDecoder.decodeLogs(receipt.logs).find(function (log) {
-      return log.name == 'Transfer';
-    }).events.find(function (e) {
-      return e.name == 'value';
-    }).value;
-  }
-  if (method.name == 'book') {
-    method.name = 'confirmBooking';
+  if (method.name == 'beginCall') {
+    method = abiDecoder.decodeMethod(method.params.find(function (call) {
+      return call.name === 'publicCallData';
+    }).value);
+    if (method.name == 'book') method.name = 'requestToBook';
+    if (method.name == 'bookWithLif') method.name = 'requestToBookWithLif';
+    txData.hotel = tx.to;
   }
   method.name = splitCamelCaseToString(method.name);
   txData.method = method;
@@ -13332,6 +13341,7 @@ async function getDecodedTransactions(walletAddress, indexAddress, startBlock, w
   var wtIndex = getInstance('WTIndex', indexAddress, { web3: web3 });
   var hotelsAddrs = await wtIndex.methods.getHotelsByManager(walletAddress).call();
   var hotelInstances = [];
+  var wtAddresses = [indexAddress].concat(hotelsAddrs);
 
   //Obtain TX data, either from etherscan or from local chain
   if (networkName != 'test') {
@@ -13346,14 +13356,15 @@ async function getDecodedTransactions(walletAddress, indexAddress, startBlock, w
     rawTxs = rawTxs.body.result;
     indexAddress = indexAddress.toLowerCase();
   } else {
-    rawTxs = await getTransactionsByAccount(walletAddress, indexAddress, 0, null, web3);
+    rawTxs = await getTransactionsByAccount(walletAddress, 0, null, web3);
   }
 
   //Decode the TXs
   var start = async function start() {
     await Promise.all(rawTxs.map(async function (tx) {
-      if (tx.to == indexAddress) {
+      if (tx.to && wtAddresses.includes(web3.utils.toChecksumAddress(tx.to))) {
         var txData = {};
+        txData.hash = tx.hash;
         txData.timeStamp = tx.timeStamp;
         var method = abiDecoder.decodeMethod(tx.input);
         if (method.name == 'callHotel') {
@@ -13378,19 +13389,28 @@ async function getDecodedTransactions(walletAddress, indexAddress, startBlock, w
             }
             var publicCallData = await hotelInstances[txData.hotel].methods.getPublicCallData(msgDataHash).call();
             method = abiDecoder.decodeMethod(publicCallData);
+            if (method.name == 'bookWithLif') {
+              method.name = 'confirmLifBooking';
+              var receipt = await web3.eth.getTransactionReceipt(tx.hash);
+              txData.lifAmount = abiDecoder.decodeLogs(receipt.logs).find(function (log) {
+                return log.name == 'Transfer';
+              }).events.find(function (e) {
+                return e.name == 'value';
+              }).value;
+            }
+            if (method.name == 'book') {
+              method.name = 'confirmBooking';
+            }
           }
         }
-        if (method.name == 'bookWithLif') {
-          method.name = 'confirmLifBooking';
-          var receipt = await web3.eth.getTransactionReceipt(tx.hash);
-          txData.lifAmount = abiDecoder.decodeLogs(receipt.logs).find(function (log) {
-            return log.name == 'Transfer';
-          }).events.find(function (e) {
-            return e.name == 'value';
-          }).value;
-        }
-        if (method.name == 'book') {
-          method.name = 'confirmBooking';
+        //Only called when requesting to book a unit
+        if (method.name == 'beginCall') {
+          method = abiDecoder.decodeMethod(method.params.find(function (call) {
+            return call.name === 'publicCallData';
+          }).value);
+          if (method.name == 'book') method.name = 'requestToBook';
+          if (method.name == 'bookWithLif') method.name = 'requestToBookWithLif';
+          txData.hotel = tx.to;
         }
         method.name = splitCamelCaseToString(method.name);
         txData.method = method;
@@ -13403,9 +13423,115 @@ async function getDecodedTransactions(walletAddress, indexAddress, startBlock, w
   return txs;
 }
 
+/**
+  Returns all booking made by one address.
+  Uses the etherscan API (unless running a local blockchain).
+  @param {Address} walletAddress Booker's address
+  @param {Address} indexAddress  WTIndex address
+  @param {Number}  startBlock    Block number to start searching from
+  @param {Object}  web3          Web3 instance
+  @param {String}  networkName   Name of the ethereum network ('api' for main, 'test' for local)
+*/
+async function getBookingTransactions(walletAddress, indexAddress, startBlock, web3, networkName) {
+  var txs = [];
+  var rawTxs = [];
+
+  //Get manager's hotel addresses
+  var wtIndex = getInstance('WTIndex', indexAddress, { web3: web3 });
+  var hotelsAddrs = await wtIndex.methods.getHotelsByManager(walletAddress).call();
+  var lifTokenAddr = await wtIndex.methods.LifToken().call();
+  var hotelInstances = [];
+  var wtAddresses = [lifTokenAddr].concat(hotelsAddrs);
+
+  //Obtain TX data, either from etherscan or from local chain
+  if (networkName != 'test') {
+    rawTxs = await request.get('http://' + networkName + '.etherscan.io/api').query({
+      module: 'account',
+      action: 'txlist',
+      address: walletAddress,
+      startBlock: startBlock,
+      endBlock: 'latest',
+      apikey: '6I7UFMJTUXG6XWXN8BBP86DWNHC9MI893F'
+    });
+    rawTxs = rawTxs.body.result;
+    indexAddress = indexAddress.toLowerCase();
+  } else {
+    rawTxs = await getTransactionsByAccount(walletAddress, 0, null, web3);
+  }
+
+  //Decode the TXs
+  var start = async function start() {
+    await Promise.all(rawTxs.map(async function (tx) {
+      if (tx.to && wtAddresses.includes(web3.utils.toChecksumAddress(tx.to))) {
+        var txData = {};
+        txData.hash = tx.hash;
+        txData.timeStamp = tx.timeStamp;
+        var method = abiDecoder.decodeMethod(tx.input);
+        if (!method) return;
+        if (method.name == 'approveData') {
+          txData.hotel = method.params.find(function (param) {
+            return param.name === 'spender';
+          }).value;
+          method = abiDecoder.decodeMethod(method.params.find(function (call) {
+            return call.name === 'data';
+          }).value);
+        }
+        //Only called when requesting to book a unit
+        if (method.name == 'beginCall') {
+          method = abiDecoder.decodeMethod(method.params.find(function (call) {
+            return call.name === 'publicCallData';
+          }).value);
+          if (method.name == 'book') method.name = 'requestToBook';
+          if (method.name == 'bookWithLif') method.name = 'requestToBookWithLif';
+          if (!txData.hotel) txData.hotel = tx.to;
+          //Get Hotel info
+          if (!hotelInstances[txData.hotel]) {
+            hotelInstances[txData.hotel] = await getInstance('Hotel', txData.hotel, { web3: web3 });
+          }
+          txData.hotelName = await hotelInstances[txData.hotel].methods.name().call();
+          //Parse to and from dates
+          txData.fromDate = new Date();
+          txData.fromDate.setTime(method.params.find(function (param) {
+            return param.name === 'fromDay';
+          }).value * 86400000);
+          txData.toDate = new Date();
+          txData.toDate.setTime((Number(method.params.find(function (param) {
+            return param.name === 'fromDay';
+          }).value) + Number(method.params.find(function (param) {
+            return param.name === 'daysAmount';
+          }).value)) * 86400000);
+          //Get Unit info
+          txData.unit = method.params.find(function (param) {
+            return param.name === 'unitAddress';
+          }).value;
+          var unitInstance = await getInstance('HotelUnit', txData.unit, { web3: web3 });
+          txData.unitType = bytes32ToString((await unitInstance.methods.unitType().call()));
+          //Get booking status
+          var receipt = await web3.eth.getTransactionReceipt(tx.hash);
+          var logs = abiDecoder.decodeLogs(receipt.logs);
+          var dataHash = logs.find(function (log) {
+            return log.name === "CallStarted";
+          }).events.find(function (event) {
+            return event.name === 'dataHash';
+          }).value;
+          var bookingStatus = (await hotelInstances[txData.hotel].methods.pendingCalls(dataHash).call())[2];
+          txData.status = bookingStatus;
+          txData.logs = logs;
+          method.name = splitCamelCaseToString(method.name);
+          txData.method = method;
+          txs.push(txData);
+        }
+      }
+    }));
+  };
+  await start();
+
+  return txs;
+}
+
 //modified version of https://ethereum.stackexchange.com/questions/2531/common-useful-javascript-snippets-for-geth/3478#3478
 //only used for testing getDecodedTransactions locally
-async function getTransactionsByAccount(myaccount, wtAddresses, startBlockNumber, endBlockNumber, web3) {
+async function getTransactionsByAccount(myaccount, startBlockNumber, endBlockNumber, web3) {
   if (endBlockNumber == null) {
     endBlockNumber = await web3.eth.getBlockNumber();
   }
@@ -13417,7 +13543,7 @@ async function getTransactionsByAccount(myaccount, wtAddresses, startBlockNumber
     var block = await web3.eth.getBlock(i, true);
     if (block != null && block.transactions != null) {
       block.transactions.forEach(function (e) {
-        if (myaccount == e.from && wtAddresses.includes(e.to)) {
+        if (myaccount == e.from) {
           e.timeStamp = block.timestamp;
           txs.push(e);
         }
@@ -13468,6 +13594,7 @@ module.exports = {
   fundAccount: fundAccount,
   jsArrayFromSolidityArray: jsArrayFromSolidityArray,
   getDecodedTransactions: getDecodedTransactions,
+  getBookingTransactions: getBookingTransactions,
   decodeTxInput: decodeTxInput,
 
   // Debugging
@@ -28843,7 +28970,8 @@ async function execute(data, index, context, callbacks) {
   var options = {
     from: context.owner,
     to: context.WTIndex.options.address,
-    data: callData
+    data: callData,
+    nonce: await context.web3.eth.getTransactionCount(context.owner, 'pending')
   };
 
   var estimate = await context.web3.eth.estimateGas(options);
@@ -29108,17 +29236,17 @@ async function getHotelInfo(wtHotel, context) {
   var waitConfirmation = await wtHotel.methods.waitConfirmation().call();
 
   return {
-    name: isZeroString(name) ? null : name,
-    description: isZeroString(description) ? null : description,
-    manager: isZeroAddress(manager) ? null : manager,
-    lineOne: isZeroString(lineOne) ? null : lineOne,
-    lineTwo: isZeroString(lineTwo) ? null : lineTwo,
-    zip: isZeroString(zip) ? null : zip,
-    country: isZeroString(country) ? null : country,
-    created: isZeroUint(created) ? null : parseInt(created),
-    timezone: isZeroUint(timezone) ? null : parseInt(timezone),
-    latitude: isZeroUint(latitude) ? null : locationFromUint(longitude, latitude).lat,
-    longitude: isZeroUint(longitude) ? null : locationFromUint(longitude, latitude).long,
+    name: name,
+    description: description,
+    manager: manager,
+    lineOne: lineOne,
+    lineTwo: lineTwo,
+    zip: zip,
+    country: country,
+    created: parseInt(created),
+    timezone: parseInt(timezone),
+    latitude: locationFromUint(longitude, latitude).lat,
+    longitude: locationFromUint(longitude, latitude).long,
     waitConfirmation: waitConfirmation,
     images: images,
     unitTypeNames: unitTypeNames.map(function (name) {
@@ -43417,6 +43545,7 @@ var HotelManager = function () {
         from: this.owner,
         to: this.WTIndex.options.address,
         gas: await utils.addGasMargin(estimate, this.context),
+        nonce: await this.web3.eth.getTransactionCount(this.owner, 'pending'),
         data: data
       };
 
@@ -43444,7 +43573,8 @@ var HotelManager = function () {
       var options = {
         from: this.owner,
         to: this.WTIndex.options.address,
-        data: data
+        data: data,
+        nonce: await this.web3.eth.getTransactionCount(this.owner, 'pending')
       };
 
       var estimate = await this.web3.eth.estimateGas(options);

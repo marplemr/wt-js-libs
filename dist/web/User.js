@@ -12992,6 +12992,7 @@ module.exports = {
   fundAccount: misc.fundAccount,
   jsArrayFromSolidityArray: misc.jsArrayFromSolidityArray,
   getDecodedTransactions: misc.getDecodedTransactions,
+  getBookingTransactions: misc.getBookingTransactions,
   pretty: misc.pretty,
   currencyCodes: misc.currencyCodes,
   decodeTxInput: misc.decodeTxInput
@@ -13248,19 +13249,27 @@ async function decodeTxInput(txHash, indexAddress, walletAddress, web3) {
       }
       var publicCallData = await hotelInstances[txData.hotel].methods.getPublicCallData(msgDataHash).call();
       method = abiDecoder.decodeMethod(publicCallData);
+      if (method.name == 'bookWithLif') {
+        method.name = 'confirmLifBooking';
+        var receipt = await web3.eth.getTransactionReceipt(tx.hash);
+        txData.lifAmount = abiDecoder.decodeLogs(receipt.logs).find(function (log) {
+          return log.name == 'Transfer';
+        }).events.find(function (e) {
+          return e.name == 'value';
+        }).value;
+      }
+      if (method.name == 'book') {
+        method.name = 'confirmBooking';
+      }
     }
   }
-  if (method.name == 'bookWithLif') {
-    method.name = 'confirmLifBooking';
-    var receipt = await web3.eth.getTransactionReceipt(tx.hash);
-    txData.lifAmount = abiDecoder.decodeLogs(receipt.logs).find(function (log) {
-      return log.name == 'Transfer';
-    }).events.find(function (e) {
-      return e.name == 'value';
-    }).value;
-  }
-  if (method.name == 'book') {
-    method.name = 'confirmBooking';
+  if (method.name == 'beginCall') {
+    method = abiDecoder.decodeMethod(method.params.find(function (call) {
+      return call.name === 'publicCallData';
+    }).value);
+    if (method.name == 'book') method.name = 'requestToBook';
+    if (method.name == 'bookWithLif') method.name = 'requestToBookWithLif';
+    txData.hotel = tx.to;
   }
   method.name = splitCamelCaseToString(method.name);
   txData.method = method;
@@ -13284,6 +13293,7 @@ async function getDecodedTransactions(walletAddress, indexAddress, startBlock, w
   var wtIndex = getInstance('WTIndex', indexAddress, { web3: web3 });
   var hotelsAddrs = await wtIndex.methods.getHotelsByManager(walletAddress).call();
   var hotelInstances = [];
+  var wtAddresses = [indexAddress].concat(hotelsAddrs);
 
   //Obtain TX data, either from etherscan or from local chain
   if (networkName != 'test') {
@@ -13298,14 +13308,15 @@ async function getDecodedTransactions(walletAddress, indexAddress, startBlock, w
     rawTxs = rawTxs.body.result;
     indexAddress = indexAddress.toLowerCase();
   } else {
-    rawTxs = await getTransactionsByAccount(walletAddress, indexAddress, 0, null, web3);
+    rawTxs = await getTransactionsByAccount(walletAddress, 0, null, web3);
   }
 
   //Decode the TXs
   var start = async function start() {
     await Promise.all(rawTxs.map(async function (tx) {
-      if (tx.to == indexAddress) {
+      if (tx.to && wtAddresses.includes(web3.utils.toChecksumAddress(tx.to))) {
         var txData = {};
+        txData.hash = tx.hash;
         txData.timeStamp = tx.timeStamp;
         var method = abiDecoder.decodeMethod(tx.input);
         if (method.name == 'callHotel') {
@@ -13330,19 +13341,28 @@ async function getDecodedTransactions(walletAddress, indexAddress, startBlock, w
             }
             var publicCallData = await hotelInstances[txData.hotel].methods.getPublicCallData(msgDataHash).call();
             method = abiDecoder.decodeMethod(publicCallData);
+            if (method.name == 'bookWithLif') {
+              method.name = 'confirmLifBooking';
+              var receipt = await web3.eth.getTransactionReceipt(tx.hash);
+              txData.lifAmount = abiDecoder.decodeLogs(receipt.logs).find(function (log) {
+                return log.name == 'Transfer';
+              }).events.find(function (e) {
+                return e.name == 'value';
+              }).value;
+            }
+            if (method.name == 'book') {
+              method.name = 'confirmBooking';
+            }
           }
         }
-        if (method.name == 'bookWithLif') {
-          method.name = 'confirmLifBooking';
-          var receipt = await web3.eth.getTransactionReceipt(tx.hash);
-          txData.lifAmount = abiDecoder.decodeLogs(receipt.logs).find(function (log) {
-            return log.name == 'Transfer';
-          }).events.find(function (e) {
-            return e.name == 'value';
-          }).value;
-        }
-        if (method.name == 'book') {
-          method.name = 'confirmBooking';
+        //Only called when requesting to book a unit
+        if (method.name == 'beginCall') {
+          method = abiDecoder.decodeMethod(method.params.find(function (call) {
+            return call.name === 'publicCallData';
+          }).value);
+          if (method.name == 'book') method.name = 'requestToBook';
+          if (method.name == 'bookWithLif') method.name = 'requestToBookWithLif';
+          txData.hotel = tx.to;
         }
         method.name = splitCamelCaseToString(method.name);
         txData.method = method;
@@ -13355,9 +13375,115 @@ async function getDecodedTransactions(walletAddress, indexAddress, startBlock, w
   return txs;
 }
 
+/**
+  Returns all booking made by one address.
+  Uses the etherscan API (unless running a local blockchain).
+  @param {Address} walletAddress Booker's address
+  @param {Address} indexAddress  WTIndex address
+  @param {Number}  startBlock    Block number to start searching from
+  @param {Object}  web3          Web3 instance
+  @param {String}  networkName   Name of the ethereum network ('api' for main, 'test' for local)
+*/
+async function getBookingTransactions(walletAddress, indexAddress, startBlock, web3, networkName) {
+  var txs = [];
+  var rawTxs = [];
+
+  //Get manager's hotel addresses
+  var wtIndex = getInstance('WTIndex', indexAddress, { web3: web3 });
+  var hotelsAddrs = await wtIndex.methods.getHotelsByManager(walletAddress).call();
+  var lifTokenAddr = await wtIndex.methods.LifToken().call();
+  var hotelInstances = [];
+  var wtAddresses = [lifTokenAddr].concat(hotelsAddrs);
+
+  //Obtain TX data, either from etherscan or from local chain
+  if (networkName != 'test') {
+    rawTxs = await request.get('http://' + networkName + '.etherscan.io/api').query({
+      module: 'account',
+      action: 'txlist',
+      address: walletAddress,
+      startBlock: startBlock,
+      endBlock: 'latest',
+      apikey: '6I7UFMJTUXG6XWXN8BBP86DWNHC9MI893F'
+    });
+    rawTxs = rawTxs.body.result;
+    indexAddress = indexAddress.toLowerCase();
+  } else {
+    rawTxs = await getTransactionsByAccount(walletAddress, 0, null, web3);
+  }
+
+  //Decode the TXs
+  var start = async function start() {
+    await Promise.all(rawTxs.map(async function (tx) {
+      if (tx.to && wtAddresses.includes(web3.utils.toChecksumAddress(tx.to))) {
+        var txData = {};
+        txData.hash = tx.hash;
+        txData.timeStamp = tx.timeStamp;
+        var method = abiDecoder.decodeMethod(tx.input);
+        if (!method) return;
+        if (method.name == 'approveData') {
+          txData.hotel = method.params.find(function (param) {
+            return param.name === 'spender';
+          }).value;
+          method = abiDecoder.decodeMethod(method.params.find(function (call) {
+            return call.name === 'data';
+          }).value);
+        }
+        //Only called when requesting to book a unit
+        if (method.name == 'beginCall') {
+          method = abiDecoder.decodeMethod(method.params.find(function (call) {
+            return call.name === 'publicCallData';
+          }).value);
+          if (method.name == 'book') method.name = 'requestToBook';
+          if (method.name == 'bookWithLif') method.name = 'requestToBookWithLif';
+          if (!txData.hotel) txData.hotel = tx.to;
+          //Get Hotel info
+          if (!hotelInstances[txData.hotel]) {
+            hotelInstances[txData.hotel] = await getInstance('Hotel', txData.hotel, { web3: web3 });
+          }
+          txData.hotelName = await hotelInstances[txData.hotel].methods.name().call();
+          //Parse to and from dates
+          txData.fromDate = new Date();
+          txData.fromDate.setTime(method.params.find(function (param) {
+            return param.name === 'fromDay';
+          }).value * 86400000);
+          txData.toDate = new Date();
+          txData.toDate.setTime((Number(method.params.find(function (param) {
+            return param.name === 'fromDay';
+          }).value) + Number(method.params.find(function (param) {
+            return param.name === 'daysAmount';
+          }).value)) * 86400000);
+          //Get Unit info
+          txData.unit = method.params.find(function (param) {
+            return param.name === 'unitAddress';
+          }).value;
+          var unitInstance = await getInstance('HotelUnit', txData.unit, { web3: web3 });
+          txData.unitType = bytes32ToString((await unitInstance.methods.unitType().call()));
+          //Get booking status
+          var receipt = await web3.eth.getTransactionReceipt(tx.hash);
+          var logs = abiDecoder.decodeLogs(receipt.logs);
+          var dataHash = logs.find(function (log) {
+            return log.name === "CallStarted";
+          }).events.find(function (event) {
+            return event.name === 'dataHash';
+          }).value;
+          var bookingStatus = (await hotelInstances[txData.hotel].methods.pendingCalls(dataHash).call())[2];
+          txData.status = bookingStatus;
+          txData.logs = logs;
+          method.name = splitCamelCaseToString(method.name);
+          txData.method = method;
+          txs.push(txData);
+        }
+      }
+    }));
+  };
+  await start();
+
+  return txs;
+}
+
 //modified version of https://ethereum.stackexchange.com/questions/2531/common-useful-javascript-snippets-for-geth/3478#3478
 //only used for testing getDecodedTransactions locally
-async function getTransactionsByAccount(myaccount, wtAddresses, startBlockNumber, endBlockNumber, web3) {
+async function getTransactionsByAccount(myaccount, startBlockNumber, endBlockNumber, web3) {
   if (endBlockNumber == null) {
     endBlockNumber = await web3.eth.getBlockNumber();
   }
@@ -13369,7 +13495,7 @@ async function getTransactionsByAccount(myaccount, wtAddresses, startBlockNumber
     var block = await web3.eth.getBlock(i, true);
     if (block != null && block.transactions != null) {
       block.transactions.forEach(function (e) {
-        if (myaccount == e.from && wtAddresses.includes(e.to)) {
+        if (myaccount == e.from) {
           e.timeStamp = block.timestamp;
           txs.push(e);
         }
@@ -13420,6 +13546,7 @@ module.exports = {
   fundAccount: fundAccount,
   jsArrayFromSolidityArray: jsArrayFromSolidityArray,
   getDecodedTransactions: getDecodedTransactions,
+  getBookingTransactions: getBookingTransactions,
   decodeTxInput: decodeTxInput,
 
   // Debugging
@@ -26499,7 +26626,8 @@ async function execute(data, index, context, callbacks) {
   var options = {
     from: context.owner,
     to: context.WTIndex.options.address,
-    data: callData
+    data: callData,
+    nonce: await context.web3.eth.getTransactionCount(context.owner, 'pending')
   };
 
   var estimate = await context.web3.eth.estimateGas(options);
@@ -26764,17 +26892,17 @@ async function getHotelInfo(wtHotel, context) {
   var waitConfirmation = await wtHotel.methods.waitConfirmation().call();
 
   return {
-    name: isZeroString(name) ? null : name,
-    description: isZeroString(description) ? null : description,
-    manager: isZeroAddress(manager) ? null : manager,
-    lineOne: isZeroString(lineOne) ? null : lineOne,
-    lineTwo: isZeroString(lineTwo) ? null : lineTwo,
-    zip: isZeroString(zip) ? null : zip,
-    country: isZeroString(country) ? null : country,
-    created: isZeroUint(created) ? null : parseInt(created),
-    timezone: isZeroUint(timezone) ? null : parseInt(timezone),
-    latitude: isZeroUint(latitude) ? null : locationFromUint(longitude, latitude).lat,
-    longitude: isZeroUint(longitude) ? null : locationFromUint(longitude, latitude).long,
+    name: name,
+    description: description,
+    manager: manager,
+    lineOne: lineOne,
+    lineTwo: lineTwo,
+    zip: zip,
+    country: country,
+    created: parseInt(created),
+    timezone: parseInt(timezone),
+    latitude: locationFromUint(longitude, latitude).lat,
+    longitude: locationFromUint(longitude, latitude).long,
     waitConfirmation: waitConfirmation,
     images: images,
     unitTypeNames: unitTypeNames.map(function (name) {
@@ -36850,6 +36978,7 @@ var HotelManager = function () {
         from: this.owner,
         to: this.WTIndex.options.address,
         gas: await utils.addGasMargin(estimate, this.context),
+        nonce: await this.web3.eth.getTransactionCount(this.owner, 'pending'),
         data: data
       };
 
@@ -36877,7 +37006,8 @@ var HotelManager = function () {
       var options = {
         from: this.owner,
         to: this.WTIndex.options.address,
-        data: data
+        data: data,
+        nonce: await this.web3.eth.getTransactionCount(this.owner, 'pending')
       };
 
       var estimate = await this.web3.eth.estimateGas(options);
@@ -54552,6 +54682,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var _ = __webpack_require__(231);
+var moment = __webpack_require__(0);
 var utils = __webpack_require__(24);
 var HotelManager = __webpack_require__(230);
 
@@ -54669,6 +54800,110 @@ var BookingData = function () {
 
       return true;
     }
+  }, {
+    key: 'unitAvailability',
+    value: async function unitAvailability(unitAddress, fromDate, daysAmount) {
+      var unit = utils.getInstance('HotelUnit', unitAddress, this.context);
+      var fromDay = utils.formatDate(fromDate);
+      var range = _.range(fromDay, fromDay + daysAmount);
+      var defaultPrice = (await unit.methods.defaultPrice().call()) / 100;
+      var defaultLifPrice = utils.lifWei2Lif((await unit.methods.defaultLifPrice().call()), this.context);
+      var availability = [];
+
+      var _iteratorNormalCompletion2 = true;
+      var _didIteratorError2 = false;
+      var _iteratorError2 = undefined;
+
+      try {
+        for (var _iterator2 = range[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+          var day = _step2.value;
+
+          var _ref2 = await this.manager.getReservation(unitAddress, day),
+              specialPrice = _ref2.specialPrice,
+              specialLifPrice = _ref2.specialLifPrice,
+              bookedBy = _ref2.bookedBy;
+
+          availability.push({
+            day: day,
+            price: specialPrice > 0 ? specialPrice : defaultPrice,
+            lifPrice: specialLifPrice > 0 ? specialLifPrice : defaultLifPrice,
+            available: utils.isZeroAddress(bookedBy) ? true : false
+          });
+        }
+      } catch (err) {
+        _didIteratorError2 = true;
+        _iteratorError2 = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion2 && _iterator2.return) {
+            _iterator2.return();
+          }
+        } finally {
+          if (_didIteratorError2) {
+            throw _iteratorError2;
+          }
+        }
+      }
+
+      return availability;
+    }
+
+    /**
+     * Returns a unit's availability for a single month
+     * @param  {Address} unitAddress Unit contract address
+     * @param  {Moment}  date        Moment object
+     * @return {Object}  Mapping of number of days since epoch to unit's price and availability for that day
+     */
+
+  }, {
+    key: 'unitMonthlyAvailability',
+    value: async function unitMonthlyAvailability(unitAddress, date) {
+      var fromDate = moment().year(date.year()).month(date.month()).date(1);
+      var toDate = moment(fromDate).endOf('month');
+      var daysAmount = toDate.diff(fromDate, 'days');
+      var unit = utils.getInstance('HotelUnit', unitAddress, this.context);
+      var fromDay = utils.formatDate(fromDate);
+      var range = _.range(fromDay, fromDay + daysAmount);
+      var defaultPrice = (await unit.methods.defaultPrice().call()) / 100;
+      var defaultLifPrice = utils.lifWei2Lif((await unit.methods.defaultLifPrice().call()), this.context);
+      var availability = {};
+
+      var _iteratorNormalCompletion3 = true;
+      var _didIteratorError3 = false;
+      var _iteratorError3 = undefined;
+
+      try {
+        for (var _iterator3 = range[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+          var day = _step3.value;
+
+          var _ref3 = await this.manager.getReservation(unitAddress, day),
+              specialPrice = _ref3.specialPrice,
+              specialLifPrice = _ref3.specialLifPrice,
+              bookedBy = _ref3.bookedBy;
+
+          availability[day] = {
+            price: specialPrice > 0 ? specialPrice : defaultPrice,
+            lifPrice: specialLifPrice > 0 ? specialLifPrice : defaultLifPrice,
+            available: utils.isZeroAddress(bookedBy) ? true : false
+          };
+        }
+      } catch (err) {
+        _didIteratorError3 = true;
+        _iteratorError3 = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion3 && _iterator3.return) {
+            _iterator3.return();
+          }
+        } finally {
+          if (_didIteratorError3) {
+            throw _iteratorError3;
+          }
+        }
+      }
+
+      return availability;
+    }
 
     /**
      * Gets the bookings history for hotel(s). If `fromBlock` is ommitted, method will search from the
@@ -54708,13 +54943,13 @@ var BookingData = function () {
       var finished = void 0;
       //TX hashes of CallStarted events indexed by corresponding hashes of CallFinished events
       var startedMappedByFinished = [];
-      var _iteratorNormalCompletion2 = true;
-      var _didIteratorError2 = false;
-      var _iteratorError2 = undefined;
+      var _iteratorNormalCompletion4 = true;
+      var _didIteratorError4 = false;
+      var _iteratorError4 = undefined;
 
       try {
-        for (var _iterator2 = hotelsToQuery[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-          var address = _step2.value;
+        for (var _iterator4 = hotelsToQuery[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+          var address = _step4.value;
 
           var hotel = utils.getInstance('Hotel', address, this.context);
 
@@ -54742,13 +54977,13 @@ var BookingData = function () {
             return found !== -1;
           });
 
-          var _iteratorNormalCompletion3 = true;
-          var _didIteratorError3 = false;
-          var _iteratorError3 = undefined;
+          var _iteratorNormalCompletion5 = true;
+          var _didIteratorError5 = false;
+          var _iteratorError5 = undefined;
 
           try {
-            for (var _iterator3 = bookEvents[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-              var event = _step3.value;
+            for (var _iterator5 = bookEvents[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+              var event = _step5.value;
 
               var guestData = void 0;
 
@@ -54772,16 +55007,16 @@ var BookingData = function () {
               });
             }
           } catch (err) {
-            _didIteratorError3 = true;
-            _iteratorError3 = err;
+            _didIteratorError5 = true;
+            _iteratorError5 = err;
           } finally {
             try {
-              if (!_iteratorNormalCompletion3 && _iterator3.return) {
-                _iterator3.return();
+              if (!_iteratorNormalCompletion5 && _iterator5.return) {
+                _iterator5.return();
               }
             } finally {
-              if (_didIteratorError3) {
-                throw _iteratorError3;
+              if (_didIteratorError5) {
+                throw _iteratorError5;
               }
             }
           }
@@ -54789,16 +55024,16 @@ var BookingData = function () {
           ;
         }
       } catch (err) {
-        _didIteratorError2 = true;
-        _iteratorError2 = err;
+        _didIteratorError4 = true;
+        _iteratorError4 = err;
       } finally {
         try {
-          if (!_iteratorNormalCompletion2 && _iterator2.return) {
-            _iterator2.return();
+          if (!_iteratorNormalCompletion4 && _iterator4.return) {
+            _iterator4.return();
           }
         } finally {
-          if (_didIteratorError2) {
-            throw _iteratorError2;
+          if (_didIteratorError4) {
+            throw _iteratorError4;
           }
         }
       }
@@ -54847,13 +55082,13 @@ var BookingData = function () {
       var finishEvents = void 0;
       var unfinished = void 0;
 
-      var _iteratorNormalCompletion4 = true;
-      var _didIteratorError4 = false;
-      var _iteratorError4 = undefined;
+      var _iteratorNormalCompletion6 = true;
+      var _didIteratorError6 = false;
+      var _iteratorError6 = undefined;
 
       try {
-        for (var _iterator4 = hotelsToQuery[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
-          var address = _step4.value;
+        for (var _iterator6 = hotelsToQuery[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
+          var address = _step6.value;
 
           var hotel = utils.getInstance('Hotel', address, this.context);
 
@@ -54874,13 +55109,13 @@ var BookingData = function () {
             return found === -1;
           });
 
-          var _iteratorNormalCompletion5 = true;
-          var _didIteratorError5 = false;
-          var _iteratorError5 = undefined;
+          var _iteratorNormalCompletion7 = true;
+          var _didIteratorError7 = false;
+          var _iteratorError7 = undefined;
 
           try {
             var _loop = async function _loop() {
-              var event = _step5.value;
+              var event = _step7.value;
 
               var guestData = await utils.getGuestData(event.transactionHash, _this.context);
 
@@ -54905,20 +55140,20 @@ var BookingData = function () {
               });
             };
 
-            for (var _iterator5 = unfinished[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+            for (var _iterator7 = unfinished[Symbol.iterator](), _step7; !(_iteratorNormalCompletion7 = (_step7 = _iterator7.next()).done); _iteratorNormalCompletion7 = true) {
               await _loop();
             }
           } catch (err) {
-            _didIteratorError5 = true;
-            _iteratorError5 = err;
+            _didIteratorError7 = true;
+            _iteratorError7 = err;
           } finally {
             try {
-              if (!_iteratorNormalCompletion5 && _iterator5.return) {
-                _iterator5.return();
+              if (!_iteratorNormalCompletion7 && _iterator7.return) {
+                _iterator7.return();
               }
             } finally {
-              if (_didIteratorError5) {
-                throw _iteratorError5;
+              if (_didIteratorError7) {
+                throw _iteratorError7;
               }
             }
           }
@@ -54926,16 +55161,16 @@ var BookingData = function () {
           ;
         }
       } catch (err) {
-        _didIteratorError4 = true;
-        _iteratorError4 = err;
+        _didIteratorError6 = true;
+        _iteratorError6 = err;
       } finally {
         try {
-          if (!_iteratorNormalCompletion4 && _iterator4.return) {
-            _iterator4.return();
+          if (!_iteratorNormalCompletion6 && _iterator6.return) {
+            _iterator6.return();
           }
         } finally {
-          if (_didIteratorError4) {
-            throw _iteratorError4;
+          if (_didIteratorError6) {
+            throw _iteratorError6;
           }
         }
       }
