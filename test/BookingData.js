@@ -424,4 +424,56 @@ describe('BookingData', function() {
       assert.equal(requests.length, 0);
     });
   })
+
+  describe('getBookingTransactions', () => {
+
+    const daysAmount = 5;
+    const price = 1;
+    const guestData = 'guestData';
+
+    it('returns a single booking made by an address', async() => {
+      const fromDate = new Date('2020-10-10T00:00:00');
+      let bookTx = await user.bookWithLif(
+        hotelAddress,
+        unitAddress,
+        fromDate,
+        daysAmount,
+        guestData
+      );
+      const txs = await utils.getBookingTransactions(userOptions.account, index.options.address, 0, web3, 'test');
+
+      bookTx = txs.find(tx => tx.hash === bookTx.transactionHash);
+      assert.equal(web3.utils.toChecksumAddress(bookTx.hotel), hotelAddress);
+      assert.equal(web3.utils.toChecksumAddress(bookTx.unit), unitAddress);
+      assert.equal(bookTx.unitType, utils.bytes32ToString(await utils.getInstance('HotelUnit', unitAddress, {web3: web3}).methods.unitType().call()));
+      assert.equal(bookTx.fromDate.toDateString(), fromDate.toDateString());
+      let toDate = fromDate;
+      toDate.setDate(fromDate.getDate() + daysAmount);
+      assert.equal(bookTx.toDate.toDateString(), toDate.toDateString());
+      assert(bookTx.status);
+    });
+
+    it('shows booking status as false when confirmation is required', async() => {
+      await Manager.setRequireConfirmation(hotelAddress, true);
+      const fromDate = new Date('2021-10-10T00:00:00');
+      let bookTx = await user.bookWithLif(
+        hotelAddress,
+        unitAddress,
+        fromDate,
+        daysAmount,
+        guestData
+      );
+      const txs = await utils.getBookingTransactions(userOptions.account, index.options.address, 0, web3, 'test');
+      bookTx = txs.find(tx => tx.hash === bookTx.transactionHash);
+      assert.equal(web3.utils.toChecksumAddress(bookTx.hotel), hotelAddress);
+      assert.equal(web3.utils.toChecksumAddress(bookTx.unit), unitAddress);
+      assert.equal(bookTx.unitType, utils.bytes32ToString(await utils.getInstance('HotelUnit', unitAddress, {web3: web3}).methods.unitType().call()));
+      assert.equal(bookTx.fromDate.toDateString(), fromDate.toDateString());
+      let toDate = fromDate;
+      toDate.setDate(fromDate.getDate() + daysAmount);
+      assert.equal(bookTx.toDate.toDateString(), toDate.toDateString());
+      assert(!bookTx.status);
+    })
+
+  })
 });

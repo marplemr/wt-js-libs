@@ -39,6 +39,7 @@ module.exports = {
   fundAccount: misc.fundAccount,
   jsArrayFromSolidityArray: misc.jsArrayFromSolidityArray,
   getDecodedTransactions: misc.getDecodedTransactions,
+  getBookingTransactions: misc.getBookingTransactions,
   pretty: misc.pretty,
   currencyCodes: misc.currencyCodes,
   decodeTxInput: misc.decodeTxInput
