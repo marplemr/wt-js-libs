@@ -1,4 +1,5 @@
 const _ = require('lodash');
+const moment = require('moment');
 const utils = require('./utils/index');
 const HotelManager = require('./HotelManager');
 
@@ -106,6 +107,42 @@ class BookingData {
         lifPrice: (specialLifPrice > 0) ? specialLifPrice : defaultLifPrice,
         available: utils.isZeroAddress(bookedBy) ? true : false
       });
+    }
+
+    return availability;
+  }
+
+  /**
+   * Returns a unit's availability for a single month
+   * @param  {Address} unitAddress Unit contract address
+   * @param  {Moment}  date        Moment object
+   * @return {Object}  Mapping of number of days since epoch to unit's price and availability for that day
+   */
+  async unitMonthlyAvailability(unitAddress, date) {
+    let fromDate = moment().year(date.year()).month(date.month()).date(1);
+    let toDate = moment(fromDate).endOf('month');
+    let daysAmount = toDate.diff(fromDate, 'days');
+    const unit = utils.getInstance('HotelUnit', unitAddress, this.context);
+    const fromDay = utils.formatDate(fromDate);
+    const range = _.range(fromDay, fromDay + daysAmount);
+    const defaultPrice = (await unit.methods.defaultPrice().call()) / 100;
+    const defaultLifPrice = utils.lifWei2Lif(await unit.methods.defaultLifPrice().call(), this.context);
+    let availability = {};
+
+    for (let day of range) {
+
+      const {
+        specialPrice,
+        specialLifPrice,
+        bookedBy
+      } = await this.manager.getReservation(unitAddress, day);
+
+      availability[day] = {
+        price: (specialPrice > 0) ? specialPrice : defaultPrice,
+        lifPrice: (specialLifPrice > 0) ? specialLifPrice : defaultLifPrice,
+        available: utils.isZeroAddress(bookedBy) ? true : false
+      }
+
     }
 
     return availability;

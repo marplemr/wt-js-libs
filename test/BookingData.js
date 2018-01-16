@@ -9,6 +9,7 @@ chai.use(require('chai-string'));
 const assert = chai.assert;
 
 const _ = require('lodash');
+const moment = require('moment');
 
 const Web3 = require('web3');
 const provider = new Web3.providers.HttpProvider('http://localhost:8545')
@@ -99,7 +100,7 @@ describe('BookingData', function() {
     const specialPrice = 200.00;
     const specialLifPrice = 2;
 
-    it('unitAvailability: returns a unit\'s price and availability for a range of dates', async () => {
+    it('returns a unit\'s price and availability for a range of dates', async () => {
       await Manager.setDefaultPrice(hotelAddress, unitAddress, price);
       await Manager.setDefaultLifPrice(hotelAddress, unitAddress, lifPrice);
       await Manager.setUnitSpecialPrice(hotelAddress, unitAddress, specialPrice, fromDate, 1);
@@ -115,6 +116,18 @@ describe('BookingData', function() {
           assert.equal(date.lifPrice, lifPrice);
         }
       }
+    })
+
+    it('given a single moment date, returns units price and availability for that month', async() => {
+      await Manager.setDefaultPrice(hotelAddress, unitAddress, price);
+      await Manager.setDefaultLifPrice(hotelAddress, unitAddress, lifPrice);
+      await Manager.setUnitSpecialPrice(hotelAddress, unitAddress, specialPrice, fromDate, 1);
+      await Manager.setUnitSpecialLifPrice(hotelAddress, unitAddress, specialLifPrice, fromDate, 1);
+
+      let fromDateMoment = moment(fromDate);
+      let availability = await data.unitMonthlyAvailability(unitAddress, fromDateMoment);
+      assert.equal(Object.keys(availability).length, 30);
+      assert.equal(availability[utils.formatDate(fromDate)].price, specialPrice);
     })
   })
 
