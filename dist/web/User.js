@@ -55288,7 +55288,7 @@ var User = function () {
 
   }, {
     key: 'bookWithLif',
-    value: async function bookWithLif(hotelAddress, unitAddress, fromDate, daysAmount, guestData) {
+    value: async function bookWithLif(hotelAddress, unitAddress, fromDate, daysAmount, guestData, callbacks) {
       var fromDay = utils.formatDate(fromDate);
 
       var cost = await this.bookings.getLifCost(unitAddress, fromDay, daysAmount);
@@ -55314,6 +55314,8 @@ var User = function () {
       var estimate = await this.context.web3.eth.estimateGas(options);
       options.gas = await utils.addGasMargin(estimate, this.context);
 
+      if (callbacks) return this.context.web3.eth.sendTransaction(options).once('transactionHash', callbacks.transactionHash).once('receipt', callbacks.receipt).on('error', callbacks.error);
+
       return this.context.web3.eth.sendTransaction(options);
     }
   }, {
@@ -55329,7 +55331,7 @@ var User = function () {
      * @param  {String}     guestData     hex encoded guest data
      * @return {Promievent}
      */
-    value: async function book(hotelAddress, unitAddress, fromDate, daysAmount, guestData) {
+    value: async function book(hotelAddress, unitAddress, fromDate, daysAmount, guestData, callbacks) {
       var fromDay = utils.formatDate(fromDate);
       var guestDataHex = this.context.web3.utils.toHex(guestData);
 
@@ -55343,6 +55345,8 @@ var User = function () {
 
       var estimate = await this.context.web3.eth.estimateGas(options);
       options.gas = await utils.addGasMargin(estimate, this.context);
+
+      if (callbacks) return this.context.web3.eth.sendTransaction(options).once('transactionHash', callbacks.transactionHash).once('receipt', callbacks.receipt).on('error', callbacks.error);
 
       return this.context.web3.eth.sendTransaction(options);
     }
