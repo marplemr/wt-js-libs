@@ -1,7 +1,6 @@
 const _ = require('lodash');
 const moment = require('moment');
 const utils = require('./utils/index');
-const HotelManager = require('./HotelManager');
 
 /**
  * Methods that let managers and clients query the blockchain about hotel booking costs, history,
@@ -19,7 +18,6 @@ class BookingData {
   constructor(web3){
     this.context = {};
     this.context.web3 = web3;
-    this.manager = new HotelManager({web3: web3});
   }
 
   /**
@@ -72,11 +70,10 @@ class BookingData {
     let availability = [];
 
     for (let day of range) {
-      const {
-        specialPrice,
-        specialLifPrice,
-        bookedBy
-      } = await this.manager.getReservation(unitAddress, day);
+      const reservationResult = await unit.methods.getReservation(day).call();
+      const specialPrice = utils.bnToPrice(reservationResult[0]);
+      const specialLifPrice = utils.lifWei2Lif(reservationResult[1], this.context);
+      const bookedBy = reservationResult[2];
 
       availability.push({
         day: day,
