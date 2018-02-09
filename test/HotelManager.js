@@ -562,6 +562,15 @@ describe('HotelManager', function() {
 
   });
 
+  describe('get Tx info from txHash', () => {
 
-
+    it('get transaction info for mined transaction', async()=>{
+      const {transactionHash} = await lib.createHotel(hotelName, hotelDescription);
+      const {status, method} = await lib.getTx(transactionHash)
+      assert.equal(status, 'mined');
+      assert.equal(method.name, 'Register Hotel');
+      assert.equal(method.params.find(e => e.name == 'name').value, hotelName);
+      assert.equal(method.params.find(e => e.name == 'description').value, hotelDescription);
+    });
+  });
 });
