@@ -1,5 +1,4 @@
 const _ = require('lodash');
-const utils = require('./../../libs/utils/index');
 const help = require('./misc.js');
 const HotelManager = require('./../../libs/HotelManager');
 
@@ -21,34 +20,34 @@ async function generateCompleteHotel(
   indexAddress,
   ownerAccount,
   gasMargin,
-  web3,
+  web3proxy,
   sync=true
 ){
   const hotelName = help.randomString(10);
   const hotelDescription = help.randomString(15);
   const typeName = 'BASIC_ROOM';
 
-  const lib = new HotelManager({
+  const manager = new HotelManager({
     indexAddress: indexAddress,
     owner: ownerAccount,
     gasMargin: gasMargin,
-    web3: web3
+    web3proxy: web3proxy
   })
 
-  await lib.createHotel(hotelName, hotelDescription, sync);
-  const hotels = await lib.getHotels();
+  await manager.createHotel(hotelName, hotelDescription, sync);
+  const hotels = await manager.getHotels();
 
   const hotelsArray = Object.keys(hotels);
   const latest = hotelsArray.length - 1;
   hotelAddress = hotelsArray[latest];
 
-  await lib.addUnitType(hotelAddress, typeName, sync);
-  await lib.addUnit(hotelAddress, typeName, sync);
-  hotel = await lib.getHotel(hotelAddress);
+  await manager.addUnitType(hotelAddress, typeName, sync);
+  await manager.addUnit(hotelAddress, typeName, sync);
+  hotel = await manager.getHotel(hotelAddress);
   unitAddress = hotel.unitAddresses[0];
 
   return {
-    Manager: lib,
+    Manager: manager,
     hotelAddress: hotelAddress,
     unitAddress: unitAddress
   }

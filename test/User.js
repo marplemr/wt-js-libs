@@ -1,7 +1,6 @@
 const User = require('../libs/User');
 const BookingData = require('../libs/BookingData');
 
-const utils = require('../libs/utils/index');
 const help = require('./helpers/index');
 
 const assert = require('chai').assert;
@@ -11,9 +10,7 @@ const Web3 = require('web3');
 const provider = new Web3.providers.HttpProvider('http://localhost:8545')
 const web3 = new Web3(provider);
 
-(process.env.TEST_BUILD)
-  ? HotelManager = require('../dist/node/User.js')
-  : HotelManager = require('../libs/User.js');
+const Web3Proxy = require('../libs/web3proxy');
 
 describe('User', function(){
   let Manager;
@@ -25,16 +22,18 @@ describe('User', function(){
   let jakub;
   let hotelAddress;
   let unitAddress;
+  let web3proxy;
 
   const sync = true;
 
   before(async function(){
-    accounts = await web3.eth.getAccounts();
+    web3proxy = Web3Proxy.getInstance(web3);
+    accounts = await web3proxy.web3.eth.getAccounts();
     ({
       index,
       token,
       wallet
-    } = await help.createWindingTreeEconomy(accounts, web3));
+    } = await help.createWindingTreeEconomy(accounts, web3proxy));
 
     ownerAccount = wallet["1"].address;
     augusto = wallet["2"].address;
@@ -48,7 +47,7 @@ describe('User', function(){
       userOptions = {
         account: augusto,
         tokenAddress: token.options.address,
-        web3: web3
+        web3proxy: web3proxy,
       }
       user = new User(userOptions);
     })
@@ -69,24 +68,26 @@ describe('User', function(){
   describe('book', function() {
     const fromDate = new Date('10/10/2020');
     const daysAmount = 5;
-    const guestData = web3.utils.toHex('guestData');
+    let guestData;
+    
 
     beforeEach(async function() {
+      guestData = web3proxy.web3.utils.toHex('guestData');
       ({
         Manager,
         hotelAddress,
         unitAddress
-      } = await help.generateCompleteHotel(index.options.address, ownerAccount, 1.5, web3));
+      } = await help.generateCompleteHotel(index.options.address, ownerAccount, 1.5, web3proxy));
 
       userOptions = {
         account: augusto,
         gasMargin: 1.5,
-        web3: web3
+        web3proxy: web3proxy,
       }
 
       user = new User(userOptions);
-      data = new BookingData(web3);
-      hotel = utils.getInstance('Hotel', hotelAddress, {web3: web3});
+      data = new BookingData({web3proxy: web3proxy});
+      hotel = web3proxy.contracts.getContractInstance('Hotel', hotelAddress);
 
       await Manager.setRequireConfirmation(hotelAddress, true, sync);
     });
@@ -162,25 +163,26 @@ describe('User', function(){
     const fromDate = new Date('10/10/2020');
     const daysAmount = 5;
     const price = 1;
-    const guestData = web3.utils.toHex('guestData');
+    let guestData;
 
     beforeEach(async function() {
+      guestData = web3proxy.web3.utils.toHex('guestData');
       ({
         Manager,
         hotelAddress,
         unitAddress
-      } = await help.generateCompleteHotel(index.options.address, ownerAccount, 1.5, web3));
+      } = await help.generateCompleteHotel(index.options.address, ownerAccount, 1.5, web3proxy));
 
       userOptions = {
         account: augusto,
         gasMargin: 1.5,
         tokenAddress: token.options.address,
-        web3: web3
+        web3proxy: web3proxy
       }
 
       user = new User(userOptions);
-      data = new BookingData(web3);
-      hotel = utils.getInstance('Hotel', hotelAddress, {web3: web3});
+      data = new BookingData({web3proxy: web3proxy});
+      hotel = web3proxy.contracts.getContractInstance('Hotel', hotelAddress);
 
       await Manager.setDefaultLifPrice(hotelAddress, unitAddress, price, sync);
     });
@@ -198,7 +200,7 @@ describe('User', function(){
       const book = events[0].returnValues;
       assert.equal(book.from, augusto);
       assert.equal(book.unit, unitAddress);
-      assert.equal(book.fromDay, utils.formatDate(fromDate));
+      assert.equal(book.fromDay, web3proxy.utils.formatDate(fromDate));
       assert.equal(book.daysAmount, daysAmount);
     });
 
@@ -221,11 +223,11 @@ describe('User', function(){
     it('should make a booking: tokens transferred', async () => {
       let augustoInitialBalance = await token.methods.balanceOf(augusto).call();
       let hotelInitialBalance = await token.methods.balanceOf(hotelAddress).call();
-      let lifWeiCost = utils.lif2LifWei(price * daysAmount, {web3: web3});
+      let lifWeiCost = web3proxy.utils.lif2LifWei(price * daysAmount);
 
-      augustoInitialBalance =  new web3.utils.BN(augustoInitialBalance);
-      hotelInitialBalance = new web3.utils.BN(hotelInitialBalance);
-      lifWeiCost = new web3.utils.BN(lifWeiCost);
+      augustoInitialBalance =  new web3proxy.web3.utils.BN(augustoInitialBalance);
+      hotelInitialBalance = new web3proxy.web3.utils.BN(hotelInitialBalance);
+      lifWeiCost = new web3proxy.web3.utils.BN(lifWeiCost);
 
       await user.bookWithLif(
         hotelAddress,
@@ -238,8 +240,8 @@ describe('User', function(){
       let augustoFinalBalance = await token.methods.balanceOf(augusto).call();
       let hotelFinalBalance = await token.methods.balanceOf(hotelAddress).call();
 
-      augustoFinalBalance = new web3.utils.BN(augustoFinalBalance);
-      hotelFinalBalance = new web3.utils.BN(hotelFinalBalance);
+      augustoFinalBalance = new web3proxy.web3.utils.BN(augustoFinalBalance);
+      hotelFinalBalance = new web3proxy.web3.utils.BN(hotelFinalBalance);
 
       const augustoExpectedBalance = augustoInitialBalance.sub(lifWeiCost);
       const hotelExpectedBalance = hotelInitialBalance.add(lifWeiCost);

@@ -1,5 +1,4 @@
 const _ = require('lodash');
-const utils = require('../../libs/utils/index');
 
 /**
  * Generates a random string of len `length`
@@ -16,24 +15,7 @@ function randomString(length){
   return text;
 }
 
-/**
- * Send tokens from one address to another
- * @param  {Instance} token
- * @param  {Address}  sender
- * @param  {Address}  recipient
- * @param  {Number}   value     Lif 'ether'
- * @return {Promise}
- */
-async function sendTokens(options){
-  const amount = utils.lif2LifWei(options.value, {web3: options.web3});
-
-  return await options.token.methods
-        .transfer(options.receiver, amount)
-        .send({from: options.sender});
-}
-
 module.exports = {
   randomString: randomString,
-  sendTokens: sendTokens,
 }
 

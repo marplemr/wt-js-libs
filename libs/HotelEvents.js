@@ -1,5 +1,4 @@
 const _ = require('lodash');
-const utils = require('./utils/index');
 const HotelManager = require('./HotelManager');
 const EventEmitter = require('events');
 
@@ -16,7 +15,7 @@ class HotelEvents extends EventEmitter {
    * @param  {Object} _web3
    * @return {HotelEvents}
    */
-  constructor(_web3){
+  constructor(web3proxy) {
     super();
 
     /**
@@ -26,10 +25,10 @@ class HotelEvents extends EventEmitter {
     this.subscriptions = [];
 
     /**
-     * Web3 instance initialised with a provider.
+     * Web3proxy instance initialised with a provider.
      * @type {Object}
      */
-    this.web3 = _web3;
+    this.web3proxy = web3proxy;
   }
 
   /**
@@ -40,7 +39,7 @@ class HotelEvents extends EventEmitter {
   async _emitEvent(err, event){
     if(!event) return;
 
-    const guestData = await utils.getGuestData(event.transactionHash, {web3: this.web3});
+    const guestData = await this.web3proxy.data.getGuestData(event.transactionHash);
 
     const defaults = {
       address: event.address,
@@ -54,7 +53,7 @@ class HotelEvents extends EventEmitter {
       "Book": {
         from: event.returnValues.from,
         unit: event.returnValues.unit,
-        fromDate: utils.parseDate(event.returnValues.fromDay),
+        fromDate: this.web3proxy.utils.parseDate(event.returnValues.fromDay),
         daysAmount: event.returnValues.daysAmount
       },
       "CallStarted": {
@@ -90,7 +89,7 @@ class HotelEvents extends EventEmitter {
 
     let events;
     for (let address of hotelsToMonitor){
-      const hotel = utils.getInstance('Hotel', address, {web3: this.web3});
+      const hotel = this.web3proxy.contracts.getContractInstance('Hotel', address);
 
       hotel.events.Book({}, this._emitEvent.bind(this));
       hotel.events.CallStarted({}, this._emitEvent.bind(this));

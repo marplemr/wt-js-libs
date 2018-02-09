@@ -1,4 +1,3 @@
-const utils = require('./utils/index');
 const errors = require('./utils/errors');
 const BookingData = require('./BookingData');
 
@@ -20,20 +19,30 @@ class User {
    * @param  {Object} options
    * @return {User}
    */
-  constructor(options){
-    this.context = {};
+  constructor(options) {
+    this.web3proxy = options.web3proxy;
+    this.gasMargin = options.gasMargin || 1;
     this.account = options.account || null;
-    this.context.web3 = options.web3;
-    this.context.gasMargin = options.gasMargin || 1;
-    this.token = utils.getInstance('LifToken', options.tokenAddress, this.context);
-    this.bookings = new BookingData(options.web3);
+    
+    this.token = this.getLifTokenInstance(options.tokenAddress);
+    this.bookings = new BookingData({
+      web3proxy: options.web3proxy,
+    });
+  }
+
+  getLifTokenInstance(tokenAddress) {
+    return this.web3proxy.contracts.getContractInstance('LifToken', tokenAddress);
+  }
+
+  getHotelInstance(hotelAddress) {
+    return this.web3proxy.contracts.getContractInstance('Hotel', hotelAddress);
   }
 
   /**
    * Private method that composes a non-token booking's data for execution by sendTransaction
    */
   async _compileBooking(hotelAddress, unitAddress, fromDay, daysAmount, guestData){
-    const hotel = utils.getInstance('Hotel', hotelAddress, this.context);
+    const hotel = this.getHotelInstance(hotelAddress);
 
     const bookData = await hotel.methods
       .book(unitAddress, this.account, fromDay, daysAmount)
@@ -48,7 +57,7 @@ class User {
    * Private method that composes a token based booking's data for execution by sendTransaction
    */
   async _compileLifBooking(hotelAddress, unitAddress, fromDay, daysAmount, guestData){
-    const hotel = utils.getInstance('Hotel', hotelAddress, this.context);
+    const hotel = this.getHotelInstance(hotelAddress);
 
     const bookData = await hotel.methods
       .bookWithLif(unitAddress, this.account, fromDay, daysAmount)
@@ -70,12 +79,12 @@ class User {
    * @return {Promievent}
    */
   async bookWithLif(hotelAddress, unitAddress, fromDate, daysAmount, guestData, callbacks) {
-    const fromDay = utils.formatDate(fromDate);
+    const fromDay = this.web3proxy.utils.formatDate(fromDate);
 
     const cost = await this.bookings.getLifCost(unitAddress, fromDay, daysAmount);
     const enough = await this.balanceCheck(cost);
     const available = await this.bookings.unitIsAvailable(unitAddress, fromDate, daysAmount);
-    const guestDataHex = this.context.web3.utils.toHex(guestData);
+    const guestDataHex = this.web3proxy.web3.utils.toHex(guestData);
 
     if (!enough)
       return Promise.reject(errors.insufficientBalance);
@@ -91,7 +100,7 @@ class User {
       guestDataHex
     );
 
-    const weiCost = utils.lif2LifWei(cost, this.context);
+    const weiCost = this.web3proxy.utils.lif2LifWei(cost);
     const approvalData = await this.token.methods
       .approveData(hotelAddress, weiCost, bookData)
       .encodeABI();
@@ -102,16 +111,17 @@ class User {
       data: approvalData
     };
 
-    const estimate = await this.context.web3.eth.estimateGas(options);
-    options.gas = await utils.addGasMargin(estimate, this.context);
+    const estimate = await this.web3proxy.web3.eth.estimateGas(options);
+    options.gas = await this.web3proxy.utils.addGasMargin(estimate, this.gasMargin);
 
-    if(callbacks)
-      return this.context.web3.eth.sendTransaction(options)
+    if(callbacks) {
+      return this.web3proxy.web3.eth.sendTransaction(options)
         .once('transactionHash', callbacks.transactionHash)
         .once('receipt', callbacks.receipt)
         .on('error', callbacks.error);
+    }
 
-    return this.context.web3.eth.sendTransaction(options);
+    return this.web3proxy.web3.eth.sendTransaction(options);
   };
 
   /**
@@ -124,8 +134,8 @@ class User {
    * @return {Promievent}
    */
   async book(hotelAddress, unitAddress, fromDate, daysAmount, guestData, callbacks){
-    const fromDay = utils.formatDate(fromDate);
-    const guestDataHex = this.context.web3.utils.toHex(guestData);
+    const fromDay = this.web3proxy.utils.formatDate(fromDate);
+    const guestDataHex = this.web3proxy.web3.utils.toHex(guestData);
 
     const data = await this._compileBooking(
       hotelAddress,
@@ -141,16 +151,17 @@ class User {
       data: data
     };
 
-    const estimate = await this.context.web3.eth.estimateGas(options);
-    options.gas = await utils.addGasMargin(estimate, this.context);
+    const estimate = await this.web3proxy.web3.eth.estimateGas(options);
+    options.gas = await this.web3proxy.utils.addGasMargin(estimate, this.gasMargin);
 
-    if(callbacks)
-      return this.context.web3.eth.sendTransaction(options)
+    if(callbacks) {
+      return this.web3proxy.web3.eth.sendTransaction(options)
         .once('transactionHash', callbacks.transactionHash)
         .once('receipt', callbacks.receipt)
         .on('error', callbacks.error);
+    }
 
-    return this.context.web3.eth.sendTransaction(options);
+    return this.web3proxy.web3.eth.sendTransaction(options);
   }
 
   /**
@@ -160,11 +171,11 @@ class User {
    * @return {Boolean}
    */
   async balanceCheck(cost){
-    let weiCost = utils.lif2LifWei(cost, this.context);
-    weiCost = new this.context.web3.utils.BN(weiCost);
+    let weiCost = this.web3proxy.utils.lif2LifWei(cost);
+    weiCost = new this.web3proxy.web3.utils.BN(weiCost);
 
     let balance = await this.token.methods.balanceOf(this.account).call();
-    balance = new this.context.web3.utils.BN(balance);
+    balance = new this.web3proxy.web3.utils.BN(balance);
 
     return balance.gte(weiCost);
   }

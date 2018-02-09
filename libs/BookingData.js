@@ -1,6 +1,6 @@
 const _ = require('lodash');
 const moment = require('moment');
-const utils = require('./utils/index');
+const HotelManager = require('./HotelManager');
 
 /**
  * Methods that let managers and clients query the blockchain about hotel booking costs, history,
@@ -12,12 +12,24 @@ class BookingData {
 
   /**
    * Instantiates with a web3 object whose provider has been set
-   * @param  {Object} web3
+   * @param  {Object} options
    * @return {BookingData}
    */
-  constructor(web3){
-    this.context = {};
-    this.context.web3 = web3;
+  constructor(options) {
+    this.web3proxy = options.web3proxy;
+    this.manager = new HotelManager({web3proxy: options.web3proxy});
+  }
+
+  getHotelUnitInstance(unitAddress) {
+    return this.web3proxy.contracts.getContractInstance('HotelUnit', unitAddress);
+  }
+
+  getHotelInstance(hotelAddress) {
+    return this.web3proxy.contracts.getContractInstance('Hotel', hotelAddress);
+  }
+
+  addressToChecksum(address) {
+    return this.web3proxy.web3.utils.toChecksumAddress(address);
   }
 
   /**
@@ -31,10 +43,10 @@ class BookingData {
       const cost = await lib.getCost('0xab3..cd', new Date('5/31/2020'), 5);
    */
   async getCost(unitAddress, fromDate, daysAmount){
-    const fromDay = utils.formatDate(fromDate);
-    const unit = utils.getInstance('HotelUnit', unitAddress, this.context);
+    const fromDay = this.web3proxy.utils.formatDate(fromDate);
+    const unit = this.getHotelUnitInstance(unitAddress);
     const cost = await unit.methods.getCost(fromDay, daysAmount).call();
-    return utils.bnToPrice(cost);
+    return this.web3proxy.utils.bnToPrice(cost);
   }
 
   /**
@@ -48,25 +60,26 @@ class BookingData {
       const cost = await lib.getCost('0xab3..cd', new Date('5/31/2020'), 5);
    */
   async getLifCost(unitAddress, fromDate, daysAmount){
-    const fromDay = utils.formatDate(fromDate);
-    const unit = utils.getInstance('HotelUnit', unitAddress, this.context);
+    const fromDay = this.web3proxy.utils.formatDate(fromDate);
+    const unit = this.getHotelUnitInstance(unitAddress);
     const wei = await unit.methods.getLifCost(fromDay, daysAmount).call();
 
-    return utils.lifWei2Lif(wei, this.context);
+    return this.web3proxy.utils.lifWei2Lif(wei);
   }
 
+  /**
+   * Checks the availability of a unit for a range of days
+   * @param  {Address} unitAddress Unit contract address
+   * @param  {Date}    fromDate    check-in date
+   * @param  {Number}  daysAmount  number of days
+   * @return {Boolean}
+   */
   async unitAvailability(unitAddress, fromDate, daysAmount) {
-    const unit = utils.getInstance('HotelUnit', unitAddress, this.context);
-    // If unit is not active, fail fast
-    const isActive = await unit.methods.active().call();
-    if (!isActive) {
-      return false;
-    }
-
-    const fromDay = utils.formatDate(fromDate);
+    const unit = this.getHotelUnitInstance(unitAddress);
+    const fromDay = this.web3proxy.utils.formatDate(fromDate);
     const range = _.range(fromDay, fromDay + daysAmount);
     const defaultPrice = (await unit.methods.defaultPrice().call()) / 100;
-    const defaultLifPrice = utils.lifWei2Lif(await unit.methods.defaultLifPrice().call(), this.context);
+    const defaultLifPrice = this.web3proxy.utils.lifWei2Lif(await unit.methods.defaultLifPrice().call());
     let availability = [];
 
     for (let day of range) {
@@ -79,7 +92,7 @@ class BookingData {
         day: day,
         price: (specialPrice > 0) ? specialPrice : defaultPrice,
         lifPrice: (specialLifPrice > 0) ? specialLifPrice : defaultLifPrice,
-        available: utils.isZeroAddress(bookedBy),
+        available: this.web3proxy.utils.isZeroAddress(bookedBy) ? true : false
       });
     }
 
@@ -133,7 +146,7 @@ class BookingData {
    *    }
    * ]
    */
-  async getBookings(_addresses, fromBlock=0){
+  async getBookings(_addresses, fromBlock = 0){
     let hotelsToQuery = [];
     let bookings = [];
 
@@ -149,11 +162,11 @@ class BookingData {
     let finished;
     //TX hashes of CallStarted events indexed by corresponding hashes of CallFinished events
     let startedMappedByFinished = [];
-    for (let address of hotelsToQuery){
-      const hotel = utils.getInstance('Hotel', address, this.context);
+    for (let address of hotelsToQuery) {
+      const hotel = this.getHotelInstance(address);
 
       bookEvents = await hotel.getPastEvents('Book', {
-        fromBlock: fromBlock
+        fromBlock: fromBlock,
       });
 
       startedEvents = await hotel.getPastEvents('CallStarted', {
@@ -162,7 +175,7 @@ class BookingData {
 
       finishEvents = await hotel.getPastEvents('CallFinish', {
         fromBlock: fromBlock
-      })
+      });
 
       // Filter out started events with a corresponding Book event
       // and map finish events -> started events
@@ -175,15 +188,15 @@ class BookingData {
         return found !== -1;
       })
 
-      for (let event of bookEvents){
+      for (let event of bookEvents) {
         let guestData;
 
         //If guest data can't be retreived, it means the booking required a
         //confirmation, so the guestData can be found in the CallStarted tx
         try {
-          guestData = await utils.getGuestData(event.transactionHash, this.context)
+          guestData = await this.web3proxy.data.getGuestData(event.transactionHash)
         } catch(e) {
-          guestData = await utils.getGuestData(startedMappedByFinished[event.transactionHash], this.context)
+          guestData = await this.web3proxy.data.getGuestData(startedMappedByFinished[event.transactionHash])
         }
 
         bookings.push({
@@ -193,7 +206,7 @@ class BookingData {
           id: event.id,
           from: event.returnValues.from,
           unit: event.returnValues.unit,
-          fromDate: utils.parseDate(event.returnValues.fromDay),
+          fromDate: this.web3proxy.utils.parseDate(event.returnValues.fromDay),
           daysAmount: event.returnValues.daysAmount
         })
       };
@@ -238,7 +251,7 @@ class BookingData {
     let unfinished;
 
     for (let address of hotelsToQuery){
-      const hotel = utils.getInstance('Hotel', address, this.context);
+      const hotel = this.getHotelInstance(address);
 
       startedEvents = await hotel.getPastEvents('CallStarted', {
         fromBlock: fromBlock
@@ -257,12 +270,12 @@ class BookingData {
       })
 
       for(let event of unfinished){
-        const guestData = await utils.getGuestData(event.transactionHash, this.context);
+        const guestData = await this.web3proxy.data.getGuestData(event.transactionHash);
 
         //get calldata and decode it for booking data
         let publicCallData = await hotel.methods.getPublicCallData(event.returnValues.dataHash).call();
         let bookData = {};
-        utils.abiDecoder.decodeMethod(publicCallData).params.forEach((param) => {
+        this.web3proxy.contracts.abiDecoder.decodeMethod(publicCallData).params.forEach((param) => {
           bookData[param.name] = param.value;
         });
 
@@ -274,8 +287,8 @@ class BookingData {
           from: event.returnValues.from,
           dataHash: event.returnValues.dataHash,
           hotel: address,
-          unit: this.context.web3.utils.toChecksumAddress(bookData.unitAddress),
-          fromDate: utils.parseDate(bookData.fromDay),
+          unit: this.addressToChecksum(bookData.unitAddress),
+          fromDate: this.web3proxy.utils.parseDate(bookData.fromDay),
           daysAmount: bookData.daysAmount
         })
       };
