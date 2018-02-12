@@ -1,7 +1,6 @@
 const _ = require('lodash');
 const moment = require('moment');
 const utils = require('./utils/index');
-const HotelManager = require('./HotelManager');
 
 /**
  * Methods that let managers and clients query the blockchain about hotel booking costs, history,
@@ -19,7 +18,6 @@ class BookingData {
   constructor(web3){
     this.context = {};
     this.context.web3 = web3;
-    this.manager = new HotelManager({web3: web3});
   }
 
   /**
@@ -57,36 +55,14 @@ class BookingData {
     return utils.lifWei2Lif(wei, this.context);
   }
 
-  /**
-   * Checks the availability of a unit for a range of days
-   * @param  {Address} unitAddress Unit contract address
-   * @param  {Date}    fromDate    check-in date
-   * @param  {Number}  daysAmount  number of days
-   * @return {Boolean}
-   */
-  async unitIsAvailable(unitAddress, fromDate, daysAmount){
-    const unit = utils.getInstance('HotelUnit', unitAddress, this.context);
-    const fromDay = utils.formatDate(fromDate);
-    const range = _.range(fromDay, fromDay + daysAmount);
-
-    const isActive = await unit.methods.active().call();
-    if (!isActive) return false;
-
-    for (let day of range) {
-
-      const {
-        specialPrice,
-        specialLifPrice,
-        bookedBy
-      } = await this.manager.getReservation(unitAddress, day);
-
-      if (!utils.isZeroAddress(bookedBy)) return false;
-    }
-    return true;
-  }
-
   async unitAvailability(unitAddress, fromDate, daysAmount) {
     const unit = utils.getInstance('HotelUnit', unitAddress, this.context);
+    // If unit is not active, fail fast
+    const isActive = await unit.methods.active().call();
+    if (!isActive) {
+      return false;
+    }
+
     const fromDay = utils.formatDate(fromDate);
     const range = _.range(fromDay, fromDay + daysAmount);
     const defaultPrice = (await unit.methods.defaultPrice().call()) / 100;
@@ -94,22 +70,34 @@ class BookingData {
     let availability = [];
 
     for (let day of range) {
-
-      const {
-        specialPrice,
-        specialLifPrice,
-        bookedBy
-      } = await this.manager.getReservation(unitAddress, day);
+      const reservationResult = await unit.methods.getReservation(day).call();
+      const specialPrice = utils.bnToPrice(reservationResult[0]);
+      const specialLifPrice = utils.lifWei2Lif(reservationResult[1], this.context);
+      const bookedBy = reservationResult[2];
 
       availability.push({
         day: day,
         price: (specialPrice > 0) ? specialPrice : defaultPrice,
         lifPrice: (specialLifPrice > 0) ? specialLifPrice : defaultLifPrice,
-        available: utils.isZeroAddress(bookedBy) ? true : false
+        available: utils.isZeroAddress(bookedBy),
       });
     }
 
     return availability;
+  }
+
+  /**
+   * Checks the availability of a unit for a range of days
+   * @param  {Address} unitAddress Unit contract address
+   * @param  {Date}    fromDate    check-in date
+   * @param  {Number}  daysAmount  number of days
+   * @return {Boolean}
+   */
+  async unitIsAvailable(unitAddress, fromDate, daysAmount) {
+    const availability = await this.unitAvailability(unitAddress, fromDate, daysAmount);
+    return _.every(availability, (dayAvailability) => {
+      return dayAvailability.available;
+    });
   }
 
   /**
@@ -122,30 +110,8 @@ class BookingData {
     let fromDate = moment().year(date.year()).month(date.month()).date(1);
     let toDate = moment(fromDate).endOf('month');
     let daysAmount = toDate.diff(fromDate, 'days');
-    const unit = utils.getInstance('HotelUnit', unitAddress, this.context);
-    const fromDay = utils.formatDate(fromDate);
-    const range = _.range(fromDay, fromDay + daysAmount);
-    const defaultPrice = (await unit.methods.defaultPrice().call()) / 100;
-    const defaultLifPrice = utils.lifWei2Lif(await unit.methods.defaultLifPrice().call(), this.context);
-    let availability = {};
-
-    for (let day of range) {
-
-      const {
-        specialPrice,
-        specialLifPrice,
-        bookedBy
-      } = await this.manager.getReservation(unitAddress, day);
-
-      availability[day] = {
-        price: (specialPrice > 0) ? specialPrice : defaultPrice,
-        lifPrice: (specialLifPrice > 0) ? specialLifPrice : defaultLifPrice,
-        available: utils.isZeroAddress(bookedBy) ? true : false
-      }
-
-    }
-
-    return availability;
+    const availability = await this.unitAvailability(unitAddress, fromDate, daysAmount);
+    return _.keyBy(availability, 'day');
   }
 
   /**
