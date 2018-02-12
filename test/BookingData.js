@@ -1,10 +1,7 @@
-const User = require('../libs/User');
-const BookingData = require('../libs/BookingData');
-const help = require('./helpers/index');
-
 var chai = require('chai');
 chai.use(require('chai-string'));
 const assert = chai.assert;
+const sinon = require('sinon');
 
 const _ = require('lodash');
 const moment = require('moment');
@@ -12,61 +9,26 @@ const moment = require('moment');
 const Web3 = require('web3');
 const provider = new Web3.providers.HttpProvider('http://localhost:8545')
 const web3 = new Web3(provider);
-
 const Web3Proxy = require('../libs/web3proxy');
 
-const HotelManager = (process.env.TEST_BUILD)
-  ? require('../dist/node/HotelManager.js')
-  : require('../libs/HotelManager.js');
+const User = require('../libs/User');
+const BookingData = require('../libs/BookingData');
+const help = require('./helpers/index');
 
 describe('BookingData', function() {
-  let Manager;
-  let token;
-  let index;
-  let accounts;
-  let ownerAccount;
-  let augusto;
-  let jakub;
-  let hotelAddress;
-  let unitAddress;
+  const augusto = '0x8a33BA3429680B31383Fc46f4Ff22f7ac838511F';
+  const jakub = '0xA38c43e02a680d21c58e2CcdD7504E55F79889b8';
+  const hotelAddress = '0x96eA4BbF71FEa3c9411C1Cefc555E9d7189695fA';
+  const unitAddress = '0xdf3b7a20D5A08957AbE8d9366efcC38cfF00aea6';
   let web3proxy;
+  let bookingData;
 
-  const sync = true;
-
-  before(async function() {
+  beforeEach(async function() {
     web3proxy = Web3Proxy.getInstance(web3);
-    accounts = await web3.eth.getAccounts();
-    ({
-      index,
-      token,
-      wallet
-    } = await help.createWindingTreeEconomy(accounts, web3proxy));
-
-    ownerAccount = wallet["1"].address;
-    augusto = wallet["2"].address;
-    jakub = wallet["3"].address;
-  })
-
-  beforeEach( async function() {
-    ({
-      Manager,
-      hotelAddress,
-      unitAddress
-    } = await help.generateCompleteHotel(index.options.address, ownerAccount, 1.5, web3proxy));
-
-    userOptions = {
-      account: augusto,
-      gasMargin: 1.5,
-      tokenAddress: token.options.address,
-      web3proxy: web3proxy,
-    }
-
-    user = new User(userOptions);
-    data = new BookingData({web3proxy: web3proxy});
-    hotel = web3proxy.contracts.getContractInstance('Hotel', hotelAddress);
+    bookingData = new BookingData({web3proxy: web3proxy});
   });
 
-  describe('getCost | getLifCost', function(){
+  describe('getCost | getLifCost', function() {
 
     it('getCost: gets the total cost for a booking over a range of days', async () => {
       const fromDate = new Date('10/10/2020');
@@ -74,11 +36,15 @@ describe('BookingData', function() {
       const price = 100.00;
       const expectedCost = price * daysAmount;
 
-      await Manager.setDefaultPrice(hotelAddress, unitAddress, price, sync);
-      const actualCost = await data.getCost(unitAddress, fromDate, daysAmount);
+      sinon.stub(web3proxy.contracts, 'getHotelUnitInstance').returns({
+        methods: {
+          getCost: help.stubContractMethodResult(price * daysAmount * 100),
+        }
+      });
 
+      const actualCost = await bookingData.getCost(unitAddress, fromDate, daysAmount);
       assert.equal(expectedCost, actualCost);
-    })
+    });
 
     it('getLifCost gets the total cost for a booking over a range of days', async () => {
       const fromDate = new Date('10/10/2020');
@@ -86,15 +52,18 @@ describe('BookingData', function() {
       const price = 20;
       const expectedCost = price * daysAmount;
 
-      await Manager.setDefaultLifPrice(hotelAddress, unitAddress, price, sync);
-      const actualCost = await data.getLifCost(unitAddress, fromDate, daysAmount);
+      sinon.stub(web3proxy.contracts, 'getHotelUnitInstance').returns({
+        methods: {
+          getLifCost: help.stubContractMethodResult('' + price * daysAmount * web3proxy.utils.weiInLif),
+        }
+      });
 
+      const actualCost = await bookingData.getLifCost(unitAddress, fromDate, daysAmount);
       assert.equal(expectedCost, actualCost);
     })
   });
 
   describe('unit availability', () => {
-
     const fromDate = new Date('10/10/2020');
     const daysAmount = 5;
     const price = 100.00;
@@ -102,13 +71,30 @@ describe('BookingData', function() {
     const specialPrice = 200.00;
     const specialLifPrice = 2;
 
-    it('returns a unit\'s price and availability for a range of dates', async () => {
-      await Manager.setDefaultPrice(hotelAddress, unitAddress, price);
-      await Manager.setDefaultLifPrice(hotelAddress, unitAddress, lifPrice);
-      await Manager.setUnitSpecialPrice(hotelAddress, unitAddress, specialPrice, fromDate, 1);
-      await Manager.setUnitSpecialLifPrice(hotelAddress, unitAddress, specialLifPrice, fromDate, 1);
+    beforeEach(() => {
+      sinon.stub(web3proxy.contracts, 'getHotelUnitInstance').returns({
+        methods: {
+          defaultPrice: help.stubContractMethodResult(price  * 100),
+          defaultLifPrice: help.stubContractMethodResult('' + lifPrice * web3proxy.utils.weiInLif),
+          unitSpecialPrice: help.stubContractMethodResult(specialPrice * 100),
+          unitSpecialLifPrice: help.stubContractMethodResult('' + specialLifPrice * web3proxy.utils.weiInLif),
+          getReservation: help.stubContractMethodResult((args) => {
+            // behave accordingly to date
+            if (web3proxy.utils.formatDate(fromDate) == args.methodParams[0]) {
+              return [specialPrice * 100, '' + specialLifPrice * web3proxy.utils.weiInLif, jakub];
+            }
+            return [0, '0', jakub];
+          }),
+        }
+      });
+    });
 
-      let availability = await data.unitAvailability(unitAddress, fromDate, daysAmount);
+    afterEach(() => {
+      web3proxy.contracts.getHotelUnitInstance.restore();
+    });
+
+    it('returns a unit\'s price and availability for a range of dates', async () => {
+      let availability = await bookingData.unitAvailability(unitAddress, fromDate, daysAmount);
       for(let date of availability) {
         if (date.day == web3proxy.utils.formatDate(fromDate)) {
           assert.equal(date.price, specialPrice);
@@ -121,84 +107,110 @@ describe('BookingData', function() {
     })
 
     it('given a single moment date, returns units price and availability for that month', async() => {
-      await Manager.setDefaultPrice(hotelAddress, unitAddress, price);
-      await Manager.setDefaultLifPrice(hotelAddress, unitAddress, lifPrice);
-      await Manager.setUnitSpecialPrice(hotelAddress, unitAddress, specialPrice, fromDate, 1);
-      await Manager.setUnitSpecialLifPrice(hotelAddress, unitAddress, specialLifPrice, fromDate, 1);
-
       let fromDateMoment = moment(fromDate);
-      let availability = await data.unitMonthlyAvailability(unitAddress, fromDateMoment);
+      let availability = await bookingData.unitMonthlyAvailability(unitAddress, fromDateMoment);
       assert.equal(Object.keys(availability).length, 30);
       assert.equal(availability[web3proxy.utils.formatDate(fromDate)].price, specialPrice);
     })
-  })
+  });
 
   describe('getBookings', function() {
     const fromDate = new Date('10/10/2020');
     const daysAmount = 5;
     const price = 1;
     const guestData = 'guestData';
+    const hotelTwoAddress = '0x61a19c2cf1c761f4a4f5e1cfb129177d4afe893b';
+    const unitTwoAddress = '0x7080e2142dbecb98818c29b1e20bbdb3fd82575c';
+    let getPastEventsSpy1, getPastEventsSpy2, getHotelInstanceStub;
+
+    beforeEach(() => {
+      getPastEventsSpy1 = sinon.spy((type, options) => {
+        let data = [];
+        if (type == 'Book') {
+          data.push({
+            transactionHash: 'hash',
+            blockNumber: 12,
+            id: '123',
+            returnValues: {
+              from: augusto,
+              unit: unitAddress,
+              fromDay: web3proxy.utils.formatDate(fromDate),
+              daysAmount: daysAmount,
+            }
+          });
+        } else if (type == 'CallStarted') {
+          data.push({
+            returnValues: {
+              dataHash: 'startedfinishedhash',
+            },
+            transactionHash: 'startedhash',
+          });
+        } else if (type == 'CallFinish') {
+          data.push({
+            returnValues: {
+              dataHash: 'startedfinishedhash',
+            },
+            transactionHash: 'hash',
+          });
+        }
+        return data;
+      });
+      getPastEventsSpy2 = sinon.spy((type, options) => {
+        let data = [];
+        if (type == 'Book') {
+          data.push({
+            transactionHash: 'hash2',
+            blockNumber: 13,
+            id: '1234',
+            returnValues: {
+              from: jakub,
+              unit: unitTwoAddress,
+              fromDay: web3proxy.utils.formatDate(fromDate),
+              daysAmount: daysAmount,
+            }
+          });
+        }
+        return data;
+      });
+      getHotelInstanceStub = sinon.stub(web3proxy.contracts, 'getHotelInstance');
+      getHotelInstanceStub.withArgs(hotelAddress).returns({
+        getPastEvents: getPastEventsSpy1,
+        methods: {
+          waitConfirmation: help.stubContractMethodResult(false),
+        }
+      });
+      getHotelInstanceStub.withArgs(hotelTwoAddress).returns({
+        getPastEvents: getPastEventsSpy2,
+        methods: {
+          waitConfirmation: help.stubContractMethodResult(false),
+        }
+      });
+      sinon.stub(web3proxy.data, 'getGuestData').returns(guestData);
+    });
+
+    afterEach(() => {
+      getHotelInstanceStub.restore();
+      web3proxy.data.getGuestData.restore();
+    });
 
     it('gets a booking for a hotel', async() => {
-      const aa = await user.bookWithLif(
-        hotelAddress,
-        unitAddress,
-        fromDate,
-        daysAmount,
-        guestData
-      );
-      const bookings = await data.getBookings(hotelAddress);
-
+      const bookings = await bookingData.getBookings(hotelAddress);
       const booking = bookings[0];
-
       assert.equal(bookings.length, 1);
       assert.isString(booking.transactionHash);
       assert.isNumber(booking.blockNumber);
       assert.isString(booking.id);
+      assert.equal(web3proxy.data.getGuestData.firstCall.args[0], 'hash');
 
       assert.equal(booking.guestData, guestData);
-      assert.equal(booking.from, user.account);
+      assert.equal(booking.from, augusto);
       assert.equal(booking.fromDate.toString(), fromDate.toString());
       assert.equal(booking.unit, unitAddress);
       assert.equal(booking.daysAmount, daysAmount);
     });
 
     it('gets bookings for two hotels', async() => {
-      const hotelTwo = await help.generateCompleteHotel(
-        index.options.address,
-        ownerAccount,
-        1.5,
-        web3proxy
-      );
-      const hotelAddressTwo = hotelTwo.hotelAddress;
-      const unitAddressTwo = hotelTwo.unitAddress;
-
-      jakubOptions = {
-        account: jakub,
-        gasMargin: 1.5,
-        tokenAddress: token.options.address,
-        web3proxy: web3proxy
-      }
-
-      const jakubUser = new User(jakubOptions);
-
-      await user.bookWithLif(
-        hotelAddress,
-        unitAddress,
-        fromDate,
-        daysAmount,
-        guestData
-      );
-
-      await jakubUser.bookWithLif(
-        hotelAddressTwo,
-        unitAddressTwo,
-        fromDate,
-        daysAmount,
-        guestData
-      );
-
-      const bookings = await data.getBookings([hotelAddress, hotelAddressTwo]);
+      const bookings = await bookingData.getBookings([hotelAddress, hotelTwoAddress]);
       assert.equal(bookings.length, 2);
       const augustoBooking = bookings.filter(item => item.from === augusto)[0];
       const jakubBooking = bookings.filter(item => item.from === jakub)[0];
@@ -208,70 +220,43 @@ describe('BookingData', function() {
     });
 
     it('gets bookings for a hotel starting from a specific block number', async() => {
-      await user.bookWithLif(
-        hotelAddress,
-        unitAddress,
-        fromDate,
-        daysAmount,
-        guestData
-      );
-      let bookings = await data.getBookings(hotelAddress);
-      const firstBooking = bookings[0];
-
-      assert.equal(bookings.length, 1);
-
-      blockNumber = await web3.eth.getBlockNumber();
-      blockNumber += 1;
-
-      await user.bookWithLif(
-        hotelAddress,
-        unitAddress,
-        new Date('10/10/2021'),
-        daysAmount,
-        guestData
-      );
-
-      bookings = await data.getBookings(hotelAddress, blockNumber);
-      const secondBooking = bookings[0];
-
-      assert.isDefined(firstBooking);
-      assert.isDefined(secondBooking);
-      assert.notDeepEqual(firstBooking, secondBooking);
+      let bookings = await bookingData.getBookings(hotelAddress, '1234');
+      assert.equal(getPastEventsSpy1.callCount, 3);
+      assert.equal(getPastEventsSpy1.firstCall.args[0], 'Book');
+      assert.isDefined(getPastEventsSpy1.firstCall.args[1]);
+      assert.isDefined(getPastEventsSpy1.firstCall.args[1].fromBlock);
+      assert.equal(getPastEventsSpy1.firstCall.args[1].fromBlock, '1234');
     });
 
     it('returns an empty array if there are no bookings', async() => {
-      const bookings = await data.getBookings(hotelAddress);
+      web3proxy.contracts.getHotelInstance.restore();
+      sinon.stub(web3proxy.contracts, 'getHotelInstance').returns({
+        getPastEvents: () => [],
+      });
+      const bookings = await bookingData.getBookings(hotelAddress);
       assert.isArray(bookings);
       assert.equal(bookings.length, 0);
     });
 
     it('gets a booking for a hotel that requires confirmation', async() => {
-      await Manager.setRequireConfirmation(hotelAddress, true, sync);
-
-      await user.book(
-        hotelAddress,
-        unitAddress,
-        fromDate,
-        daysAmount,
-        guestData
-      );
-
-      let requests = await data.getBookingRequests(hotelAddress);
-      assert.equal(requests.length, 1);
-      const firstRequest = requests[0];
-      await Manager.confirmBooking(hotelAddress, firstRequest.dataHash, sync);
-
-      const bookings = await data.getBookings(hotelAddress);
-
+      getHotelInstanceStub.restore();
+      getHotelInstanceStub = sinon.stub(web3proxy.contracts, 'getHotelInstance');
+      getHotelInstanceStub.withArgs(hotelAddress).returns({
+        getPastEvents: getPastEventsSpy1,
+        methods: {
+          waitConfirmation: help.stubContractMethodResult(true),
+        }
+      });
+      const bookings = await bookingData.getBookings(hotelAddress);
       const booking = bookings[0];
-
+      assert.equal(web3proxy.data.getGuestData.firstCall.args[0], 'startedhash');
       assert.equal(bookings.length, 1);
       assert.isString(booking.transactionHash);
       assert.isNumber(booking.blockNumber);
       assert.isString(booking.id);
 
       assert.equal(booking.guestData, guestData);
-      assert.equal(booking.from, user.account);
+      assert.equal(booking.from, augusto);
       assert.equal(booking.fromDate.toString(), fromDate.toString());
       assert.equal(booking.unit, unitAddress);
       assert.equal(booking.daysAmount, daysAmount);
@@ -283,18 +268,100 @@ describe('BookingData', function() {
     const daysAmount = 5;
     const price = 1;
     const guestData = 'guestData';
+    const hotelTwoAddress = '0x61a19c2cf1c761f4a4f5e1cfb129177d4afe893b';
+    const unitTwoAddress = '0x7080e2142dbecb98818c29b1e20bbdb3fd82575c';
+    let getPastEventsSpy1, getPastEventsSpy2, getHotelInstanceStub;
 
-    beforeEach(async () => await Manager.setRequireConfirmation(hotelAddress, true, sync));
+    beforeEach(() => {
+      getPastEventsSpy1 = sinon.spy((type, options) => {
+        let data = [];
+        if (type == 'CallStarted') {
+          data.push({
+            returnValues: {
+              dataHash: 'startedfinishedhash',
+              from: augusto,
+            },
+            transactionHash: 'startedhash',
+            blockNumber: 13,
+            id: '1234',
+          });
+        } else if (type == 'CallFinish') {
+          data.push({
+            returnValues: {
+              dataHash: 'anotherstartedfinishedhash',
+              from: augusto,
+            },
+            transactionHash: 'finishedhash',
+            blockNumber: 13,
+            id: '1235',
+          });
+        }
+        return data;
+      });
+      getPastEventsSpy2 = sinon.spy((type, options) => {
+        let data = [];
+        if (type == 'CallStarted') {
+          data.push({
+            returnValues: {
+              dataHash: 'startedfinishedhash2',
+              from: jakub,
+            },
+            transactionHash: 'startedhash2',
+            blockNumber: 13,
+            id: '1236',
+          });
+        } else if (type == 'CallFinish') {
+          data.push({
+            returnValues: {
+              dataHash: 'anotherstartedfinishedhash2',
+              from: jakub,
+            },
+            transactionHash: 'finishedhash2',
+            blockNumber: 13,
+            id: '1237',
+          });
+        }
+        return data;
+      });
+      getHotelInstanceStub = sinon.stub(web3proxy.contracts, 'getHotelInstance');
+      getHotelInstanceStub.withArgs(hotelAddress).returns({
+        getPastEvents: getPastEventsSpy1,
+        methods: {
+          waitConfirmation: help.stubContractMethodResult(true),
+          getPublicCallData: help.stubContractMethodResult({
+            unitAddress: unitAddress,
+            fromDay: web3proxy.utils.formatDate(fromDate),
+            daysAmount: daysAmount,
+          }),
+        }
+      });
+      getHotelInstanceStub.withArgs(hotelTwoAddress).returns({
+        getPastEvents: getPastEventsSpy2,
+        methods: {
+          waitConfirmation: help.stubContractMethodResult(true),
+          getPublicCallData: help.stubContractMethodResult({
+            unitAddress: unitTwoAddress,
+            fromDay: web3proxy.utils.formatDate(fromDate),
+            daysAmount: daysAmount,
+          }),
+        }
+      });
+      sinon.stub(web3proxy.data, 'getGuestData').returns(guestData);
+      sinon.stub(web3proxy.contracts.abiDecoder, 'decodeMethod').callsFake((arg0) => {
+        return {
+          params: _.map(arg0, (v, k) => {return {name: k, value: v}}),
+        };
+      });
+    });
+
+    afterEach(() => {
+      getHotelInstanceStub.restore();
+      web3proxy.data.getGuestData.restore();
+      web3proxy.contracts.abiDecoder.decodeMethod.restore();
+    });
 
     it('gets pending booking requests for a hotel', async() => {
-      await user.book(
-        hotelAddress,
-        unitAddress,
-        fromDate,
-        daysAmount,
-        guestData
-      );
-      const requests = await data.getBookingRequests(hotelAddress);
+      const requests = await bookingData.getBookingRequests(hotelAddress);
       const request = requests[0];
 
       assert.equal(requests.length, 1);
@@ -304,7 +371,7 @@ describe('BookingData', function() {
       assert.isString(request.dataHash);
 
       assert.equal(request.guestData, guestData);
-      assert.equal(request.from, user.account);
+      assert.equal(request.from, augusto);
 
       assert.equalIgnoreCase(request.hotel, hotelAddress);
       assert.equalIgnoreCase(request.unit, unitAddress);
@@ -313,45 +380,7 @@ describe('BookingData', function() {
     });
 
     it('gets booking requests for two hotels', async() => {
-
-      const hotelTwo = await help.generateCompleteHotel(
-        index.options.address,
-        ownerAccount,
-        1.5,
-        web3proxy
-      );
-      const managerTwo = hotelTwo.Manager;
-      const hotelAddressTwo = hotelTwo.hotelAddress;
-      const unitAddressTwo = hotelTwo.unitAddress;
-
-      await managerTwo.setRequireConfirmation(hotelAddressTwo, true, sync);
-
-      jakubOptions = {
-        account: jakub,
-        gasMargin: 1.5,
-        tokenAddress: token.options.address,
-        web3proxy: web3proxy
-      }
-
-      const jakubUser = new User(jakubOptions);
-
-      await user.book(
-        hotelAddress,
-        unitAddress,
-        fromDate,
-        daysAmount,
-        guestData
-      );
-
-      await jakubUser.book(
-        hotelAddressTwo,
-        unitAddressTwo,
-        fromDate,
-        daysAmount,
-        guestData
-      );
-
-      const requests = await data.getBookingRequests([hotelAddress, hotelAddressTwo]);
+      const requests = await bookingData.getBookingRequests([hotelAddress, hotelTwoAddress]);
       assert.equal(requests.length, 2);
       const augustoBooking = requests.filter(item => item.from === augusto)[0];
       const jakubBooking = requests.filter(item => item.from === jakub)[0];
@@ -364,87 +393,99 @@ describe('BookingData', function() {
       assert.equal(augustoBooking.fromDate.toString(), fromDate.toString());
       assert.equal(augustoBooking.daysAmount, daysAmount);
 
-      assert.equalIgnoreCase(jakubBooking.hotel, hotelAddressTwo);
-      assert.equalIgnoreCase(jakubBooking.unit, unitAddressTwo);
+      assert.equalIgnoreCase(jakubBooking.hotel, hotelTwoAddress);
+      assert.equalIgnoreCase(jakubBooking.unit, unitTwoAddress);
       assert.equal(jakubBooking.fromDate.toString(), fromDate.toString());
       assert.equal(jakubBooking.daysAmount, daysAmount);
     });
 
     it('gets booking requests for a hotel starting from a specific block number', async() => {
-      await user.bookWithLif(
-        hotelAddress,
-        unitAddress,
-        fromDate,
-        daysAmount,
-        guestData
-      );
-      let requests = await data.getBookingRequests(hotelAddress);
-      const firstRequest = requests[0];
-
-      assert.equal(requests.length, 1);
-
-      blockNumber = await web3.eth.getBlockNumber();
-      blockNumber += 1;
-
-      await user.bookWithLif(
-        hotelAddress,
-        unitAddress,
-        new Date('10/10/2021'),
-        daysAmount,
-        guestData
-      );
-
-      requests = await data.getBookingRequests(hotelAddress, blockNumber);
-      const secondRequest = requests[0];
-
-      assert.isDefined(firstRequest);
-      assert.isDefined(secondRequest);
-      assert.notDeepEqual(firstRequest, secondRequest);
+      await bookingData.getBookingRequests(hotelAddress, 123456);
+      assert.equal(getPastEventsSpy1.callCount, 2);
+      assert.equal(getPastEventsSpy1.firstCall.args[0], 'CallStarted');
+      assert.isDefined(getPastEventsSpy1.firstCall.args[1]);
+      assert.equal(getPastEventsSpy1.firstCall.args[1].fromBlock, 123456);
     });
 
     it('filters out completed booking requests', async() => {
-      await user.bookWithLif(
-        hotelAddress,
-        unitAddress,
-        fromDate,
-        daysAmount,
-        guestData
-      );
-      let requests = await data.getBookingRequests(hotelAddress);
+      getHotelInstanceStub.restore();
+      getHotelInstanceStub = sinon.stub(web3proxy.contracts, 'getHotelInstance');
+      getHotelInstanceStub.withArgs(hotelAddress).returns({
+        getPastEvents: (type, options) => {
+          let data = [];
+          if (type == 'CallStarted') {
+            data.push({
+              returnValues: {
+                dataHash: 'startedfinishedhash',
+                from: augusto,
+              },
+              transactionHash: 'startedhash',
+              blockNumber: 13,
+              id: '1234',
+            });
+            data.push({
+              returnValues: {
+                dataHash: 'startedfinishedhash2',
+                from: augusto,
+              },
+              transactionHash: 'startedhash2',
+              blockNumber: 13,
+              id: '1234',
+            });
+          } else if (type == 'CallFinish') {
+            data.push({
+              returnValues: {
+                dataHash: 'anotherstartedfinishedhash',
+                from: augusto,
+              },
+              transactionHash: 'finishedhash',
+              blockNumber: 13,
+              id: '1235',
+            });
+            data.push({
+              returnValues: {
+                dataHash: 'startedfinishedhash',
+                from: augusto,
+              },
+              transactionHash: 'finishedhash',
+              blockNumber: 13,
+              id: '1235',
+            });
+          }
+          return data;
+        },
+        methods: {
+          waitConfirmation: help.stubContractMethodResult(true),
+          getPublicCallData: help.stubContractMethodResult({
+            unitAddress: unitAddress,
+            fromDay: web3proxy.utils.formatDate(fromDate),
+            daysAmount: daysAmount,
+          }),
+        }
+      });
+      requests = await bookingData.getBookingRequests(hotelAddress);
       assert.equal(requests.length, 1);
-      const firstRequest = requests[0];
-
-      await Manager.confirmBooking(hotelAddress, firstRequest.dataHash, sync);
-
-      await user.bookWithLif(
-        hotelAddress,
-        unitAddress,
-        new Date('10/10/2021'),
-        daysAmount,
-        guestData
-      );
-
-      requests = await data.getBookingRequests(hotelAddress);
-      assert.equal(requests.length, 1);
-      const secondRequest = requests[0];
-
-      assert.isDefined(firstRequest);
-      assert.isDefined(secondRequest);
-      assert.notDeepEqual(firstRequest, secondRequest);
     });
 
     it('returns an empty array if there are no bookings', async() => {
-      const requests = await data.getBookingRequests(hotelAddress);
+      getHotelInstanceStub.restore();
+      getHotelInstanceStub = sinon.stub(web3proxy.contracts, 'getHotelInstance');
+      getHotelInstanceStub.withArgs(hotelAddress).returns({
+        getPastEvents: () => [],
+      });
+      const requests = await bookingData.getBookingRequests(hotelAddress);
       assert.isArray(requests);
       assert.equal(requests.length, 0);
     });
   })
 
-  describe('getBookingTransactions', () => {
+// TODO move this out of this test suite, it has no relation to BookingData
+  xdescribe('getBookingTransactions', () => {
 
     const daysAmount = 5;
     const price = 1;
     const guestData = 'guestData';
+    const indexAddress = '0x8F4F27056Bc59a7567a6dFc934bC4a46738c9fc2';
 
     it('returns a single booking made by an address', async() => {
       const fromDate = new Date('2020-10-10T00:00:00');
@@ -455,12 +496,12 @@ describe('BookingData', function() {
         daysAmount,
         guestData
       );
-      const txs = await web3proxy.data.getBookingTransactions(userOptions.account, index.options.address, 0, web3, 'test');
+      const txs = await web3proxy.data.getBookingTransactions(userOptions.account, indexAddress, 0, 'test');
 
       bookTx = txs.find(tx => tx.hash === bookTx.transactionHash);
-      assert.equal(web3.utils.toChecksumAddress(bookTx.hotel), hotelAddress);
-      assert.equal(web3.utils.toChecksumAddress(bookTx.unit), unitAddress);
-      assert.equal(bookTx.unitType, utils.bytes32ToString(await utils.getInstance('HotelUnit', unitAddress, {web3: web3}).methods.unitType().call()));
+      assert.equal(web3proxy.web3.utils.toChecksumAddress(bookTx.hotel), hotelAddress);
+      assert.equal(web3proxy.web3.utils.toChecksumAddress(bookTx.unit), unitAddress);
+      assert.equal(bookTx.unitType, web3proxy.utils.bytes32ToString(await web3proxy.contracts.getContractInstance('HotelUnit', unitAddress).methods.unitType().call()));
       assert.equal(bookTx.fromDate.toDateString(), fromDate.toDateString());
       let toDate = fromDate;
       toDate.setDate(fromDate.getDate() + daysAmount);
@@ -478,11 +519,11 @@ describe('BookingData', function() {
         daysAmount,
         guestData
       );
-      const txs = await web3proxy.data.getBookingTransactions(userOptions.account, index.options.address, 0, web3, 'test');
+      const txs = await web3proxy.data.getBookingTransactions(userOptions.account, indexAddress, 0, 'test');
       bookTx = txs.find(tx => tx.hash === bookTx.transactionHash);
-      assert.equal(web3.utils.toChecksumAddress(bookTx.hotel), hotelAddress);
-      assert.equal(web3.utils.toChecksumAddress(bookTx.unit), unitAddress);
-      assert.equal(bookTx.unitType, utils.bytes32ToString(await utils.getInstance('HotelUnit', unitAddress, {web3: web3}).methods.unitType().call()));
+      assert.equal(web3proxy.web3.utils.toChecksumAddress(bookTx.hotel), hotelAddress);
+      assert.equal(web3proxy.web3.utils.toChecksumAddress(bookTx.unit), unitAddress);
+      assert.equal(bookTx.unitType, web3proxy.utils.bytes32ToString(await web3proxy.contracts.getContractInstance('HotelUnit', unitAddress).methods.unitType().call()));
       assert.equal(bookTx.fromDate.toDateString(), fromDate.toDateString());
       let toDate = fromDate;
       toDate.setDate(fromDate.getDate() + daysAmount);

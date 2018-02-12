@@ -31,11 +31,11 @@ class User {
   }
 
   getLifTokenInstance(tokenAddress) {
-    return this.web3proxy.contracts.getContractInstance('LifToken', tokenAddress);
+    return this.web3proxy.contracts.getTokenInstance(tokenAddress);
   }
 
   getHotelInstance(hotelAddress) {
-    return this.web3proxy.contracts.getContractInstance('Hotel', hotelAddress);
+    return this.web3proxy.contracts.getHotelInstance(hotelAddress);
   }
 
   /**
@@ -80,17 +80,18 @@ class User {
    */
   async bookWithLif(hotelAddress, unitAddress, fromDate, daysAmount, guestData, callbacks) {
     const fromDay = this.web3proxy.utils.formatDate(fromDate);
-
     const cost = await this.bookings.getLifCost(unitAddress, fromDay, daysAmount);
     const enough = await this.balanceCheck(cost);
     const available = await this.bookings.unitIsAvailable(unitAddress, fromDate, daysAmount);
     const guestDataHex = this.web3proxy.web3.utils.toHex(guestData);
 
-    if (!enough)
+    if (! enough) {
       return Promise.reject(errors.insufficientBalance);
+    }
 
-    if (!available)
+    if (! available) {
       return Promise.reject(errors.notAvailable);
+    }
 
     const bookData = await this._compileLifBooking(
       hotelAddress,
@@ -99,12 +100,10 @@ class User {
       daysAmount,
       guestDataHex
     );
-
     const weiCost = this.web3proxy.utils.lif2LifWei(cost);
     const approvalData = await this.token.methods
       .approveData(hotelAddress, weiCost, bookData)
       .encodeABI();
-
     const options = {
       from: this.account,
       to: this.token.options.address,
@@ -153,14 +152,12 @@ class User {
 
     const estimate = await this.web3proxy.web3.eth.estimateGas(options);
     options.gas = await this.web3proxy.utils.addGasMargin(estimate, this.gasMargin);
-
     if(callbacks) {
       return this.web3proxy.web3.eth.sendTransaction(options)
         .once('transactionHash', callbacks.transactionHash)
         .once('receipt', callbacks.receipt)
         .on('error', callbacks.error);
     }
-
     return this.web3proxy.web3.eth.sendTransaction(options);
   }
 
@@ -170,7 +167,7 @@ class User {
    * @param  {Number}  cost    Lif 'ether'
    * @return {Boolean}
    */
-  async balanceCheck(cost){
+  async balanceCheck(cost) {
     let weiCost = this.web3proxy.utils.lif2LifWei(cost);
     weiCost = new this.web3proxy.web3.utils.BN(weiCost);
 

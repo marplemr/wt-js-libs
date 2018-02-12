@@ -1,56 +1,41 @@
-const User = require('../libs/User');
-const BookingData = require('../libs/BookingData');
-
-const help = require('./helpers/index');
-
 const assert = require('chai').assert;
+const sinon = require('sinon');
 const _ = require('lodash');
 
 const Web3 = require('web3');
 const provider = new Web3.providers.HttpProvider('http://localhost:8545')
 const web3 = new Web3(provider);
-
 const Web3Proxy = require('../libs/web3proxy');
 
-describe('User', function(){
-  let Manager;
-  let token;
-  let index;
-  let accounts;
-  let ownerAccount;
-  let augusto;
-  let jakub;
-  let hotelAddress;
-  let unitAddress;
+const User = require('../libs/User');
+const help = require('./helpers/index');
+
+describe('User', function() {
+  const augusto = '0x8a33BA3429680B31383Fc46f4Ff22f7ac838511F';
+  const hotelAddress = '0x96eA4BbF71FEa3c9411C1Cefc555E9d7189695fA';
+  const tokenAddress = '0xe91036d59eAd8b654eE2F5b354245f6D7eD2487e';
+  const unitAddress = '0xdf3b7a20D5A08957AbE8d9366efcC38cfF00aea6';
+  const gasMargin = 1.5;
   let web3proxy;
+  let user;
 
-  const sync = true;
-
-  before(async function(){
+  beforeEach( async function() {
     web3proxy = Web3Proxy.getInstance(web3);
-    accounts = await web3proxy.web3.eth.getAccounts();
-    ({
-      index,
-      token,
-      wallet
-    } = await help.createWindingTreeEconomy(accounts, web3proxy));
+  });
 
-    ownerAccount = wallet["1"].address;
-    augusto = wallet["2"].address;
-    jakub = wallet["3"].address;
-  })
+  describe('balanceCheck', function() {
+    beforeEach(() => {
+      sinon.stub(web3proxy.contracts, 'getTokenInstance').returns({
+        methods: {
+          balanceOf: help.stubContractMethodResult('' + web3proxy.utils.weiInLif * 500)
+        }
+      });
+      user = new User({web3proxy: web3proxy, account: augusto, tokenAddress: tokenAddress, gasMargin: gasMargin});
+    });
 
-  describe('balanceCheck', function(){
-    let user;
-
-    beforeEach(async () => {
-      userOptions = {
-        account: augusto,
-        tokenAddress: token.options.address,
-        web3proxy: web3proxy,
-      }
-      user = new User(userOptions);
-    })
+    afterEach(() => {
+      web3proxy.contracts.getTokenInstance.restore();
+    });
 
     it('should return true if balance is greater than cost', async () => {
       const cost = 50;
@@ -63,36 +48,36 @@ describe('User', function(){
       const canPay = await user.balanceCheck(cost);
       assert.isFalse(canPay);
     })
-  })
+  });
 
   describe('book', function() {
     const fromDate = new Date('10/10/2020');
     const daysAmount = 5;
-    let guestData;
+    const estimatedGas = 38;
+    const guestData = 'guestData';
+    let sendTransactionStub;
     
-
-    beforeEach(async function() {
-      guestData = web3proxy.web3.utils.toHex('guestData');
-      ({
-        Manager,
-        hotelAddress,
-        unitAddress
-      } = await help.generateCompleteHotel(index.options.address, ownerAccount, 1.5, web3proxy));
-
-      userOptions = {
-        account: augusto,
-        gasMargin: 1.5,
-        web3proxy: web3proxy,
-      }
-
-      user = new User(userOptions);
-      data = new BookingData({web3proxy: web3proxy});
-      hotel = web3proxy.contracts.getContractInstance('Hotel', hotelAddress);
-
-      await Manager.setRequireConfirmation(hotelAddress, true, sync);
+    beforeEach(() => {
+      sinon.stub(web3proxy.contracts, 'getHotelInstance').returns({
+        methods: {
+          book: help.stubContractMethodResult({}, 'book-encodedABI'),
+          beginCall: help.stubContractMethodResult({}, 'beginCall-encodedABI'),
+        }
+      });
+      sendTransactionStub = sinon.stub(web3proxy.web3.eth, 'sendTransaction').returns({});
+      sinon.stub(web3proxy.web3.eth, 'estimateGas').returns(estimatedGas);
+      sinon.stub(web3proxy.web3.eth.net, 'getId').returns('not-a-test');
+      user = new User({web3proxy: web3proxy, account: augusto, tokenAddress: tokenAddress, gasMargin: gasMargin});
     });
 
-    it('should initiate a booking: CallStarted event fired / Book event not fired', async () => {
+    afterEach(() => {
+      web3proxy.contracts.getHotelInstance.restore();
+      sendTransactionStub.restore();
+      web3proxy.web3.eth.estimateGas.restore();
+      web3proxy.web3.eth.net.getId.restore();
+    });
+
+    it('should create a blockchain transaction', async () => {
       await user.book(
         hotelAddress,
         unitAddress,
@@ -100,17 +85,13 @@ describe('User', function(){
         daysAmount,
         guestData
       );
-
-      const events = await hotel.getPastEvents('allEvents', {fromBlock: 0});
-      const CallStarted = events[0];
-
-      assert.equal(events.length, 1);
-      assert.equal(CallStarted.event, 'CallStarted');
-      assert.equal(CallStarted.returnValues.from, augusto);
-      assert.isString(CallStarted.returnValues.dataHash);
+      assert.equal(sendTransactionStub.callCount, 1);
+      assert.equalIgnoreCase(sendTransactionStub.firstCall.args[0].from, augusto);
+      assert.equalIgnoreCase(sendTransactionStub.firstCall.args[0].to, hotelAddress);
+      assert.equal(sendTransactionStub.firstCall.args[0].data, 'beginCall-encodedABI');
     });
 
-    it('should fire Book & CallFinished events when manager confirms', async() => {
+    it('should apply gas margin in a non-test network', async () => {
       await user.book(
         hotelAddress,
         unitAddress,
@@ -118,76 +99,53 @@ describe('User', function(){
         daysAmount,
         guestData
       );
-
-      const callStartedEvents = await hotel.getPastEvents('CallStarted');
-      const dataHash = callStartedEvents[0].returnValues.dataHash;
-
-      await Manager.confirmBooking(hotelAddress, dataHash, sync);
-
-      const events = await hotel.getPastEvents('allEvents', {fromBlock: 0});
-      const bookEvents = events.filter(item => item.event === 'Book');
-      const callFinishEvents = events.filter(item => item.event === 'CallFinish');
-
-      assert.equal(bookEvents.length, 1);
-      assert.equal(callFinishEvents.length, 1);
+      assert.equal(sendTransactionStub.callCount, 1);
+      assert.equal(sendTransactionStub.firstCall.args[0].gas, gasMargin * estimatedGas);
     });
-
-    it('should make the reservation when manager confirms', async() => {
-      // Pre booking request
-      let isAvailable = await data.unitIsAvailable(unitAddress, fromDate, daysAmount);
-      assert.isTrue(isAvailable);
-
-      await user.book(
-        hotelAddress,
-        unitAddress,
-        fromDate,
-        daysAmount,
-        guestData
-      );
-
-      // Post booking request / pre-confirmation
-      isAvailable = await data.unitIsAvailable(unitAddress, fromDate, daysAmount);
-      assert.isTrue(isAvailable);
-
-      const callStartedEvents = await hotel.getPastEvents('CallStarted');
-      const dataHash = callStartedEvents[0].returnValues.dataHash;
-      await Manager.confirmBooking(hotelAddress, dataHash, sync);
-
-      // Post confirmation
-      isAvailable = await data.unitIsAvailable(unitAddress, fromDate, daysAmount);
-      assert.isFalse(isAvailable);
-    })
   });
 
-  describe('bookWithLif: success cases', function () {
+  describe('bookWithLif', function () {
     const fromDate = new Date('10/10/2020');
     const daysAmount = 5;
     const price = 1;
-    let guestData;
+    const estimatedGas = 38;
+    const guestData = 'guestData';
 
-    beforeEach(async function() {
-      guestData = web3proxy.web3.utils.toHex('guestData');
-      ({
-        Manager,
-        hotelAddress,
-        unitAddress
-      } = await help.generateCompleteHotel(index.options.address, ownerAccount, 1.5, web3proxy));
-
-      userOptions = {
-        account: augusto,
-        gasMargin: 1.5,
-        tokenAddress: token.options.address,
-        web3proxy: web3proxy
-      }
-
-      user = new User(userOptions);
-      data = new BookingData({web3proxy: web3proxy});
-      hotel = web3proxy.contracts.getContractInstance('Hotel', hotelAddress);
-
-      await Manager.setDefaultLifPrice(hotelAddress, unitAddress, price, sync);
+    beforeEach(() => {
+      sinon.stub(web3proxy.contracts, 'getHotelInstance').returns({
+        methods: {
+          bookWithLif: help.stubContractMethodResult({}, 'bookWithLif-encodedABI'),
+          beginCall: help.stubContractMethodResult({}, 'beginCall-encodedABI'),
+        }
+      });
+      sendTransactionStub = sinon.stub(web3proxy.web3.eth, 'sendTransaction').returns({});
+      sinon.stub(web3proxy.web3.eth, 'estimateGas').returns(estimatedGas);
+      sinon.stub(web3proxy.web3.eth.net, 'getId').returns('not-a-test');
+      sinon.stub(web3proxy.contracts, 'getTokenInstance').returns({
+        options: {
+          address: tokenAddress,
+        },
+        methods: {
+          balanceOf: help.stubContractMethodResult('' + web3proxy.utils.weiInLif * 500),
+          approveData: help.stubContractMethodResult(true, 'approvalData-encodedABI'),
+        }
+      });
+      user = new User({web3proxy: web3proxy, account: augusto, tokenAddress: tokenAddress, gasMargin: gasMargin});
+      sinon.stub(user.bookings, 'getLifCost').returns(120);
+      sinon.stub(user.bookings, 'unitIsAvailable').returns(true);
     });
 
-    it('should make a booking: event fired', async () => {
+    afterEach(() => {
+      web3proxy.contracts.getHotelInstance.restore();
+      web3proxy.contracts.getTokenInstance.restore();
+      sendTransactionStub.restore();
+      web3proxy.web3.eth.estimateGas.restore();
+      web3proxy.web3.eth.net.getId.restore();
+      user.bookings.getLifCost.restore();
+      user.bookings.unitIsAvailable.restore();
+    });
+
+    it('should create a blockchain transaction', async () => {
       await user.bookWithLif(
         hotelAddress,
         unitAddress,
@@ -196,18 +154,13 @@ describe('User', function(){
         guestData
       );
 
-      const events = await hotel.getPastEvents('Book');
-      const book = events[0].returnValues;
-      assert.equal(book.from, augusto);
-      assert.equal(book.unit, unitAddress);
-      assert.equal(book.fromDay, web3proxy.utils.formatDate(fromDate));
-      assert.equal(book.daysAmount, daysAmount);
+      assert.equal(sendTransactionStub.callCount, 1);
+      assert.equalIgnoreCase(sendTransactionStub.firstCall.args[0].from, augusto);
+      assert.equalIgnoreCase(sendTransactionStub.firstCall.args[0].to, tokenAddress);
+      assert.equal(sendTransactionStub.firstCall.args[0].data, 'approvalData-encodedABI');
     });
 
-    it('should make a booking: days reserved', async () => {
-      let isAvailable = await data.unitIsAvailable(unitAddress, fromDate, daysAmount);
-      assert.isTrue(isAvailable);
-
+    it('should apply gas margin to a non-test network', async () => {
       await user.bookWithLif(
         hotelAddress,
         unitAddress,
@@ -215,39 +168,8 @@ describe('User', function(){
         daysAmount,
         guestData
       );
-
-      isAvailable = await data.unitIsAvailable(unitAddress, fromDate, daysAmount);
-      assert.isFalse(isAvailable);
-    });
-
-    it('should make a booking: tokens transferred', async () => {
-      let augustoInitialBalance = await token.methods.balanceOf(augusto).call();
-      let hotelInitialBalance = await token.methods.balanceOf(hotelAddress).call();
-      let lifWeiCost = web3proxy.utils.lif2LifWei(price * daysAmount);
-
-      augustoInitialBalance =  new web3proxy.web3.utils.BN(augustoInitialBalance);
-      hotelInitialBalance = new web3proxy.web3.utils.BN(hotelInitialBalance);
-      lifWeiCost = new web3proxy.web3.utils.BN(lifWeiCost);
-
-      await user.bookWithLif(
-        hotelAddress,
-        unitAddress,
-        fromDate,
-        daysAmount,
-        guestData
-      );
-
-      let augustoFinalBalance = await token.methods.balanceOf(augusto).call();
-      let hotelFinalBalance = await token.methods.balanceOf(hotelAddress).call();
-
-      augustoFinalBalance = new web3proxy.web3.utils.BN(augustoFinalBalance);
-      hotelFinalBalance = new web3proxy.web3.utils.BN(hotelFinalBalance);
-
-      const augustoExpectedBalance = augustoInitialBalance.sub(lifWeiCost);
-      const hotelExpectedBalance = hotelInitialBalance.add(lifWeiCost);
-
-      assert(augustoExpectedBalance.eq(augustoFinalBalance));
-      assert(hotelExpectedBalance.eq(hotelFinalBalance));
+      assert.equal(sendTransactionStub.callCount, 1);
+      assert.equal(sendTransactionStub.firstCall.args[0].gas, gasMargin * estimatedGas);
     });
 
     it('should reject if the Unit has already been booked for the range of dates', async () => {
@@ -273,50 +195,36 @@ describe('User', function(){
       }
     });
 
-    it('should reject if the Units active status is false', async () => {
-      const firstDate = new Date('10/10/2020');
-      const secondDate = new Date('10/10/2021'); // Different year
-
-      const args = [
-        hotelAddress,
-        unitAddress,
-        firstDate,
-        daysAmount,
-        guestData
-      ];
-
-      await user.bookWithLif(...args)
-      await Manager.setUnitActive(hotelAddress, unitAddress, false, sync);
-      args[2] = secondDate;
-
-      try {
-        await user.bookWithLif(...args);
-        assert(false);
-      } catch (e) {
-        assert.isDefined(e);
-      }
-    });
-
-    it('should reject if the users balance is insufficient', async () => {
-      // Augusto's total balance is set to 500 in the before();
-      // Total price for this booking will be 2500;
-      const newPrice = 500;
-      await Manager.setDefaultLifPrice(hotelAddress, unitAddress, newPrice, sync);
-
-      const args = [
+    it('should reject if the Unit is not active', async () => {
+      user.bookings.unitIsAvailable.restore();
+      sinon.stub(user.bookings, 'unitIsAvailable').returns(false);
+      return user.bookWithLif(
         hotelAddress,
         unitAddress,
         fromDate,
         daysAmount,
         guestData
-      ];
+      ).then(() => {
+        assert.equal(true, false);
+      }).catch((e) => {
+        assert.equal(e, 'Unit is not available for the requested dates');
+      });
+    });
 
-      try {
-        await user.bookWithLif(...args);
-        assert(false);
-      } catch (e) {
-        assert.isDefined(e);
-      }
+    it('should reject if the users balance is insufficient', async () => {
+      user.bookings.getLifCost.restore();
+      sinon.stub(user.bookings, 'getLifCost').returns(501);
+      return user.bookWithLif(
+        hotelAddress,
+        unitAddress,
+        fromDate,
+        daysAmount,
+        guestData
+      ).then(() => {
+        assert.equal(true, false);
+      }).catch((e) => {
+        assert.equal(e, 'Token balance was too low to attempt this booking.');
+      })
     });
   });
 });

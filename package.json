@@ -7,7 +7,7 @@
     "test": "test"
   },
   "scripts": {
-    "test": "./scripts/test.sh",
+    "test": "mocha --timeout 20000",
     "test-build": "TEST_BUILD=true ./scripts/test.sh",
     "postinstall": "scripts/install.sh",
     "recompile": "rm -rf build && ./node_modules/.bin/truffle migrate --reset",
@@ -51,7 +51,9 @@
     "esdoc-node": "^1.0.2",
     "esdoc-standard-plugin": "^1.0.0",
     "ethereumjs-testrpc": "3.9.2",
+    "sinon": "^4.3.0",
     "truffle": "4.0.0",
+    "web3-core-promievent": "^1.0.0-beta.30",
     "webpack": "^2.4.1",
     "webpack-bundle-size-analyzer": "^2.7.0"
   }

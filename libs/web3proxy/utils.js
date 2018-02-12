@@ -8,6 +8,7 @@ const defaultGas = 4700000;
 const zeroBytes8 = '0x0000000000000000';
 const zeroAddress = '0x0000000000000000000000000000000000000000';
 const zeroBytes32 = '0x0000000000000000000000000000000000000000000000000000000000000000';
+const weiInLif = 1000000000000000000;
 
 // Returns the date from a single integer in format DD/MM/YYYY
 function parseDate(date) {
@@ -135,6 +136,7 @@ async function addGasMargin(web3, gas, gasMargin) {
 
 module.exports = function (web3) {
   return {
+    weiInLif: weiInLif,
     parseDate: parseDate,
     formatDate: formatDate,
     zeroAddress: zeroAddress,
@@ -157,5 +159,6 @@ module.exports = function (web3) {
     locationFromUint: locationFromUint,
     addGasMargin: _.partial(addGasMargin, web3),
     jsArrayFromSolidityArray: jsArrayFromSolidityArray,
+    splitCamelCaseToString: splitCamelCaseToString,
   }
 }

@@ -21,11 +21,11 @@ class BookingData {
   }
 
   getHotelUnitInstance(unitAddress) {
-    return this.web3proxy.contracts.getContractInstance('HotelUnit', unitAddress);
+    return this.web3proxy.contracts.getHotelUnitInstance(unitAddress);
   }
 
   getHotelInstance(hotelAddress) {
-    return this.web3proxy.contracts.getContractInstance('Hotel', hotelAddress);
+    return this.web3proxy.contracts.getHotelInstance(hotelAddress);
   }
 
   addressToChecksum(address) {
@@ -44,7 +44,7 @@ class BookingData {
    */
   async getCost(unitAddress, fromDate, daysAmount){
     const fromDay = this.web3proxy.utils.formatDate(fromDate);
-    const unit = this.getHotelUnitInstance(unitAddress);
+    const unit = this.web3proxy.contracts.getHotelUnitInstance(unitAddress);
     const cost = await unit.methods.getCost(fromDay, daysAmount).call();
     return this.web3proxy.utils.bnToPrice(cost);
   }
@@ -84,8 +84,8 @@ class BookingData {
 
     for (let day of range) {
       const reservationResult = await unit.methods.getReservation(day).call();
-      const specialPrice = utils.bnToPrice(reservationResult[0]);
-      const specialLifPrice = utils.lifWei2Lif(reservationResult[1], this.context);
+      const specialPrice = this.web3proxy.utils.bnToPrice(reservationResult[0]);
+      const specialLifPrice = this.web3proxy.utils.lifWei2Lif(reservationResult[1], this.context);
       const bookedBy = reservationResult[2];
 
       availability.push({
@@ -95,7 +95,6 @@ class BookingData {
         available: this.web3proxy.utils.isZeroAddress(bookedBy) ? true : false
       });
     }
-
     return availability;
   }
 
@@ -193,10 +192,10 @@ class BookingData {
 
         //If guest data can't be retreived, it means the booking required a
         //confirmation, so the guestData can be found in the CallStarted tx
-        try {
-          guestData = await this.web3proxy.data.getGuestData(event.transactionHash)
-        } catch(e) {
-          guestData = await this.web3proxy.data.getGuestData(startedMappedByFinished[event.transactionHash])
+        if (await hotel.methods.waitConfirmation().call() == true) {
+          guestData = await this.web3proxy.data.getGuestData(startedMappedByFinished[event.transactionHash]);
+        } else {
+          guestData = await this.web3proxy.data.getGuestData(event.transactionHash);
         }
 
         bookings.push({
@@ -250,7 +249,7 @@ class BookingData {
     let finishEvents;
     let unfinished;
 
-    for (let address of hotelsToQuery){
+    for (let address of hotelsToQuery) {
       const hotel = this.getHotelInstance(address);
 
       startedEvents = await hotel.getPastEvents('CallStarted', {
@@ -269,7 +268,7 @@ class BookingData {
         return found === -1;
       })
 
-      for(let event of unfinished){
+      for(let event of unfinished) {
         const guestData = await this.web3proxy.data.getGuestData(event.transactionHash);
 
         //get calldata and decode it for booking data
