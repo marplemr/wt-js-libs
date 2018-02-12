@@ -780,6 +780,34 @@ class HotelManager {
 
     return utils.execute(hotelData, index, this.context, callbacks);
   }
+
+  /**
+   * Gets transaction .
+   * @param  {String}  txHash  Transaction hash.
+   * @return {Promise}         Transaction object
+   * @example
+   *  {
+   *    "status": "Mined",
+   *    "method":  {
+   *      "name": 'Register Hotel',
+   *      "params": [
+   *        {
+   *        "name": 'name',
+   *        "value": 'WTHotel',
+   *        "type": 'string'
+   *         },
+   *        {
+   *        "name": 'description',
+   *        "value": 'Winding Tree Hotel',
+   *        "type": 'string'
+   *        }
+   *     ]
+   *   }
+   */
+  async getTx(txHash){
+    const {status, method} = await utils.decodeTxInput(txHash, this.context.WTIndex._address, this.owner, this.context.web3)
+    return {status, method}
+  }
 };
 
 module.exports = HotelManager;
