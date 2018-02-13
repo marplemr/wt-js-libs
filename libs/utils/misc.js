@@ -242,7 +242,6 @@ async function decodeTxInput(txHash, indexAddress, walletAddress, web3) {
 */
 async function getDecodedTransactions(walletAddress, indexAddress, startBlock, web3, networkName) {
   let txs = [];
-  let rawTxs = [];
 
   //Get manager's hotel addresses
   let wtIndex = getInstance('WTIndex', indexAddress, {web3: web3});
@@ -253,22 +252,8 @@ async function getDecodedTransactions(walletAddress, indexAddress, startBlock, w
   let wtAddresses = [indexAddress].concat(hotelsAddrs);
 
   //Obtain TX data, either from etherscan or from local chain
-  if(networkName != 'test') {
-    rawTxs = await request.get('http://'+networkName+'.etherscan.io/api')
-      .query({
-        module: 'account',
-        action: 'txlist',
-        address: walletAddress,
-        startBlock: startBlock,
-        endBlock: 'latest',
-        apikey: '6I7UFMJTUXG6XWXN8BBP86DWNHC9MI893F'
-      });
-    rawTxs = rawTxs.body.result;
-    indexAddress = indexAddress.toLowerCase();
-  } else {
-    rawTxs = await getTransactionsByAccount(walletAddress, 0, null, web3);
-  }
-
+  let rawTxs = await _getRawTxs(networkName, walletAddress, startBlock, web3)
+  indexAddress = indexAddress.toLowerCase();
   //Decode the TXs
   const start = async () => {
     await Promise.all(rawTxs.map(async tx => {
@@ -302,7 +287,6 @@ async function getDecodedTransactions(walletAddress, indexAddress, startBlock, w
 */
 async function getBookingTransactions(walletAddress, indexAddress, startBlock, web3, networkName) {
   let txs = [];
-  let rawTxs = [];
 
   //Get manager's hotel addresses
   let wtIndex = getInstance('WTIndex', indexAddress, {web3: web3});
@@ -315,22 +299,8 @@ async function getBookingTransactions(walletAddress, indexAddress, startBlock, w
 
 
   //Obtain TX data, either from etherscan or from local chain
-  if(networkName != 'test') {
-    rawTxs = await request.get('http://'+networkName+'.etherscan.io/api')
-      .query({
-        module: 'account',
-        action: 'txlist',
-        address: walletAddress,
-        startBlock: startBlock,
-        endBlock: 'latest',
-        apikey: '6I7UFMJTUXG6XWXN8BBP86DWNHC9MI893F'
-      });
-    rawTxs = rawTxs.body.result;
-    indexAddress = indexAddress.toLowerCase();
-  } else {
-    rawTxs = await getTransactionsByAccount(walletAddress, 0, null, web3);
-  }
-
+  let rawTxs = await _getRawTxs(networkName, walletAddress, startBlock, web3)
+  indexAddress = indexAddress.toLowerCase();
   //Decode the TXs
   const start = async () => {
     await Promise.all(rawTxs.map(async tx => {
@@ -442,6 +412,20 @@ async function _callHotel(_method, _txData, _hotelsAddrs){
     }
   }
   return newMethod;
+}
+
+async function _getRawTxs(networkName, walletAddress, startBlock, web3){
+  if(networkName === 'test') return  getTransactionsByAccount(walletAddress, 0, null, web3);
+  rawTxs = await request.get('http://'+networkName+'.etherscan.io/api')
+    .query({
+      module: 'account',
+      action: 'txlist',
+      address: walletAddress,
+      startBlock: startBlock,
+      endBlock: 'latest',
+      apikey: '6I7UFMJTUXG6XWXN8BBP86DWNHC9MI893F'
+    });
+  return rawTxs.body.result;
 }
 
 module.exports = {
