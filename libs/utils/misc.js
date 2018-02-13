@@ -248,12 +248,7 @@ async function decodeTxInput(txHash, indexAddress, walletAddress, web3) {
       }
     }
   }
-  if(method.name == 'beginCall') {
-    method = abiDecoder.decodeMethod(method.params.find(call => call.name === 'publicCallData').value);
-    if(method.name == 'book') method.name = 'requestToBook';
-    if(method.name == 'bookWithLif') method.name = 'requestToBookWithLif';
-    txData.hotel = tx.to;
-  }
+  if(method.name == 'beginCall') method = _beginCall(method, txData, tx)
   method.name = splitCamelCaseToString(method.name);
   txData.method = method;
   return txData;
@@ -330,12 +325,7 @@ async function getDecodedTransactions(walletAddress, indexAddress, startBlock, w
           }
         }
         //Only called when requesting to book a unit
-        if(method.name == 'beginCall') {
-          method = abiDecoder.decodeMethod(method.params.find(call => call.name === 'publicCallData').value);
-          if(method.name == 'book') method.name = 'requestToBook';
-          if(method.name == 'bookWithLif') method.name = 'requestToBookWithLif';
-          txData.hotel = tx.to;
-        }
+        if(method.name == 'beginCall') method = _beginCall(method, txData, tx)
         method.name = splitCamelCaseToString(method.name);
         txData.method = method;
         txs.push(txData);
@@ -402,10 +392,7 @@ async function getBookingTransactions(walletAddress, indexAddress, startBlock, w
         }
         //Only called when requesting to book a unit
         if(method.name == 'beginCall') {
-          method = abiDecoder.decodeMethod(method.params.find(call => call.name === 'publicCallData').value);
-          if(method.name == 'book') method.name = 'requestToBook';
-          if(method.name == 'bookWithLif') method.name = 'requestToBookWithLif';
-          if(!txData.hotel) txData.hotel = tx.to;
+           method = _beginCall(method, txData, tx)
           //Get Hotel info
           if(!hotelInstances[txData.hotel]) {
             hotelInstances[txData.hotel] = await getInstance('Hotel', txData.hotel, {web3: web3});
@@ -467,6 +454,14 @@ async function getTransactionsByAccount(myaccount, startBlockNumber, endBlockNum
 // Debugging helper
 function pretty(msg, obj) {
   console.log(`<------ ${msg} ------>\n${print(obj, null, ' ')}\n`)
+}
+
+function _beginCall(_method, _txData, _tx){
+  const newMethod = abiDecoder.decodeMethod(_method.params.find(call => call.name === 'publicCallData').value);
+  if(newMethod.name == 'book') newMethod.name = 'requestToBook';
+  if(newMethod.name == 'bookWithLif') newMethod.name = 'requestToBookWithLif';
+  if (!_txData.hotel) _txData.hotel= _tx.to;
+  return newMethod
 }
 
 module.exports = {
