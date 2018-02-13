@@ -224,36 +224,8 @@ async function decodeTxInput(txHash, indexAddress, walletAddress, web3) {
   let txData = {hash: txHash};
   txData.status = tx.blockNumber ? 'mined' : 'pending';
   let method = abiDecoder.decodeMethod(tx.input);
-  if(method.name == 'callHotel') {
-    let hotelIndex = method.params.find(call => call.name === 'index').value;
-    txData.hotel = hotelsAddrs[hotelIndex];
-    method = abiDecoder.decodeMethod(method.params.find(call => call.name === 'data').value);
-    if(method.name == 'callUnitType' || method.name == 'callUnit') {
-      method = abiDecoder.decodeMethod(method.params.find(call => call.name === 'data').value);
-    }
-    if(method.name == 'continueCall') {
-      let msgDataHash = method.params.find(call => call.name === 'msgDataHash').value;
-      if(!hotelInstances[txData.hotel]) {
-        hotelInstances[txData.hotel] = await getInstance('Hotel', txData.hotel, {web3: web3});
-      }
-      let publicCallData = await hotelInstances[txData.hotel].methods.getPublicCallData(msgDataHash).call();
-      method = abiDecoder.decodeMethod(publicCallData);
-      if(method.name == 'bookWithLif') {
-        method.name = 'confirmLifBooking';
-        let receipt = await web3.eth.getTransactionReceipt(tx.hash);
-        txData.lifAmount = abiDecoder.decodeLogs(receipt.logs).find(log => log.name == 'Transfer').events.find(e => e.name == 'value').value
-      }
-      if(method.name == 'book') {
-        method.name = 'confirmBooking';
-      }
-    }
-  }
-  if(method.name == 'beginCall') {
-    method = abiDecoder.decodeMethod(method.params.find(call => call.name === 'publicCallData').value);
-    if(method.name == 'book') method.name = 'requestToBook';
-    if(method.name == 'bookWithLif') method.name = 'requestToBookWithLif';
-    txData.hotel = tx.to;
-  }
+  if(method.name == 'callHotel') method = await _callHotel(method, txData, hotelAddrs)
+  if(method.name == 'beginCall') method = _beginCall(method, txData, tx)
   method.name = splitCamelCaseToString(method.name);
   txData.method = method;
   return txData;
@@ -270,7 +242,6 @@ async function decodeTxInput(txHash, indexAddress, walletAddress, web3) {
 */
 async function getDecodedTransactions(walletAddress, indexAddress, startBlock, web3, networkName) {
   let txs = [];
-  let rawTxs = [];
 
   //Get manager's hotel addresses
   let wtIndex = getInstance('WTIndex', indexAddress, {web3: web3});
@@ -281,22 +252,8 @@ async function getDecodedTransactions(walletAddress, indexAddress, startBlock, w
   let wtAddresses = [indexAddress].concat(hotelsAddrs);
 
   //Obtain TX data, either from etherscan or from local chain
-  if(networkName != 'test') {
-    rawTxs = await request.get('http://'+networkName+'.etherscan.io/api')
-      .query({
-        module: 'account',
-        action: 'txlist',
-        address: walletAddress,
-        startBlock: startBlock,
-        endBlock: 'latest',
-        apikey: '6I7UFMJTUXG6XWXN8BBP86DWNHC9MI893F'
-      });
-    rawTxs = rawTxs.body.result;
-    indexAddress = indexAddress.toLowerCase();
-  } else {
-    rawTxs = await getTransactionsByAccount(walletAddress, 0, null, web3);
-  }
-
+  let rawTxs = await _getRawTxs(networkName, walletAddress, startBlock, web3)
+  indexAddress = indexAddress.toLowerCase();
   //Decode the TXs
   const start = async () => {
     await Promise.all(rawTxs.map(async tx => {
@@ -305,37 +262,9 @@ async function getDecodedTransactions(walletAddress, indexAddress, startBlock, w
         txData.hash = tx.hash;
         txData.timeStamp = tx.timeStamp;
         let method = abiDecoder.decodeMethod(tx.input);
-        if(method.name == 'callHotel') {
-          let hotelIndex = method.params.find(call => call.name === 'index').value;
-          txData.hotel = hotelsAddrs[hotelIndex];
-          method = abiDecoder.decodeMethod(method.params.find(call => call.name === 'data').value);
-          if(method.name == 'callUnitType' || method.name == 'callUnit') {
-            method = abiDecoder.decodeMethod(method.params.find(call => call.name === 'data').value);
-          }
-          if(method.name == 'continueCall') {
-            let msgDataHash = method.params.find(call => call.name === 'msgDataHash').value;
-            if(!hotelInstances[txData.hotel]) {
-              hotelInstances[txData.hotel] = await getInstance('Hotel', txData.hotel, {web3: web3});
-            }
-            let publicCallData = await hotelInstances[txData.hotel].methods.getPublicCallData(msgDataHash).call();
-            method = abiDecoder.decodeMethod(publicCallData);
-            if(method.name == 'bookWithLif') {
-              method.name = 'confirmLifBooking';
-              let receipt = await web3.eth.getTransactionReceipt(tx.hash);
-              txData.lifAmount = abiDecoder.decodeLogs(receipt.logs).find(log => log.name == 'Transfer').events.find(e => e.name == 'value').value;
-            }
-            if(method.name == 'book') {
-              method.name = 'confirmBooking';
-            }
-          }
-        }
+        if(method.name == 'callHotel') method = await _callHotel(method, txData, hotelsAddrs)
         //Only called when requesting to book a unit
-        if(method.name == 'beginCall') {
-          method = abiDecoder.decodeMethod(method.params.find(call => call.name === 'publicCallData').value);
-          if(method.name == 'book') method.name = 'requestToBook';
-          if(method.name == 'bookWithLif') method.name = 'requestToBookWithLif';
-          txData.hotel = tx.to;
-        }
+        if(method.name == 'beginCall') method = _beginCall(method, txData, tx)
         method.name = splitCamelCaseToString(method.name);
         txData.method = method;
         txs.push(txData);
@@ -358,7 +287,6 @@ async function getDecodedTransactions(walletAddress, indexAddress, startBlock, w
 */
 async function getBookingTransactions(walletAddress, indexAddress, startBlock, web3, networkName) {
   let txs = [];
-  let rawTxs = [];
 
   //Get manager's hotel addresses
   let wtIndex = getInstance('WTIndex', indexAddress, {web3: web3});
@@ -371,22 +299,8 @@ async function getBookingTransactions(walletAddress, indexAddress, startBlock, w
 
 
   //Obtain TX data, either from etherscan or from local chain
-  if(networkName != 'test') {
-    rawTxs = await request.get('http://'+networkName+'.etherscan.io/api')
-      .query({
-        module: 'account',
-        action: 'txlist',
-        address: walletAddress,
-        startBlock: startBlock,
-        endBlock: 'latest',
-        apikey: '6I7UFMJTUXG6XWXN8BBP86DWNHC9MI893F'
-      });
-    rawTxs = rawTxs.body.result;
-    indexAddress = indexAddress.toLowerCase();
-  } else {
-    rawTxs = await getTransactionsByAccount(walletAddress, 0, null, web3);
-  }
-
+  let rawTxs = await _getRawTxs(networkName, walletAddress, startBlock, web3)
+  indexAddress = indexAddress.toLowerCase();
   //Decode the TXs
   const start = async () => {
     await Promise.all(rawTxs.map(async tx => {
@@ -402,10 +316,7 @@ async function getBookingTransactions(walletAddress, indexAddress, startBlock, w
         }
         //Only called when requesting to book a unit
         if(method.name == 'beginCall') {
-          method = abiDecoder.decodeMethod(method.params.find(call => call.name === 'publicCallData').value);
-          if(method.name == 'book') method.name = 'requestToBook';
-          if(method.name == 'bookWithLif') method.name = 'requestToBookWithLif';
-          if(!txData.hotel) txData.hotel = tx.to;
+           method = _beginCall(method, txData, tx)
           //Get Hotel info
           if(!hotelInstances[txData.hotel]) {
             hotelInstances[txData.hotel] = await getInstance('Hotel', txData.hotel, {web3: web3});
@@ -467,6 +378,54 @@ async function getTransactionsByAccount(myaccount, startBlockNumber, endBlockNum
 // Debugging helper
 function pretty(msg, obj) {
   console.log(`<------ ${msg} ------>\n${print(obj, null, ' ')}\n`)
+}
+
+function _beginCall(_method, _txData, _tx){
+  const newMethod = abiDecoder.decodeMethod(_method.params.find(call => call.name === 'publicCallData').value);
+  if(newMethod.name == 'book') newMethod.name = 'requestToBook';
+  if(newMethod.name == 'bookWithLif') newMethod.name = 'requestToBookWithLif';
+  if (!_txData.hotel) _txData.hotel= _tx.to;
+  return newMethod
+}
+
+async function _callHotel(_method, _txData, _hotelsAddrs){
+  let hotelIndex = _method.params.find(call => call.name === 'index').value;
+  _txData.hotel = _hotelsAddrs[hotelIndex];
+  let newMethod = abiDecoder.decodeMethod(_method.params.find(call => call.name === 'data').value);
+  if(newMethod.name == 'callUnitType' || newMethod.name == 'callUnit') {
+    newMethod = abiDecoder.decodeMethod(method.params.find(call => call.name === 'data').value);
+  }
+  if(newMethod.name == 'continueCall') {
+    let msgDataHash = newMethod.params.find(call => call.name === 'msgDataHash').value;
+    if(!hotelInstances[txData.hotel]) {
+      hotelInstances[txData.hotel] = await getInstance('Hotel', txData.hotel, {web3: web3});
+    }
+    let publicCallData = await hotelInstances[txData.hotel].methods.getPublicCallData(msgDataHash).call();
+    newMethod = abiDecoder.decodeMethod(publicCallData);
+    if(newMethod.name == 'bookWithLif') {
+      newMethod.name = 'confirmLifBooking';
+      let receipt = await web3.eth.getTransactionReceipt(tx.hash);
+      txData.lifAmount = abiDecoder.decodeLogs(receipt.logs).find(log => log.name == 'Transfer').events.find(e => e.name == 'value').value;
+    }
+    if(newMethod.name == 'book') {
+      newMethod.name = 'confirmBooking';
+    }
+  }
+  return newMethod;
+}
+
+async function _getRawTxs(networkName, walletAddress, startBlock, web3){
+  if(networkName === 'test') return  getTransactionsByAccount(walletAddress, 0, null, web3);
+  rawTxs = await request.get('http://'+networkName+'.etherscan.io/api')
+    .query({
+      module: 'account',
+      action: 'txlist',
+      address: walletAddress,
+      startBlock: startBlock,
+      endBlock: 'latest',
+      apikey: '6I7UFMJTUXG6XWXN8BBP86DWNHC9MI893F'
+    });
+  return rawTxs.body.result;
 }
 
 module.exports = {
