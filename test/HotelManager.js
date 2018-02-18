@@ -573,4 +573,108 @@ describe('HotelManager', function() {
       assert.equal(method.params.find(e => e.name == 'description').value, hotelDescription);
     });
   });
+
+  describe('Create full hotel', ()=> {
+    it('Should create a complete hotel', async()=>{
+      const hotelToCreate = {
+        name: 'Test Hotel',
+        description: 'Test Hotel desccription',
+        lineOne: 'line One',
+        lineTwo: 'line two',
+        zip: 'C1414',
+        country: 'Argentina',
+        timezone: 3,
+        latitude: 38.002281,
+        longitude: 57.557541,
+        waitConfirmation: true,
+        images: ['image.url0', 'image.url1'],
+        unitTypes:{
+          BASIC_ROOM:{
+            amenities: [22, 11],
+            info: {
+              description: 'Best unit type ever',
+              minGuests: 1,
+              maxGuests: 8,
+              price: '10'
+            },
+            images: ['image.url2', 'image.url3']
+          },
+          FAMILY_CABIN: {
+            amenities: [22, 33],
+            info: {
+              description: 'Best family cabin type ever',
+              minGuests: 2,
+              maxGuests: 7,
+              price: '11'
+            },
+            images: ['image.url22', 'image.url33']
+          }
+        },
+        units: [
+          {
+            active: true,
+            unitType: 'BASIC_ROOM',
+            currencyCode: 948,
+            defaultPrice: 78.00,
+            defaultLifPrice: 1
+          },
+          {
+            active: true,
+            unitType: 'FAMILY_CABIN',
+            currencyCode: 948,
+            defaultPrice: 78.00,
+            defaultLifPrice: 2
+          },
+          {
+            active: false,
+            unitType: 'BASIC_ROOM',
+            currencyCode: 948,
+            defaultPrice: 79.00,
+            defaultLifPrice: 3
+          }
+        ]
+      }
+      const {hotel} = await lib.createFullHotel(hotelToCreate);
+
+      assert.equal(hotelToCreate.name, hotel.name);
+      assert.equal(hotelToCreate.description, hotel.description);
+      assert.equal(hotelToCreate.lineOne, hotel.lineOne);
+      assert.equal(hotelToCreate.lineTwo, hotel.lineTwo);
+      assert.equal(hotelToCreate.zip, hotel.zip);
+      assert.equal(hotelToCreate.country, hotel.country);
+      assert.equal(hotelToCreate.timezone, hotel.timezone);
+      assert.equal(hotelToCreate.latitude, hotel.latitude);
+      assert.equal(hotelToCreate.longitude, hotel.longitude);
+      assert.equal(hotelToCreate.waitConfirmation, hotel.waitConfirmation);
+      assert.sameMembers(hotelToCreate.images, hotel.images);
+
+      const unitTypesToCreate = hotelToCreate.unitTypes;
+      const unitTypes = hotel.unitTypes
+
+      assert.sameMembers(unitTypesToCreate['BASIC_ROOM'].amenities, unitTypes['BASIC_ROOM'].amenities);
+      assert.sameMembers(unitTypesToCreate['BASIC_ROOM'].images, unitTypes['BASIC_ROOM'].images);
+      assert.equal(unitTypesToCreate['BASIC_ROOM'].description, unitTypes['BASIC_ROOM'].description);
+      assert.equal(unitTypesToCreate['BASIC_ROOM'].minGuests, unitTypes['BASIC_ROOM'].minGuests);
+      assert.equal(unitTypesToCreate['BASIC_ROOM'].maxGuests, unitTypes['BASIC_ROOM'].maxGuests);
+      assert.equal(unitTypesToCreate['BASIC_ROOM'].price, unitTypes['BASIC_ROOM'].price);
+
+      assert.sameMembers(unitTypesToCreate['FAMILY_CABIN'].amenities, unitTypes['FAMILY_CABIN'].amenities);
+      assert.sameMembers(unitTypesToCreate['FAMILY_CABIN'].images, unitTypes['FAMILY_CABIN'].images);
+      assert.equal(unitTypesToCreate['FAMILY_CABIN'].description, unitTypes['FAMILY_CABIN'].description);
+      assert.equal(unitTypesToCreate['FAMILY_CABIN'].minGuests, unitTypes['FAMILY_CABIN'].minGuests);
+      assert.equal(unitTypesToCreate['FAMILY_CABIN'].maxGuests, unitTypes['FAMILY_CABIN'].maxGuests);
+      assert.equal(unitTypesToCreate['FAMILY_CABIN'].price, unitTypes['FAMILY_CABIN'].price);
+
+      const unitsToCreate = hotelToCreate.units.sort((a,b)=>a.defaultLifPrice<b.defaultLifPrice)
+      const units = Object.values(hotel.units).sort((a,b)=>a.defaultLifPrice<b.defaultLifPrice)
+
+      for (let i = 0; i < units.length; i++) {
+        assert.equal(units[i].active, unitsToCreate[i].active)
+        assert.equal(units[i].unitType, unitsToCreate[i].unitType)
+        assert.equal(units[i].defaultPrice, unitsToCreate[i].defaultPrice)
+        assert.equal(units[i].defaultLifPrice, unitsToCreate[i].defaultLifPrice)
+        assert.equal(units[i].currencyCode, 'CHW')
+      }
+    });
+  });
 });

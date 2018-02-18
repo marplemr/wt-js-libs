@@ -808,6 +808,138 @@ class HotelManager {
     const {status, method} = await utils.decodeTxInput(txHash, this.context.WTIndex._address, this.owner, this.context.web3)
     return {status, method}
   }
+
+  /**
+   * Deploy a complete hotel.
+   * @param  {Object}  txHash  Transaction hash.
+   * @return {Promise}         Transaction object
+   * @example
+   *   {
+   *     name: 'WTHotel',
+   *     description: 'Winding Tree Hotel',
+   *     lineOne: 'Address line One',
+   *     lineTwo: 'Address line two',
+   *     zip: 'C1414',
+   *     country: 'Argentina',
+   *     timezone: 3,
+   *     latitude: 38.002281,
+   *     longitude: 57.557541,
+   *     waitConfirmation: true,
+   *     images: ['image.url0', 'image.url1'],
+   *     unitTypes:{
+   *       BASIC_ROOM:{
+   *         amenities: [22, 11],
+   *         info: {
+   *           description: 'Best unit type ever',
+   *           minGuests: 1,
+   *           maxGuests: 8,
+   *           price: '10'
+   *         },
+   *         images: ['image.url2', 'image.url3']
+   *       },
+   *       FAMILY_CABIN: {
+   *         amenities: [22, 33],
+   *         info: {
+   *           description: 'Best family cabin ever',
+   *           minGuests: 2,
+   *           maxGuests: 7,
+   *           price: '11'
+   *         },
+   *         images: ['image.url22', 'image.url33']
+   *       }
+   *     },
+   *   units: [
+   *       {
+   *         active: true,
+   *         unitType: 'BASIC_ROOM',
+   *         currencyCode: 948,
+   *         defaultPrice: 78.00,
+   *         defaultLifPrice: 1
+   *       },
+   *       {
+   *         active: true,
+   *         unitType: 'FAMILY_CABIN',
+   *         currencyCode: 948,
+   *         defaultPrice: 78.00,
+   *         defaultLifPrice: 2
+   *       },
+   *       {
+   *         active: false,
+   *         unitType: 'BASIC_ROOM',
+   *         currencyCode: 948,
+   *         defaultPrice: 79.00,
+   *         defaultLifPrice: 3
+   *       }
+   *     ]
+   *   }
+   */
+  async createFullHotel(hotelToCreate){
+    let workingHotel = {};
+    let hotelAddress;
+    try {
+      await this.createHotel(hotelToCreate.name, hotelToCreate.description);
+      const hotels = await this.getHotels();
+      const hotelsArray = Object.keys(hotels);
+      const latest = hotelsArray.length - 1;
+      hotelAddress = hotelsArray[latest];
+      workingHotel = hotels[hotelAddress];
+
+      await this.setRequireConfirmation(hotelAddress, hotelToCreate.waitConfirmation)
+      await this.changeHotelAddress(hotelAddress, hotelToCreate.lineOne, hotelToCreate.lineTwo, hotelToCreate.zip, hotelToCreate.country)
+      await this.changeHotelLocation(hotelAddress, hotelToCreate.timezone, hotelToCreate.latitude, hotelToCreate.longitude)
+
+      for(let imageUrl of hotelToCreate.images){
+        await this.addImageHotel(hotelAddress, imageUrl)
+      }
+
+      const unitTypes = Object.keys(hotelToCreate.unitTypes)
+      for(let unitType of unitTypes){
+        await this.addUnitType(hotelAddress, unitType)
+      }
+
+      for(let unitType of unitTypes){
+        await this.editUnitType(hotelAddress,
+                                unitType,
+                                hotelToCreate.unitTypes[unitType].info.description,
+                                hotelToCreate.unitTypes[unitType].info.minGuests,
+                                hotelToCreate.unitTypes[unitType].info.maxGuests,
+                                hotelToCreate.unitTypes[unitType].info.price)
+      }
+
+      for(let unitType of unitTypes){
+        for(let imageUrl of hotelToCreate.unitTypes[unitType].images){
+          await this.addImageUnitType(hotelAddress, unitType, imageUrl)
+        }
+      }
+
+      for(let unitType of unitTypes){
+        for(let amenity of hotelToCreate.unitTypes[unitType].amenities){
+          await this.addAmenity(hotelAddress, unitType, amenity)
+        }
+      }
+
+      for(let unit of hotelToCreate.units){
+        await this.addUnit(hotelAddress, unit.unitType)
+      }
+
+      workingHotel = await this.getHotel(hotelAddress)
+      const addressesByType = workingHotel.unitAddresses.sort(
+        (a,b)=> workingHotel.units[a].unitType < workingHotel.units[b].unitType)
+      const sortedUnits = hotelToCreate.units.sort(
+        (a,b)=> a.unitType < b.unitType)
+      for (let i = 0; i < sortedUnits.length; i++) {
+        await this.setCurrencyCode(hotelAddress,addressesByType[i], sortedUnits[i].currencyCode )
+        await this.setDefaultPrice(hotelAddress,addressesByType[i], sortedUnits[i].defaultPrice )
+        await this.setDefaultLifPrice(hotelAddress,addressesByType[i], sortedUnits[i].defaultLifPrice )
+        await this.setUnitActive(hotelAddress,addressesByType[i], sortedUnits[i].active )
+      }
+      workingHotel = await this.getHotel(hotelAddress)
+      return {hotel: workingHotel, hotelAddress}
+    } catch (err) {
+      workingHotel = await this.getHotel(hotelAddress)
+      return {hotel: workingHotel, hotelAddress, err}
+    }
+  }
 };
 
 module.exports = HotelManager;
