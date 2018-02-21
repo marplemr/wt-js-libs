@@ -76,7 +76,7 @@ class HotelEvents extends EventEmitter {
    * @param  {Address|Address[]} _addresses Hotel contracts to listen to
    */
   subscribe(_addresses){
-    await utils.validate.addresses({_addresses});
+    utils.validate.addresses({_addresses});
 
     let hotelsToMonitor = [];
 
