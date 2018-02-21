@@ -76,6 +76,8 @@ class HotelEvents extends EventEmitter {
    * @param  {Address|Address[]} _addresses Hotel contracts to listen to
    */
   subscribe(_addresses){
+    await utils.validate.addresses({_addresses});
+
     let hotelsToMonitor = [];
 
     (Array.isArray(_addresses))
@@ -101,4 +103,3 @@ class HotelEvents extends EventEmitter {
 }
 
 module.exports = HotelEvents;
-
