@@ -11,6 +11,22 @@ const txHashValidator =  Joi.string().regex(/^0x[a-fA-F0-9]{64}$/).required();
 const addressesValidator = Joi.array().items(addressValidator).single().required();
 const monetaryValidator = Joi.alternatives().try(Joi.number().required(), Joi.string().regex(/^\d+$/).required());
 
+const unitValidator = {
+  hotelAddress: addressValidator,
+  unitAddress: addressValidator,
+}
+
+const unitTypeValidator = {
+  hotelAddress: addressValidator,
+  unitType: Joi.string().required()
+}
+
+const unitDateRangeValidator = {
+  ...unitValidator,
+  fromDate: dateValidator,
+  daysAmount: Joi.number().required()
+}
+
 async function addressAndRange(params) {
   const schema = Joi.object().keys({
     unitAddress: addressValidator,
@@ -45,10 +61,7 @@ async function addresses(params) {
 
 async function bookInfo(params) {
   const schema = Joi.object().keys({
-    hotelAddress: addressValidator,
-    unitAddress: addressValidator,
-    fromDate: dateValidator,
-    daysAmount: Joi.number().positive().optional(),
+    ...unitDateRangeValidator,
     guestData: Joi.string().required()
   });
   return Joi.validate(params, schema);
@@ -63,7 +76,7 @@ async function cost(params) {
 
 async function hotelAddress(params) {
   const schema = Joi.object().keys({
-    hotelAddress:addressValidator
+    hotelAddress: addressValidator
   });
   return Joi.validate(params, schema);
 }
@@ -139,16 +152,14 @@ async function hotelAddressAndreservationId(params) {
 
 async function hotelAddressAndUnitType(params) {
   const schema = Joi.object().keys({
-    hotelAddress: addressValidator,
-    unitType: Joi.string().required()
+    ...unitTypeValidator
   });
   return Joi.validate(params, schema);
 }
 
 async function unitTypeInfo(params) {
   const schema = Joi.object().keys({
-    hotelAddress: addressValidator,
-    unitType: Joi.string().required(),
+    ...unitTypeValidator,
     description: Joi.string(),
     minGuests: Joi.number().positive(),
     maxGuests: Joi.number().positive(),
@@ -159,8 +170,7 @@ async function unitTypeInfo(params) {
 
 async function unitTypeAmenity(params) {
   const schema = Joi.object().keys({
-    hotelAddress: addressValidator,
-    unitType: Joi.string().required(),
+    ...unitTypeValidator,
     amenity: Joi.number().positive().required()
   });
   return Joi.validate(params, schema);
@@ -168,8 +178,7 @@ async function unitTypeAmenity(params) {
 
 async function addImageUnitType(params) {
   const schema = Joi.object().keys({
-    hotelAddress: addressValidator,
-    unitType: Joi.string().required(),
+    ...unitTypeValidator,
     url: Joi.string().required()
   });
   return Joi.validate(params, schema);
@@ -177,8 +186,7 @@ async function addImageUnitType(params) {
 
 async function removeImageUnitType(params) {
   const schema = Joi.object().keys({
-    hotelAddress: addressValidator,
-    unitType: Joi.string().required(),
+    ...unitTypeValidator,
     imageIndex: Joi.number().min(0).required()
   });
   return Joi.validate(params, schema);
@@ -186,16 +194,14 @@ async function removeImageUnitType(params) {
 
 async function hotelAddressAndUnitAddress(params) {
   const schema = Joi.object().keys({
-    hotelAddress: addressValidator,
-    unitAddress: addressValidator
+    ...unitValidator
   });
   return Joi.validate(params, schema);
 }
 
 async function unitActive(params) {
   const schema = Joi.object().keys({
-    hotelAddress: addressValidator,
-    unitAddress: addressValidator,
+    ...unitValidator,
     active: Joi.boolean().strict().required()
   });
   return Joi.validate(params, schema);
@@ -203,8 +209,7 @@ async function unitActive(params) {
 
 async function unitPrice(params) {
   const schema = Joi.object().keys({
-    hotelAddress: addressValidator,
-    unitAddress: addressValidator,
+    ...unitValidator,
     price: monetaryValidator
   });
   return Joi.validate(params, schema);
@@ -212,17 +217,15 @@ async function unitPrice(params) {
 
 async function unitLifPrice(params) {
   const schema = Joi.object().keys({
-    hotelAddress: addressValidator,
-    unitAddress: addressValidator,
-    price: monetaryValidator
+    ...unitValidator,
+    price: Joi.number().min(0).required()
   });
   return Joi.validate(params, schema);
 }
 
 async function currencyCode(params) {
   const schema = Joi.object().keys({
-    hotelAddress: addressValidator,
-    unitAddress: addressValidator,
+    ...unitValidator,
     code: Joi.number().required()
   });
   return Joi.validate(params, schema);
@@ -230,22 +233,16 @@ async function currencyCode(params) {
 
 async function unitSpecialPrice(params) {
   const schema = Joi.object().keys({
-    hotelAddress: addressValidator,
-    unitAddress: addressValidator,
+    ...unitDateRangeValidator,
     price: monetaryValidator,
-    fromDate: dateValidator,
-    amountDays: Joi.number().required()
   });
   return Joi.validate(params, schema);
 }
 
 async function unitSpecialLifPrice(params) {
   const schema = Joi.object().keys({
-    hotelAddress: addressValidator,
-    unitAddress: addressValidator,
-    price: monetaryValidator,
-    fromDate: dateValidator,
-    amountDays: Joi.number().required()
+    ...unitDateRangeValidator,
+    price: Joi.number().min(0).required(),
   });
   return Joi.validate(params, schema);
 }
