@@ -483,10 +483,10 @@ describe('Parametes validators', function(){
         const unitAddress = '0x9ec823DB4c3B774e82DE9d8B94185Cb3d78277c9';
         const price = 22
         const fromDate = new Date('10/10/2020');
-        const amountDays = 3
+        const daysAmount = 3
         it('validate unitSpecialPrice: Expect OK.', async () => {
           try {
-            await utils.validate.unitSpecialPrice({hotelAddress, unitAddress, price, fromDate, amountDays})
+            await utils.validate.unitSpecialPrice({hotelAddress, unitAddress, price, fromDate, daysAmount})
           } catch (err){
             assert.isNull(err);
           }
@@ -504,10 +504,10 @@ describe('Parametes validators', function(){
         const unitAddress = '0x9ec823DB4c3B774e82DE9d8B94185Cb3d78277c9';
         const price = '22'
         const fromDate = new Date('10/10/2020');
-        const amountDays = 3
+        const daysAmount = 3
         it('validate unitSpecialLifPrice: Expect OK.', async () => {
           try {
-            await utils.validate.unitSpecialLifPrice({hotelAddress, unitAddress, price, fromDate, amountDays})
+            await utils.validate.unitSpecialLifPrice({hotelAddress, unitAddress, price, fromDate, daysAmount})
           } catch (err){
             assert.isNull(err);
           }

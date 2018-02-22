@@ -777,12 +777,12 @@ class HotelManager {
    * @param  {Addres}  unitAddress  Unit contract to edit
    * @param  {Number}  price        integer or floating point price
    * @param  {Date}    fromDate     check-in date
-   * @param  {Number}  amountDays   integer number of days to book.
+   * @param  {Number}  daysAmount   integer number of days to book.
    * @param  {Boolean} callbacks    object with callback functions
    * @return {Promievent}
    */
-  async setUnitSpecialPrice(hotelAddress, unitAddress, price, fromDate, amountDays, callbacks) {
-    await utils.validate.unitSpecialPrice({hotelAddress, unitAddress, price, fromDate, amountDays});
+  async setUnitSpecialPrice(hotelAddress, unitAddress, price, fromDate, daysAmount, callbacks) {
+    await utils.validate.unitSpecialPrice({hotelAddress, unitAddress, price, fromDate, daysAmount});
 
     const {
       hotel,
@@ -795,7 +795,7 @@ class HotelManager {
     const unit = this.getHotelUnitInstance(unitAddress);
 
     const unitData = unit.methods
-      .setSpecialPrice(uintPrice, fromDay, amountDays)
+      .setSpecialPrice(uintPrice, fromDay, daysAmount)
       .encodeABI();
 
     const hotelData = hotel.methods
@@ -812,12 +812,12 @@ class HotelManager {
    * @param  {Address}          unitAddress  Unit contract to edit
    * @param  {String|Number|BN} price        Lif 'ether' (converted to wei by web3.utils.toWei)
    * @param  {Date}             fromDate     check-in date
-   * @param  {Number}           amountDays   integer number of days to book.
+   * @param  {Number}           daysAmount   integer number of days to book.
    * @param  {Boolean} callbacks    object with callback functions
    * @return {Promievent}
    */
-  async setUnitSpecialLifPrice(hotelAddress, unitAddress, price, fromDate, amountDays, callbacks) {
-    await utils.validate.unitSpecialLifPrice({hotelAddress, unitAddress, price, fromDate, amountDays});
+  async setUnitSpecialLifPrice(hotelAddress, unitAddress, price, fromDate, daysAmount, callbacks) {
+    await utils.validate.unitSpecialLifPrice({hotelAddress, unitAddress, price, fromDate, daysAmount});
 
     const {
       hotel,
@@ -829,7 +829,7 @@ class HotelManager {
     const unit = this.getHotelUnitInstance(unitAddress);
 
     const unitData = unit.methods
-      .setSpecialLifPrice(lifPrice, fromDay, amountDays)
+      .setSpecialLifPrice(lifPrice, fromDay, daysAmount)
       .encodeABI();
 
     const hotelData = hotel.methods
