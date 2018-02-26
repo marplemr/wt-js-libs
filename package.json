@@ -14,9 +14,7 @@
     "docs-build": "./node_modules/.bin/esdoc",
     "docs-view": "open ./docs/index.html",
     "clean": "rimraf dist",
-    "build": "webpack",
-    "update-submodules": "git submodule update --recursive && npm run postinstall",
-    "pull-submodules": "git submodule foreach git pull origin master && npm run postinstall"
+    "build": "webpack"
   },
   "keywords": [
     "winding-tree",
