@@ -200,8 +200,8 @@ class HotelManager {
       index
     } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
 
-    const data = await this.getIndexInstance().methods
-      .removeHotel(index)
+    const data = await this.WTIndex.methods
+      .deleteHotel(index)
       .encodeABI();
 
     const options = {
@@ -431,7 +431,7 @@ class HotelManager {
     const typeHex = this.web3provider.web3.utils.toHex(unitType);
 
     const data = hotel.methods
-      .removeUnitType(typeHex, typeIndex)
+      .deleteUnitType(typeHex, typeIndex)
       .encodeABI();
 
     return this.web3provider.transactions.execute(data, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);
@@ -635,7 +635,7 @@ class HotelManager {
     } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
 
     const data = hotel.methods
-      .removeUnit(unitAddress)
+      .deleteUnit(unitAddress)
       .encodeABI();
 
     return this.web3provider.transactions.execute(data, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);
