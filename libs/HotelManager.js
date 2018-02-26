@@ -733,7 +733,7 @@ class HotelManager {
   /**
    * Changes the default currency code
    * @param {Address}   hotelAddress  Hotel contract that controls the Unit being edited
-   * @param {Address}   unitAddress   Unit contract to edit
+   * @param  {String}   unitType      unique plain text id of UnitType, ex: 'BASIC_ROOM'
    * @param {Number}    code          Integer currency code btw 0 and 255
    * @param {Function}  converter     ex `euro = kroneToEuro(krone)`
    * @param {Date}      convertStart  date to begin search of specialPrices
@@ -741,27 +741,28 @@ class HotelManager {
    * @param  {Boolean} callbacks    object with callback functions
    * @return {Promievent}
    */
-  async setCurrencyCode(hotelAddress, unitAddress, code, callbacks, converter, convertStart, convertEnd) {
-    validate.currencyCode({hotelAddress, unitAddress, code});
-
-    const {
-      hotel,
-      index
-    } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
+  async setCurrencyCode(hotelAddress, unitType, code, callbacks, converter, convertStart, convertEnd) {
+    // TODO validate.currencyCode({hotelAddress, unitAddress, code});
 
     if(! this.web3provider.utils.currencyCodes.number(code)) {
       throw new Error('Invalid currency code');
     }
-
     code = this.web3provider.utils.currencyCodeToHex(code);
-    const unit = this.getHotelUnitInstance(unitAddress);
 
-    const unitData = unit.methods
+    const {
+      hotel,
+      index
+    } = await utils.getHotelAndIndex(hotelAddress, this.context);
+    const typeNameHex =  this.web3.utils.toHex(unitType)
+    const unitTypeAddress = await hotel.methods.getUnitType(typeNameHex).call();
+
+    const unitTypeInstance = utils.getInstance('HotelUnitType', unitTypeAddress, this.context);
+    const unitTypeData = unitTypeInstance.methods
       .setCurrencyCode(code)
       .encodeABI();
 
     const hotelData = hotel.methods
-      .callUnit(unit.options.address, unitData)
+      .callUnitType(typeNameHex, unitTypeData)
       .encodeABI();
 
     return this.web3provider.transactions.execute(hotelData, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);

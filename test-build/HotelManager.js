@@ -470,15 +470,16 @@ describe('HotelManager', function() {
     it('setCurrencyCode: sets the setCurrencyCode', async() => {
       const currencyCode = 948;
 
-      assert.isNull(hotel.units[unitAddress].currencyCode);
+      assert.isNull(hotel.unitTypes[typeName].currencyCode);
 
-      await lib.setCurrencyCode(hotelAddress, unitAddress, currencyCode);
+      await lib.setCurrencyCode(hotelAddress, typeName, currencyCode);
       hotel = await lib.getHotel(hotelAddress);
 
-      const setCurrencyCode = hotel.units[unitAddress].currencyCode;
+      const setCurrencyCode = hotel.unitTypes[typeName].currencyCode;
       assert.equal(setCurrencyCode, 'CHW');
     });
 
+    // TODO
     it('setCurrencyCode: throws on invalid currencyCode', async() => {
       try {
         await lib.setCurrencyCode(hotelAddress, unitAddress, 256);
