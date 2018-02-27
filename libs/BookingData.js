@@ -85,10 +85,13 @@ class BookingData {
     if (!isActive) {
       return false;
     }
+    const unitType = await unit.methods.unitType().call();
+    const unitTypeAddress = await hotel.methods.getUnitType(unitType).call();
+    const unitTypeInstance = utils.getInstance('HotelUnitType', unitTypeAddress, this.context);
 
     const range = _.range(fromDay, fromDay + daysAmount);
-    const defaultPrice = (await unit.methods.defaultPrice().call()) / 100;
-    const defaultLifPrice = this.web3provider.utils.lifWei2Lif(await unit.methods.defaultLifPrice().call());
+    const defaultPrice = (await unitTypeInstance.methods.defaultPrice().call()) / 100;
+    const defaultLifPrice = utils.lifWei2Lif(await unitTypeInstance.methods.defaultLifPrice().call(), this.context);
     let availability = [];
 
     for (let day of range) {

@@ -90,6 +90,8 @@ describe('BookingData', function() {
       });
     });
 
+    it('returns a unit\'s price and availability for a range of dates', async () => {
+
     afterEach(() => {
       web3provider.contracts.getHotelUnitInstance.restore();
     });

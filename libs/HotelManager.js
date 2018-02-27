@@ -673,28 +673,29 @@ class HotelManager {
   /**
    * Sets the default price for a unit
    * @param {Address}   hotelAddress  Hotel contract that controls the Unit being edited
-   * @param {Address}   unitAddress   Unit contract to edit
+   * @param  {String}   unitType      unique plain text id of UnitType, ex: 'BASIC_ROOM'
    * @param {Number}    price         Integer or floating point price
    * @param  {Boolean} callbacks    object with callback functions
    * @return {Promievent}
    */
-  async setDefaultPrice(hotelAddress, unitAddress, price, callbacks) {
-    validate.unitPrice({hotelAddress, unitAddress, price});
-
+  async setDefaultPrice(hotelAddress, unitType, price, callbacks){
+    // TODO validate.unitPrice({hotelAddress, unitAddress, price});
     const {
       hotel,
       index
     } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
 
     const uintPrice = this.web3provider.utils.priceToUint(price);
-    const unit = this.getHotelUnitInstance(unitAddress);
+    const typeNameHex =  this.web3.utils.toHex(unitType)
+    const unitTypeAddress = await hotel.methods.getUnitType(typeNameHex).call();
 
-    const unitData = unit.methods
+    const unitTypeInstance = utils.getInstance('HotelUnitType', unitTypeAddress, this.context);
+    const unitTypeData = unitTypeInstance.methods
       .setDefaultPrice(uintPrice)
       .encodeABI();
 
     const hotelData = hotel.methods
-      .callUnit(unit.options.address, unitData)
+      .callUnitType(typeNameHex, unitTypeData)
       .encodeABI();
 
     return this.web3provider.transactions.execute(hotelData, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);
@@ -703,28 +704,30 @@ class HotelManager {
   /**
    * Sets the default LifPrice for this unit
    * @param  {Address}          hotelAddress Hotel contract that controls the Unit contract to edit
-   * @param  {Address}          unitAddress  Unit contract to edit
+   * @param  {String}   unitType      unique plain text id of UnitType, ex: 'BASIC_ROOM'
    * @param  {String|Number|BN} price        Lif 'ether' (converted to wei by web3.utils.toWei)
    * @param  {Boolean} callbacks    object with callback functions
    * @return {Promievent}
   */
-  async setDefaultLifPrice(hotelAddress, unitAddress, price, callbacks) {
-    validate.unitLifPrice({hotelAddress, unitAddress, price});
-
+  async setDefaultLifPrice(hotelAddress, unitType, price, callbacks){
+    // TODO validate.unitLifPrice({hotelAddress, unitAddress, price});
     const {
       hotel,
       index
     } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
 
     const weiPrice = this.web3provider.utils.lif2LifWei(price);
-    const unit = this.getHotelUnitInstance(unitAddress);
+    const typeNameHex =  this.web3.utils.toHex(unitType)
+    const unitTypeAddress = await hotel.methods.getUnitType(typeNameHex).call();
 
-    const unitData = unit.methods
+    const unitTypeInstance = utils.getInstance('HotelUnitType', unitTypeAddress, this.context);
+
+    const unitTypeData = unitTypeInstance.methods
       .setDefaultLifPrice(weiPrice)
       .encodeABI();
 
     const hotelData = hotel.methods
-      .callUnit(unit.options.address, unitData)
+      .callUnitType(typeNameHex, unitTypeData)
       .encodeABI();
 
     return this.web3provider.transactions.execute(hotelData, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);

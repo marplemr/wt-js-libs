@@ -49,7 +49,8 @@ async function generateCompleteHotel(
   return {
     Manager: manager,
     hotelAddress: hotelAddress,
-    unitAddress: unitAddress
+    unitAddress: unitAddress,
+    typeName
   }
 }
 
