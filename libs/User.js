@@ -5,11 +5,11 @@ const BookingData = require('./BookingData');
  * Methods that allow hotel clients to make bookings.
  * @example
  *   const user = new User({
+ *     web3proxy: web3proxy                     // Web3 object instantiated with a provider
  *     account: '0xabcd...123',       // Client's account address
  *     gasMargin: 1.24,               // Multiple to increase gasEstimate by to ensure tx success.
  *     tokenAddress: '0x123...abcd',  // LifToken contract address
- *     web3: web3                     // Web3 object instantiated with a provider
- *   })
+  *   })
  */
 class User {
 

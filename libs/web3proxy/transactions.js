@@ -3,8 +3,10 @@ const _ = require('lodash');
 /**
  * Takes bundled data for a hotel call and executes it through the WTIndex callHotel method.
  * @param  {String} data    hex string: output of `instance.method.xyz().encodeABI()`
+ * @param  {Instance} WTIndexInstance
+ * @param  {Address} owner  hotelOwner
  * @param  {Number} index   position of hotel in the WTIndex registry
- * @param  {Object} context Hotel class context
+ * @param  {Number} gasMargin   
  * @param  {Object} callbacks   object with callback functions
  * @return {Promievent} or options object
  */

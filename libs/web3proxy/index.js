@@ -12,7 +12,6 @@ const getInstance = function (web3) {
     const initializedContracts = contracts(web3);
     const initializedUtils = utils(web3);
     return {
-        // TODO web3 won't be exposed in the end
         web3: web3,
         accounts: accounts(web3, initializedUtils),
         utils: initializedUtils,

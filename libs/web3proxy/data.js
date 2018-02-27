@@ -6,7 +6,6 @@ const request = require('superagent');
  * Async method that gets the index of a unit type the user intends to remove
  * @param  {Instance} hotel    Hotel
  * @param  {String}   unitType ex: 'BASIC_ROOM'
- * @param  {Object}   context  ex: context.web3
  * @return {Number}
  */
 async function getUnitTypeIndex(web3, hotel, unitType) {
@@ -18,9 +17,10 @@ async function getUnitTypeIndex(web3, hotel, unitType) {
 
 /**
  * Async method that gets a hotel instance and its index number in the WTIndex parent contract
- * @param  {Address}  address  contract address of Hotel instance
- * @param  {Object}   context  {WTIndex: <Instance>, owner: <address>, web3: <web3>}
- * @return {Promise}  { hotel: <instance>, index: <number> }
+ * @param  {Address}  hotelAddress  contract address of Hotel instance
+ * @param  {Address}  indexAddress
+ * @param  {Address}  hotel owner
+ * @return {Object}  { hotel: <instance>, index: <number> }
  */
 async function getHotelAndIndex(contracts, hotelAddress, indexAddress, owner) {
   let wtIndex = contracts.getIndexInstance(indexAddress);
@@ -38,9 +38,6 @@ async function getHotelAndIndex(contracts, hotelAddress, indexAddress, owner) {
  * Async method which gets all info associated with hotel, its unit types and units. Zero
  * elements in the solidity arrays are filtered out and data types are converted from
  * their solidity form to JS, i.e. bytes32 --> utf8.
- * @param  {Object}   web3
- * @param  {Object}   utils
- * @param  {Object}   contracts
  * @param  {Instance} wtHotel   Hotel contract instance
  * @return {Object}   data
  */
@@ -271,7 +268,6 @@ async function decodeTxInput(web3, utils, contracts, txHash, indexAddress, walle
   @param {Address} walletAddress Manager's address
   @param {Address} indexAddress  WTIndex address
   @param {Number}  startBlock    Block number to start searching from
-  @param {Object}  web3          Web3 instance
   @param {String}  networkName   Name of the ethereum network ('api' for main, 'test' for local)
 */
 async function getDecodedTransactions(web3, utils, contracts, walletAddress, indexAddress, startBlock, networkName) {
@@ -318,7 +314,6 @@ async function getDecodedTransactions(web3, utils, contracts, walletAddress, ind
   @param {Address} walletAddress Booker's address
   @param {Address} indexAddress  WTIndex address
   @param {Number}  startBlock    Block number to start searching from
-  @param {Object}  web3          Web3 instance
   @param {String}  networkName   Name of the ethereum network ('api' for main, 'test' for local)
 */
 async function getBookingTransactions(web3, utils, contracts, walletAddress, indexAddress, startBlock, networkName) {
@@ -386,7 +381,6 @@ async function getBookingTransactions(web3, utils, contracts, walletAddress, ind
  * Extracts the guest data from an instant payment Booking initiated by
  * a `token.approveData` transaction.
  * @param  {String} hash    transaction hash, available on the `CallStarted` event
- * @param  {Object} context execution context of the class ()
  * @return {String}      plain text guest data. If this is JSON it will need to be parsed.
  */
 async function getGuestData(web3, abiDecoder, hash) {

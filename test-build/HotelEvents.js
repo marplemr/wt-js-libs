@@ -10,7 +10,7 @@ const User = library.User;
 const Web3Proxy = library.Web3Proxy;
 const HotelEvents = library.HotelEvents;
 
-describe('HotelEvents', function() {
+xdescribe('HotelEvents', function() {
   let Manager;
   let token;
   let index;
@@ -52,13 +52,13 @@ describe('HotelEvents', function() {
         account: augusto,
         gasMargin: 1.5,
         tokenAddress: token.options.address,
-        web3: web3
+        web3proxy: web3proxy
       }
 
       user = new User(userOptions);
-      hotelEvents = new HotelEvents(web3);
+      hotelEvents = new HotelEvents({web3proxy: web3proxy});
 
-      hotel = utils.getInstance('Hotel', hotelAddress, {web3: web3});
+      hotel = utils.getInstance('Hotel', hotelAddress);
       await Manager.setDefaultLifPrice(hotelAddress, unitAddress, price);
     });
 

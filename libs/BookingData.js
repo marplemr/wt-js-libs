@@ -1,6 +1,5 @@
 const _ = require('lodash');
 const moment = require('moment');
-const HotelManager = require('./HotelManager');
 
 /**
  * Methods that let managers and clients query the blockchain about hotel booking costs, history,
@@ -12,12 +11,11 @@ class BookingData {
 
   /**
    * Instantiates with a web3 object whose provider has been set
-   * @param  {Object} options
+   * @param  {Object} { web3proxy: <Web3Proxy> }
    * @return {BookingData}
    */
   constructor(options) {
     this.web3proxy = options.web3proxy;
-    this.manager = new HotelManager({web3proxy: options.web3proxy});
   }
 
   getHotelUnitInstance(unitAddress) {
@@ -36,7 +34,7 @@ class BookingData {
    * Gets the national currency cost of a booking for a range of days. Check-in is on the
    * first day, check-out on the last.
    * @param  {Address}          unitAddress  Unit contract to edit
-   * @param  {Date }            fromDate     check-in date
+   * @param  {Date}            fromDate     check-in date
    * @param  {Number}           daysAmount   integer number of days to book.
    * @return {Number}           Floating point cost ex: 100.00
    * @example

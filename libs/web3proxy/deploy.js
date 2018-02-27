@@ -2,9 +2,10 @@ const _ = require('lodash');
 
 /**
  * Deploys an arbitary contract
+ * @param  {Address} owner
  * @param  {Instance} instance      web3 1.0 contract instance
  * @param  {Object}   deployOptions options passed the web3 deployment method
- * @param  {Object}   context       Hotel class context
+ * @param  {Number}   gasMargin     
  * @return {Promievent}
  */
 async function _deployContract(web3, utils, owner, instance, deployOptions, gasMargin) {
@@ -30,7 +31,7 @@ let deployContract;
  * Deploys an Index contract that functions as a registry and transaction entry
  * point for the contract system's Hotels.
  * system's Hotels
- * @param  {Object}  context  ex: context.web3 / context.owner
+ * @param  {Address}  owner
  * @return {Instance}         WTIndex instance
  */
 async function deployIndex(web3, contracts, owner, gasMargin) {
@@ -50,7 +51,8 @@ async function deployIndex(web3, contracts, owner, gasMargin) {
  * Deploys a Unit contract which will subsequently be added to a Hotel's list of units
  * @param  {String}  unitType     name of this unit's UnitType, ex: `BASIC_ROOM`
  * @param  {Address} hotelAddress address of the Hotel instance that will own this contract
- * @param  {Object}  context      ex: context.web3 / context.owner
+ * @param  {Address}  owner
+ * @param  {Number}   gasMargin
  * @return {Promievent}           web3 deployment result
  */
 async function deployUnit(web3, contracts, unitType, hotelAddress, owner, gasMargin) {
@@ -71,7 +73,8 @@ async function deployUnit(web3, contracts, unitType, hotelAddress, owner, gasMar
  * Deploys a UnitType contract which will subsequently be added to a Hotel's list of unit types
  * @param  {String}  unitType     name of UnitType, ex: `BASIC_ROOM`
  * @param  {Address} hotelAddress address of the Hotel instance that will own this contract
- * @param  {Object}  context      ex: context.web3 / context.owner
+ * @param  {Address}  owner
+ * @param  {Number}   gasMargin
  * @return {Instance}             UnitType contract instance
  */
 async function deployUnitType(web3, contracts, unitType, hotelAddress, owner, gasMargin) {

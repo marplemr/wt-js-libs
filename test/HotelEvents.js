@@ -9,9 +9,7 @@ const provider = new Web3.providers.HttpProvider('http://localhost:8545')
 const web3 = new Web3(provider);
 const Web3Proxy = require('../libs/web3proxy');
 
-const HotelEvents = (process.env.TEST_BUILD)
-  ?  require('../dist/node/HotelEvents.js')
-  : require('../libs/HotelEvents.js');
+const HotelEvents = require('../libs/HotelEvents.js');
 
 xdescribe('HotelEvents', function() {
   let Manager;
@@ -37,7 +35,6 @@ xdescribe('HotelEvents', function() {
     ownerAccount = wallet["1"].address;
     augusto = wallet["2"].address;
   })
-
   describe('subscribe', function() {
     const fromDate = new Date('10/10/2020');
     const daysAmount = 5;
@@ -55,13 +52,13 @@ xdescribe('HotelEvents', function() {
         account: augusto,
         gasMargin: 1.5,
         tokenAddress: token.options.address,
-        web3: web3
+        web3proxy: web3proxy
       }
 
       user = new User(userOptions);
-      hotelEvents = new HotelEvents(web3);
+      hotelEvents = new HotelEvents({web3proxy: web3proxy});
 
-      hotel = utils.getInstance('Hotel', hotelAddress, {web3: web3});
+      hotel = utils.getInstance('Hotel', hotelAddress);
       await Manager.setDefaultLifPrice(hotelAddress, unitAddress, price);
     });
 

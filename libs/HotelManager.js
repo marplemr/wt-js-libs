@@ -12,17 +12,16 @@ class HotelManager {
   /**
    * Instantiates a HotelManager with a web3 object, an owner account address, and the address of
    * the Index contract that has registered hotel assets.
-   * @param  {Object} options (see example above)
+   * @param  {Object} options {web3proxy: <Web3Proxy>, owner: <Address>, gasMargin: <number>, indexAddress: <Address>, hotels: <Object>}
    * @return {HotelManager}
    */
   constructor(options) {
     this.web3proxy = options.web3proxy;
+    this.indexAddress = options.indexAddress;
     this.hotels = options.hotels || {};
     this.hotelsAddrs = [];
     this.owner = options.owner || null;
-    this.sync = options.sync || false;
     this.gasMargin = options.gasMargin || 1;
-    this.indexAddress = options.indexAddress;
   }
 
   getIndexInstance() {

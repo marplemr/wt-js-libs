@@ -12,10 +12,10 @@ class HotelEvents extends EventEmitter {
 
   /**
    * HotelEvents constructor
-   * @param  {Object} _web3
+   * @param  {Object} options{web3proxy: <Web3Proxy>}
    * @return {HotelEvents}
    */
-  constructor(web3proxy) {
+  constructor(options) {
     super();
 
     /**
@@ -28,7 +28,7 @@ class HotelEvents extends EventEmitter {
      * Web3proxy instance initialised with a provider.
      * @type {Object}
      */
-    this.web3proxy = web3proxy;
+    this.web3proxy = options.web3proxy;
   }
 
   /**

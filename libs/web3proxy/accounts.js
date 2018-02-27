@@ -1,5 +1,12 @@
 const _ = require('lodash');
 
+/**
+ * Funds an account
+ * @param  {Address} from
+ * @param  {Address} to   
+ * @param  {Number} amount  Lif 'ether'
+ * @return {Promise}        Transaction
+ */
 async function fundAccount(web3, from, to, amount) {
   return web3.eth.sendTransaction({
     from: from,
@@ -10,7 +17,7 @@ async function fundAccount(web3, from, to, amount) {
 
 /**
  * Send tokens from one address to another
- * @param  {Instance} token
+ * @param  {Instance} tokenInstance
  * @param  {Address}  sender
  * @param  {Address}  recipient
  * @param  {Number}   value     Lif 'ether'
