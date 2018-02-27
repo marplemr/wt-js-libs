@@ -1,4 +1,5 @@
 var chai = require('chai');
+var BN = require('bn.js');
 chai.use(require('chai-string'));
 const assert = chai.assert;
 const sinon = require('sinon');
@@ -38,7 +39,7 @@ describe('BookingData', function() {
 
       sinon.stub(web3proxy.contracts, 'getHotelUnitInstance').returns({
         methods: {
-          getCost: help.stubContractMethodResult(price * daysAmount * 100),
+          getCost: help.stubContractMethodResult(new BN(web3proxy.utils.priceToUint(price * daysAmount))),
         }
       });
 
@@ -51,10 +52,9 @@ describe('BookingData', function() {
       const daysAmount = 5;
       const price = 20;
       const expectedCost = price * daysAmount;
-
       sinon.stub(web3proxy.contracts, 'getHotelUnitInstance').returns({
         methods: {
-          getLifCost: help.stubContractMethodResult('' + price * daysAmount * web3proxy.utils.weiInLif),
+          getLifCost: help.stubContractMethodResult(new BN(web3proxy.utils.lif2LifWei(price * daysAmount))),
         }
       });
 
@@ -74,16 +74,16 @@ describe('BookingData', function() {
     beforeEach(() => {
       sinon.stub(web3proxy.contracts, 'getHotelUnitInstance').returns({
         methods: {
-          defaultPrice: help.stubContractMethodResult(price  * 100),
-          defaultLifPrice: help.stubContractMethodResult('' + lifPrice * web3proxy.utils.weiInLif),
-          unitSpecialPrice: help.stubContractMethodResult(specialPrice * 100),
-          unitSpecialLifPrice: help.stubContractMethodResult('' + specialLifPrice * web3proxy.utils.weiInLif),
+          defaultPrice: help.stubContractMethodResult(new BN(web3proxy.utils.priceToUint(price))),
+          defaultLifPrice: help.stubContractMethodResult(new BN(web3proxy.utils.lif2LifWei(lifPrice))),
+          unitSpecialPrice: help.stubContractMethodResult(new BN(web3proxy.utils.priceToUint(specialPrice))),
+          unitSpecialLifPrice: help.stubContractMethodResult(new BN(web3proxy.utils.lif2LifWei(specialLifPrice))),
           getReservation: help.stubContractMethodResult((args) => {
             // behave accordingly to date
             if (web3proxy.utils.formatDate(fromDate) == args.methodParams[0]) {
-              return [specialPrice * 100, '' + specialLifPrice * web3proxy.utils.weiInLif, jakub];
+              return [new BN(web3proxy.utils.priceToUint(specialPrice)), new BN(web3proxy.utils.lif2LifWei(specialLifPrice)), jakub];
             }
-            return [0, '0', jakub];
+            return [new BN(web3proxy.utils.priceToUint(0)), new BN(web3proxy.utils.lif2LifWei(0)), jakub];
           }),
         }
       });

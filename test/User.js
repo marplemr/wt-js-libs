@@ -1,4 +1,5 @@
 const assert = require('chai').assert;
+var BN = require('bn.js');
 const sinon = require('sinon');
 const _ = require('lodash');
 
@@ -27,7 +28,7 @@ describe('User', function() {
     beforeEach(() => {
       sinon.stub(web3proxy.contracts, 'getTokenInstance').returns({
         methods: {
-          balanceOf: help.stubContractMethodResult('' + web3proxy.utils.weiInLif * 500)
+          balanceOf: help.stubContractMethodResult(new BN(web3proxy.utils.lif2LifWei(500)))
         }
       });
       user = new User({web3proxy: web3proxy, account: augusto, tokenAddress: tokenAddress, gasMargin: gasMargin});
@@ -126,7 +127,7 @@ describe('User', function() {
           address: tokenAddress,
         },
         methods: {
-          balanceOf: help.stubContractMethodResult('' + web3proxy.utils.weiInLif * 500),
+          balanceOf: help.stubContractMethodResult(new BN(web3proxy.utils.lif2LifWei(500))),
           approveData: help.stubContractMethodResult(true, 'approvalData-encodedABI'),
         }
       });

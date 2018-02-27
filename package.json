@@ -32,13 +32,6 @@
   },
   "dependencies": {
     "abi-decoder": "^1.0.8",
-    "babel-core": "^6.17.0",
-    "babel-loader": "^6.2.0",
-    "babel-polyfill": "^6.23.0",
-    "babel-preset-es2015": "^6.3.13",
-    "babel-register": "^6.26.0",
-    "chai": "^3.5.0",
-    "chai-string": "^1.4.0",
     "currency-codes": "^1.1.2",
     "kbpgp": "^2.0.72",
     "lodash": "^4.17.5",
@@ -48,6 +41,14 @@
     "zeppelin-solidity": "^1.2.0"
   },
   "devDependencies": {
+    "babel-core": "^6.17.0",
+    "babel-loader": "^6.2.0",
+    "babel-polyfill": "^6.23.0",
+    "babel-preset-es2015": "^6.3.13",
+    "babel-register": "^6.26.0",
+    "chai": "^3.5.0",
+    "chai-string": "^1.4.0",
+    "bn.js": "^4.0.0",
     "esdoc": "^1.0.3",
     "esdoc-node": "^1.0.2",
     "esdoc-standard-plugin": "^1.0.0",

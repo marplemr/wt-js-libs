@@ -124,7 +124,7 @@ function lifWei2Lif(web3, value) {
 };
 
 function lif2LifWei(web3, value) {
-  return web3.utils.toWei(''+value, 'ether');
+  return web3.utils.toWei('' + value, 'ether');
 };
 
 async function addGasMargin(web3, gas, gasMargin) {
