@@ -790,34 +790,6 @@ class HotelManager {
   }
 
   /**
-   * Gets transaction .
-   * @param  {String}  txHash  Transaction hash.
-   * @return {Promise}         Transaction object
-   * @example
-   *  {
-   *    "status": "Mined",
-   *    "method":  {
-   *      "name": 'Register Hotel',
-   *      "params": [
-   *        {
-   *        "name": 'name',
-   *        "value": 'WTHotel',
-   *        "type": 'string'
-   *         },
-   *        {
-   *        "name": 'description',
-   *        "value": 'Winding Tree Hotel',
-   *        "type": 'string'
-   *        }
-   *     ]
-   *   }
-   */
-  async getTx(txHash) {
-    const {status, method} = await this.web3proxy.transactions.decodeTxInput(txHash, this.getIndexInstance()._address, this.owner)
-    return {status, method}
-  }
-
-  /**
    * Deploy a complete hotel.
    * @param  {Object}  txHash  Transaction hash.
    * @return {Promise}         Transaction object

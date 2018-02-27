@@ -527,19 +527,6 @@ describe('HotelManager', function() {
     });
 
   });
-  // TODO move this out of this test suite, it has no relation to HotelManager
-  // This should test only that decodeTxInput is called
-  xdescribe('get Tx info from txHash', () => {
-
-    it('get transaction info for mined transaction', async() => {
-      const {transactionHash} = await hotelManager.createHotel(hotelName, hotelDescription);
-      const {status, method} = await hotelManager.getTx(transactionHash)
-      assert.equal(status, 'mined');
-      assert.equal(method.name, 'Register Hotel');
-      assert.equal(method.params.find(e => e.name == 'name').value, hotelName);
-      assert.equal(method.params.find(e => e.name == 'description').value, hotelDescription);
-    });
-  });
 
   describe('Create full hotel', () => {
     const hotelToCreate = {
