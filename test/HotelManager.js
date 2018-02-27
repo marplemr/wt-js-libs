@@ -6,7 +6,7 @@ const Web3PromiEvent = require('web3-core-promievent');
 const Web3 = require('web3');
 const provider = new Web3.providers.HttpProvider('http://localhost:8545')
 const web3 = new Web3(provider);
-const Web3Proxy = require('../libs/web3proxy');
+const web3providerFactory = require('../libs/web3provider');
 
 const HotelManager = require('../libs/HotelManager.js');
 const help = require('./helpers/index');
@@ -27,12 +27,12 @@ describe('HotelManager', function() {
   const unitTypeAddress = '0x9de34468b0057B77A9C896e74Cb30ed05425D52A';
 
   let hotelManager;
-  let web3proxy;
+  let web3provider;
   let sendTransactionStub, deployUnitTypeStub, deployUnitStub;
 
   beforeEach(async function() {
-    web3proxy = Web3Proxy.getInstance(web3);
-    sinon.stub(web3proxy.contracts, 'getIndexInstance').returns({
+    web3provider = web3providerFactory.getInstance(web3);
+    sinon.stub(web3provider.contracts, 'getIndexInstance').returns({
       options: {
         address: indexAddress,
       },
@@ -43,7 +43,7 @@ describe('HotelManager', function() {
         getHotelsByManager: help.stubContractMethodResult([hotelAddress], (args) => {return 'encoded-hotelsbymanager-' + args.methodParams[0]}, 37),
       }
     });
-    sinon.stub(web3proxy.data, 'getHotelAndIndex').returns({hotel: {
+    sinon.stub(web3provider.data, 'getHotelAndIndex').returns({hotel: {
       methods: {
         changeConfirmation: help.stubContractMethodResult({}, (args) => {return 'encoded-changeconfirmation-' + args.methodParams[0]}, 37),
         editInfo: help.stubContractMethodResult({}, (args) => {return 'encoded-editinfo-' + Object.values(args.methodParams).join(':')}, 37),
@@ -60,7 +60,7 @@ describe('HotelManager', function() {
         removeUnit: help.stubContractMethodResult({}, (args) => {return 'encoded-removeunit-ut-' + Object.values(args.methodParams).join(':')}, 37),
       }
     }, index: existingHotelIndex});
-    sinon.stub(web3proxy.contracts, 'getHotelUnitTypeInstance').returns({
+    sinon.stub(web3provider.contracts, 'getHotelUnitTypeInstance').returns({
       methods: {
         edit: help.stubContractMethodResult({}, (args) => {return 'encoded-edit-ut-' + Object.values(args.methodParams).join(':')}, 37),
         addAmenity: help.stubContractMethodResult({}, (args) => {return 'encoded-addamenity-ut-' + Object.values(args.methodParams).join(':')}, 37),
@@ -69,7 +69,7 @@ describe('HotelManager', function() {
         removeImage: help.stubContractMethodResult({}, (args) => {return 'encoded-removeimage-ut-' + Object.values(args.methodParams).join(':')}, 37),
       }
     });
-    sinon.stub(web3proxy.contracts, 'getHotelUnitInstance').returns({
+    sinon.stub(web3provider.contracts, 'getHotelUnitInstance').returns({
       options: {
         address: unitAddress,
       },
@@ -82,7 +82,7 @@ describe('HotelManager', function() {
         setCurrencyCode: help.stubContractMethodResult({}, (args) => {return 'encoded-setcurrencycode-ut-' + Object.values(args.methodParams).join(':')}, 37),
       }
     });
-    sendTransactionStub = sinon.stub(web3proxy.web3.eth, 'sendTransaction').callsFake(() => {
+    sendTransactionStub = sinon.stub(web3provider.web3.eth, 'sendTransaction').callsFake(() => {
       let promiEvent = new Web3PromiEvent();
       setTimeout(() => {
         promiEvent.eventEmitter.emit('transactionHash', '0x12345');
@@ -91,17 +91,17 @@ describe('HotelManager', function() {
       }, 0);
       return promiEvent.eventEmitter;
     });
-    sinon.stub(web3proxy.web3.eth, 'getTransactionCount').returns(31);
-    sinon.stub(web3proxy.web3.eth, 'estimateGas').returns(estimatedGas);
-    sinon.stub(web3proxy.web3.utils, 'toHex').returns(toHexResult);
-    sinon.stub(web3proxy.data, 'getUnitTypeIndex').returns(unitIndex);
-    sinon.stub(web3proxy.utils, 'addGasMargin').returns(654);
-    deployUnitTypeStub = sinon.stub(web3proxy.deploy, 'deployUnitType').returns({
+    sinon.stub(web3provider.web3.eth, 'getTransactionCount').returns(31);
+    sinon.stub(web3provider.web3.eth, 'estimateGas').returns(estimatedGas);
+    sinon.stub(web3provider.web3.utils, 'toHex').returns(toHexResult);
+    sinon.stub(web3provider.data, 'getUnitTypeIndex').returns(unitIndex);
+    sinon.stub(web3provider.utils, 'addGasMargin').returns(654);
+    deployUnitTypeStub = sinon.stub(web3provider.deploy, 'deployUnitType').returns({
       options: {
         address: unitTypeAddress,
       },
     });
-    deployUnitStub = sinon.stub(web3proxy.deploy, 'deployUnit').returns({
+    deployUnitStub = sinon.stub(web3provider.deploy, 'deployUnit').returns({
       options: {
         address: unitAddress,
       },
@@ -111,22 +111,22 @@ describe('HotelManager', function() {
       indexAddress: indexAddress,
       owner: ownerAccount,
       gasMargin: gasMargin,
-      web3proxy: web3proxy
+      web3provider: web3provider
     });
   });
 
   afterEach(() => {
-    web3proxy.contracts.getIndexInstance.restore();
-    web3proxy.contracts.getHotelUnitTypeInstance.restore();
-    web3proxy.web3.eth.sendTransaction.restore();
-    web3proxy.web3.eth.getTransactionCount.restore();
-    web3proxy.web3.eth.estimateGas.restore();
-    web3proxy.data.getHotelAndIndex.restore();
-    web3proxy.data.getUnitTypeIndex.restore();
-    web3proxy.deploy.deployUnitType.restore();
-    web3proxy.deploy.deployUnit.restore();
-    web3proxy.web3.utils.toHex.restore();
-    web3proxy.utils.addGasMargin.restore();
+    web3provider.contracts.getIndexInstance.restore();
+    web3provider.contracts.getHotelUnitTypeInstance.restore();
+    web3provider.web3.eth.sendTransaction.restore();
+    web3provider.web3.eth.getTransactionCount.restore();
+    web3provider.web3.eth.estimateGas.restore();
+    web3provider.data.getHotelAndIndex.restore();
+    web3provider.data.getUnitTypeIndex.restore();
+    web3provider.deploy.deployUnitType.restore();
+    web3provider.deploy.deployUnit.restore();
+    web3provider.web3.utils.toHex.restore();
+    web3provider.utils.addGasMargin.restore();
     sendTransactionStub.restore();
   });
 
@@ -228,7 +228,7 @@ describe('HotelManager', function() {
       const latitude = 15;
 
       await hotelManager.changeHotelLocation(hotelAddress, timezone, latitude, longitude);
-      const {long, lat} = web3proxy.utils.locationToUint(longitude, latitude);
+      const {long, lat} = web3provider.utils.locationToUint(longitude, latitude);
       assert.equal(sendTransactionStub.callCount, 1);
       assert.equal(sendTransactionStub.firstCall.args[0].from, ownerAccount);
       assert.equal(sendTransactionStub.firstCall.args[0].to, indexAddress);
@@ -241,7 +241,7 @@ describe('HotelManager', function() {
       const latitude = 15;
 
       await hotelManager.changeHotelLocation(hotelAddress, timezone, latitude, longitude);
-      const {long, lat} = web3proxy.utils.locationToUint(longitude, latitude);
+      const {long, lat} = web3provider.utils.locationToUint(longitude, latitude);
       assert.equal(sendTransactionStub.callCount, 1);
       assert.equal(sendTransactionStub.firstCall.args[0].from, ownerAccount);
       assert.equal(sendTransactionStub.firstCall.args[0].to, indexAddress);
@@ -408,14 +408,14 @@ describe('HotelManager', function() {
       assert.equal(sendTransactionStub.firstCall.args[0].to, indexAddress);
       assert.equal(sendTransactionStub.firstCall.args[0].data, 'encoded-call-hotel-' + existingHotelIndex +
         ':encoded-callunit-ut-' + [unitAddress].join(':') +
-        ':encoded-setdefaultlifprice-ut-' + [lifPrice * web3proxy.utils.weiInLif].join(':'));
+        ':encoded-setdefaultlifprice-ut-' + [lifPrice * web3provider.utils.weiInLif].join(':'));
     })
 
     it('setUnitSpecialPrice: sets the units price across a range of dates', async () => {
       const price =  100.00;
       const fromDate = new Date('10/10/2020');
       const daysAmount = 5;
-      const fromDay = web3proxy.utils.formatDate(fromDate);
+      const fromDay = web3provider.utils.formatDate(fromDate);
 
       await hotelManager.setUnitSpecialPrice(
         hotelAddress,
@@ -436,7 +436,7 @@ describe('HotelManager', function() {
       const price =  100;
       const fromDate = new Date('10/10/2020');
       const daysAmount = 5;
-      const fromDay = web3proxy.utils.formatDate(fromDate);
+      const fromDay = web3provider.utils.formatDate(fromDate);
 
       await hotelManager.setUnitSpecialLifPrice(
         hotelAddress,
@@ -450,12 +450,12 @@ describe('HotelManager', function() {
       assert.equal(sendTransactionStub.firstCall.args[0].to, indexAddress);
       assert.equal(sendTransactionStub.firstCall.args[0].data, 'encoded-call-hotel-' + existingHotelIndex +
         ':encoded-callunit-ut-' + [unitAddress].join(':') +
-        ':encoded-setspeciallifprice-ut-' + [price * web3proxy.utils.weiInLif, fromDay, daysAmount].join(':'));
+        ':encoded-setspeciallifprice-ut-' + [price * web3provider.utils.weiInLif, fromDay, daysAmount].join(':'));
     });
 
     it('setCurrencyCode: sets the setCurrencyCode', async() => {
       const currencyCode = 948;
-      const currencyHex = web3proxy.utils.currencyCodeToHex(currencyCode);
+      const currencyHex = web3provider.utils.currencyCodeToHex(currencyCode);
       await hotelManager.setCurrencyCode(hotelAddress, unitAddress, currencyCode);
       assert.equal(sendTransactionStub.callCount, 1);
       assert.equal(sendTransactionStub.firstCall.args[0].from, ownerAccount);
@@ -553,7 +553,7 @@ describe('HotelManager', function() {
     };
     let getHotelInfoStub;
     beforeEach(() => {
-      getHotelInfoStub = sinon.stub(web3proxy.data, 'getHotelInfo');
+      getHotelInfoStub = sinon.stub(web3provider.data, 'getHotelInfo');
       getHotelInfoStub.onCall(0).returns({
         name: hotelToCreate.name,
         description: hotelToCreate.description,
@@ -565,18 +565,18 @@ describe('HotelManager', function() {
     });
 
     afterEach(() => {
-      web3proxy.data.getHotelInfo.restore();
+      web3provider.data.getHotelInfo.restore();
     });
 
     it('Should create a complete hotel', async() =>{
       const {hotel} = await hotelManager.createFullHotel(hotelToCreate);
 
-      assert.equal(web3proxy.web3.eth.sendTransaction.callCount, 33);
-      const txCalls = web3proxy.web3.eth.sendTransaction;
+      assert.equal(web3provider.web3.eth.sendTransaction.callCount, 33);
+      const txCalls = web3provider.web3.eth.sendTransaction;
       assert.equal(txCalls.getCall(0).args[0].data, 'encoded-register-hotel-' + hotelToCreate.name);
       assert.equal(txCalls.getCall(1).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-changeconfirmation-' + hotelToCreate.waitConfirmation);
       assert.equal(txCalls.getCall(2).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-editaddress-' + [hotelToCreate.lineOne, hotelToCreate.lineTwo, hotelToCreate.zip, hotelToCreate.country].join(':'));
-      let {long, lat} = web3proxy.utils.locationToUint(hotelToCreate.longitude, hotelToCreate.latitude);
+      let {long, lat} = web3provider.utils.locationToUint(hotelToCreate.longitude, hotelToCreate.latitude);
       assert.equal(txCalls.getCall(3).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-editlocation-' + [hotelToCreate.timezone, long, lat].join(':'));
       assert.equal(txCalls.getCall(4).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-addimage-' + [hotelToCreate.images[0]].join(':'));
       assert.equal(txCalls.getCall(5).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-addimage-' + [hotelToCreate.images[1]].join(':'));
@@ -603,18 +603,18 @@ describe('HotelManager', function() {
       let firstUnit = sortedUnits[0];
       let secondUnit = sortedUnits[1];
       let thirdUnit = sortedUnits[2];
-      const currencyHex = web3proxy.utils.currencyCodeToHex(firstUnit.currencyCode);
+      const currencyHex = web3provider.utils.currencyCodeToHex(firstUnit.currencyCode);
       assert.equal(txCalls.getCall(21).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunit-ut-' + unitAddress + ':encoded-setcurrencycode-ut-' + currencyHex);
       assert.equal(txCalls.getCall(22).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunit-ut-' + unitAddress + ':encoded-setdefaultprice-ut-' + firstUnit.defaultPrice * 100);
-      assert.equal(txCalls.getCall(23).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunit-ut-' + unitAddress + ':encoded-setdefaultlifprice-ut-' + firstUnit.defaultLifPrice * web3proxy.utils.weiInLif);
+      assert.equal(txCalls.getCall(23).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunit-ut-' + unitAddress + ':encoded-setdefaultlifprice-ut-' + firstUnit.defaultLifPrice * web3provider.utils.weiInLif);
       assert.equal(txCalls.getCall(24).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunit-ut-' + unitAddress + ':encoded-setactive-ut-' + firstUnit.active);
       assert.equal(txCalls.getCall(25).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunit-ut-' + unitAddress + ':encoded-setcurrencycode-ut-' + currencyHex);
       assert.equal(txCalls.getCall(26).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunit-ut-' + unitAddress + ':encoded-setdefaultprice-ut-' + secondUnit.defaultPrice * 100);
-      assert.equal(txCalls.getCall(27).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunit-ut-' + unitAddress + ':encoded-setdefaultlifprice-ut-' + secondUnit.defaultLifPrice * web3proxy.utils.weiInLif);
+      assert.equal(txCalls.getCall(27).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunit-ut-' + unitAddress + ':encoded-setdefaultlifprice-ut-' + secondUnit.defaultLifPrice * web3provider.utils.weiInLif);
       assert.equal(txCalls.getCall(28).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunit-ut-' + unitAddress + ':encoded-setactive-ut-' + secondUnit.active);
       assert.equal(txCalls.getCall(29).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunit-ut-' + unitAddress + ':encoded-setcurrencycode-ut-' + currencyHex);
       assert.equal(txCalls.getCall(30).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunit-ut-' + unitAddress + ':encoded-setdefaultprice-ut-' + thirdUnit.defaultPrice * 100);
-      assert.equal(txCalls.getCall(31).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunit-ut-' + unitAddress + ':encoded-setdefaultlifprice-ut-' + thirdUnit.defaultLifPrice * web3proxy.utils.weiInLif);
+      assert.equal(txCalls.getCall(31).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunit-ut-' + unitAddress + ':encoded-setdefaultlifprice-ut-' + thirdUnit.defaultLifPrice * web3provider.utils.weiInLif);
       assert.equal(txCalls.getCall(32).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunit-ut-' + unitAddress + ':encoded-setactive-ut-' + thirdUnit.active);
     });
   });

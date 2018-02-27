@@ -10,7 +10,7 @@ const moment = require('moment');
 const Web3 = require('web3');
 const provider = new Web3.providers.HttpProvider('http://localhost:8545')
 const web3 = new Web3(provider);
-const Web3Proxy = require('../libs/web3proxy');
+const web3providerFactory = require('../libs/web3provider');
 
 const User = require('../libs/User');
 const BookingData = require('../libs/BookingData');
@@ -21,12 +21,12 @@ describe('BookingData', function() {
   const jakub = '0xA38c43e02a680d21c58e2CcdD7504E55F79889b8';
   const hotelAddress = '0x96eA4BbF71FEa3c9411C1Cefc555E9d7189695fA';
   const unitAddress = '0xdf3b7a20D5A08957AbE8d9366efcC38cfF00aea6';
-  let web3proxy;
+  let web3provider;
   let bookingData;
 
   beforeEach(async function() {
-    web3proxy = Web3Proxy.getInstance(web3);
-    bookingData = new BookingData({web3proxy: web3proxy});
+    web3provider = web3providerFactory.getInstance(web3);
+    bookingData = new BookingData({web3provider: web3provider});
   });
 
   describe('getCost | getLifCost', function() {
@@ -37,9 +37,9 @@ describe('BookingData', function() {
       const price = 100.00;
       const expectedCost = price * daysAmount;
 
-      sinon.stub(web3proxy.contracts, 'getHotelUnitInstance').returns({
+      sinon.stub(web3provider.contracts, 'getHotelUnitInstance').returns({
         methods: {
-          getCost: help.stubContractMethodResult(new BN(web3proxy.utils.priceToUint(price * daysAmount))),
+          getCost: help.stubContractMethodResult(new BN(web3provider.utils.priceToUint(price * daysAmount))),
         }
       });
 
@@ -52,9 +52,9 @@ describe('BookingData', function() {
       const daysAmount = 5;
       const price = 20;
       const expectedCost = price * daysAmount;
-      sinon.stub(web3proxy.contracts, 'getHotelUnitInstance').returns({
+      sinon.stub(web3provider.contracts, 'getHotelUnitInstance').returns({
         methods: {
-          getLifCost: help.stubContractMethodResult(new BN(web3proxy.utils.lif2LifWei(price * daysAmount))),
+          getLifCost: help.stubContractMethodResult(new BN(web3provider.utils.lif2LifWei(price * daysAmount))),
         }
       });
 
@@ -72,31 +72,31 @@ describe('BookingData', function() {
     const specialLifPrice = 2;
 
     beforeEach(() => {
-      sinon.stub(web3proxy.contracts, 'getHotelUnitInstance').returns({
+      sinon.stub(web3provider.contracts, 'getHotelUnitInstance').returns({
         methods: {
-          defaultPrice: help.stubContractMethodResult(new BN(web3proxy.utils.priceToUint(price))),
-          defaultLifPrice: help.stubContractMethodResult(new BN(web3proxy.utils.lif2LifWei(lifPrice))),
-          unitSpecialPrice: help.stubContractMethodResult(new BN(web3proxy.utils.priceToUint(specialPrice))),
-          unitSpecialLifPrice: help.stubContractMethodResult(new BN(web3proxy.utils.lif2LifWei(specialLifPrice))),
+          defaultPrice: help.stubContractMethodResult(new BN(web3provider.utils.priceToUint(price))),
+          defaultLifPrice: help.stubContractMethodResult(new BN(web3provider.utils.lif2LifWei(lifPrice))),
+          unitSpecialPrice: help.stubContractMethodResult(new BN(web3provider.utils.priceToUint(specialPrice))),
+          unitSpecialLifPrice: help.stubContractMethodResult(new BN(web3provider.utils.lif2LifWei(specialLifPrice))),
           getReservation: help.stubContractMethodResult((args) => {
             // behave accordingly to date
-            if (web3proxy.utils.formatDate(fromDate) == args.methodParams[0]) {
-              return [new BN(web3proxy.utils.priceToUint(specialPrice)), new BN(web3proxy.utils.lif2LifWei(specialLifPrice)), jakub];
+            if (web3provider.utils.formatDate(fromDate) == args.methodParams[0]) {
+              return [new BN(web3provider.utils.priceToUint(specialPrice)), new BN(web3provider.utils.lif2LifWei(specialLifPrice)), jakub];
             }
-            return [new BN(web3proxy.utils.priceToUint(0)), new BN(web3proxy.utils.lif2LifWei(0)), jakub];
+            return [new BN(web3provider.utils.priceToUint(0)), new BN(web3provider.utils.lif2LifWei(0)), jakub];
           }),
         }
       });
     });
 
     afterEach(() => {
-      web3proxy.contracts.getHotelUnitInstance.restore();
+      web3provider.contracts.getHotelUnitInstance.restore();
     });
 
     it('returns a unit\'s price and availability for a range of dates', async () => {
       let availability = await bookingData.unitAvailability(unitAddress, fromDate, daysAmount);
       for(let date of availability) {
-        if (date.day == web3proxy.utils.formatDate(fromDate)) {
+        if (date.day == web3provider.utils.formatDate(fromDate)) {
           assert.equal(date.price, specialPrice);
           assert.equal(date.lifPrice, specialLifPrice);
         } else {
@@ -110,7 +110,7 @@ describe('BookingData', function() {
       let fromDateMoment = moment(fromDate);
       let availability = await bookingData.unitMonthlyAvailability(unitAddress, fromDateMoment);
       assert.equal(Object.keys(availability).length, 30);
-      assert.equal(availability[web3proxy.utils.formatDate(fromDate)].price, specialPrice);
+      assert.equal(availability[web3provider.utils.formatDate(fromDate)].price, specialPrice);
     })
   });
 
@@ -134,7 +134,7 @@ describe('BookingData', function() {
             returnValues: {
               from: augusto,
               unit: unitAddress,
-              fromDay: web3proxy.utils.formatDate(fromDate),
+              fromDay: web3provider.utils.formatDate(fromDate),
               daysAmount: daysAmount,
             }
           });
@@ -165,14 +165,14 @@ describe('BookingData', function() {
             returnValues: {
               from: jakub,
               unit: unitTwoAddress,
-              fromDay: web3proxy.utils.formatDate(fromDate),
+              fromDay: web3provider.utils.formatDate(fromDate),
               daysAmount: daysAmount,
             }
           });
         }
         return data;
       });
-      getHotelInstanceStub = sinon.stub(web3proxy.contracts, 'getHotelInstance');
+      getHotelInstanceStub = sinon.stub(web3provider.contracts, 'getHotelInstance');
       getHotelInstanceStub.withArgs(hotelAddress).returns({
         getPastEvents: getPastEventsSpy1,
         methods: {
@@ -185,12 +185,12 @@ describe('BookingData', function() {
           waitConfirmation: help.stubContractMethodResult(false),
         }
       });
-      sinon.stub(web3proxy.data, 'getGuestData').returns(guestData);
+      sinon.stub(web3provider.data, 'getGuestData').returns(guestData);
     });
 
     afterEach(() => {
       getHotelInstanceStub.restore();
-      web3proxy.data.getGuestData.restore();
+      web3provider.data.getGuestData.restore();
     });
 
     it('gets a booking for a hotel', async() => {
@@ -200,7 +200,7 @@ describe('BookingData', function() {
       assert.isString(booking.transactionHash);
       assert.isNumber(booking.blockNumber);
       assert.isString(booking.id);
-      assert.equal(web3proxy.data.getGuestData.firstCall.args[0], 'hash');
+      assert.equal(web3provider.data.getGuestData.firstCall.args[0], 'hash');
 
       assert.equal(booking.guestData, guestData);
       assert.equal(booking.from, augusto);
@@ -229,8 +229,8 @@ describe('BookingData', function() {
     });
 
     it('returns an empty array if there are no bookings', async() => {
-      web3proxy.contracts.getHotelInstance.restore();
-      sinon.stub(web3proxy.contracts, 'getHotelInstance').returns({
+      web3provider.contracts.getHotelInstance.restore();
+      sinon.stub(web3provider.contracts, 'getHotelInstance').returns({
         getPastEvents: () => [],
       });
       const bookings = await bookingData.getBookings(hotelAddress);
@@ -240,7 +240,7 @@ describe('BookingData', function() {
 
     it('gets a booking for a hotel that requires confirmation', async() => {
       getHotelInstanceStub.restore();
-      getHotelInstanceStub = sinon.stub(web3proxy.contracts, 'getHotelInstance');
+      getHotelInstanceStub = sinon.stub(web3provider.contracts, 'getHotelInstance');
       getHotelInstanceStub.withArgs(hotelAddress).returns({
         getPastEvents: getPastEventsSpy1,
         methods: {
@@ -249,7 +249,7 @@ describe('BookingData', function() {
       });
       const bookings = await bookingData.getBookings(hotelAddress);
       const booking = bookings[0];
-      assert.equal(web3proxy.data.getGuestData.firstCall.args[0], 'startedhash');
+      assert.equal(web3provider.data.getGuestData.firstCall.args[0], 'startedhash');
       assert.equal(bookings.length, 1);
       assert.isString(booking.transactionHash);
       assert.isNumber(booking.blockNumber);
@@ -323,14 +323,14 @@ describe('BookingData', function() {
         }
         return data;
       });
-      getHotelInstanceStub = sinon.stub(web3proxy.contracts, 'getHotelInstance');
+      getHotelInstanceStub = sinon.stub(web3provider.contracts, 'getHotelInstance');
       getHotelInstanceStub.withArgs(hotelAddress).returns({
         getPastEvents: getPastEventsSpy1,
         methods: {
           waitConfirmation: help.stubContractMethodResult(true),
           getPublicCallData: help.stubContractMethodResult({
             unitAddress: unitAddress,
-            fromDay: web3proxy.utils.formatDate(fromDate),
+            fromDay: web3provider.utils.formatDate(fromDate),
             daysAmount: daysAmount,
           }),
         }
@@ -341,13 +341,13 @@ describe('BookingData', function() {
           waitConfirmation: help.stubContractMethodResult(true),
           getPublicCallData: help.stubContractMethodResult({
             unitAddress: unitTwoAddress,
-            fromDay: web3proxy.utils.formatDate(fromDate),
+            fromDay: web3provider.utils.formatDate(fromDate),
             daysAmount: daysAmount,
           }),
         }
       });
-      sinon.stub(web3proxy.data, 'getGuestData').returns(guestData);
-      sinon.stub(web3proxy.contracts.abiDecoder, 'decodeMethod').callsFake((arg0) => {
+      sinon.stub(web3provider.data, 'getGuestData').returns(guestData);
+      sinon.stub(web3provider.contracts.abiDecoder, 'decodeMethod').callsFake((arg0) => {
         return {
           params: _.map(arg0, (v, k) => {return {name: k, value: v}}),
         };
@@ -356,8 +356,8 @@ describe('BookingData', function() {
 
     afterEach(() => {
       getHotelInstanceStub.restore();
-      web3proxy.data.getGuestData.restore();
-      web3proxy.contracts.abiDecoder.decodeMethod.restore();
+      web3provider.data.getGuestData.restore();
+      web3provider.contracts.abiDecoder.decodeMethod.restore();
     });
 
     it('gets pending booking requests for a hotel', async() => {
@@ -409,7 +409,7 @@ describe('BookingData', function() {
 
     it('filters out completed booking requests', async() => {
       getHotelInstanceStub.restore();
-      getHotelInstanceStub = sinon.stub(web3proxy.contracts, 'getHotelInstance');
+      getHotelInstanceStub = sinon.stub(web3provider.contracts, 'getHotelInstance');
       getHotelInstanceStub.withArgs(hotelAddress).returns({
         getPastEvents: (type, options) => {
           let data = [];
@@ -458,7 +458,7 @@ describe('BookingData', function() {
           waitConfirmation: help.stubContractMethodResult(true),
           getPublicCallData: help.stubContractMethodResult({
             unitAddress: unitAddress,
-            fromDay: web3proxy.utils.formatDate(fromDate),
+            fromDay: web3provider.utils.formatDate(fromDate),
             daysAmount: daysAmount,
           }),
         }
@@ -469,7 +469,7 @@ describe('BookingData', function() {
 
     it('returns an empty array if there are no bookings', async() => {
       getHotelInstanceStub.restore();
-      getHotelInstanceStub = sinon.stub(web3proxy.contracts, 'getHotelInstance');
+      getHotelInstanceStub = sinon.stub(web3provider.contracts, 'getHotelInstance');
       getHotelInstanceStub.withArgs(hotelAddress).returns({
         getPastEvents: () => [],
       });

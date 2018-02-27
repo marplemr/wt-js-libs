@@ -9,13 +9,13 @@ const help = require('./helpers/index');
 const library = require('../dist/node/wt-js-libs');
 const User = library.User;
 const BookingData = library.BookingData;
-const Web3Proxy = library.Web3Proxy;
+const web3providerFactory = library.web3providerFactory;
 const HotelManager = library.HotelManager;
 
 const provider = new Web3.providers.HttpProvider('http://localhost:8545')
 const web3 = new Web3(provider);
 
-describe('Web3Proxy', function() {
+describe('web3provider', function() {
   const hotelName = 'WTHotel';
   const hotelDescription = 'Winding Tree Hotel';
   const gasMargin = 1.5;
@@ -26,16 +26,16 @@ describe('Web3Proxy', function() {
   let index;
   let daoAccount;
   let ownerAccount;
-  let web3proxy;
+  let web3provider;
 
   before(async function(){
-    web3proxy = Web3Proxy.getInstance(web3);
+    web3provider = web3providerFactory.getInstance(web3);
     const accounts = await web3.eth.getAccounts();
     ({
       index,
       token,
       wallet
-    } = await help.createWindingTreeEconomy(accounts, web3proxy));
+    } = await help.createWindingTreeEconomy(accounts, web3provider));
 
     ownerAccount = wallet["0"].address;
     daoAccount = wallet["1"].address;
@@ -47,12 +47,12 @@ describe('Web3Proxy', function() {
       indexAddress: index.options.address,
       owner: ownerAccount,
       gasMargin: gasMargin,
-      web3proxy: web3proxy
+      web3provider: web3provider
     });
     userOptions = {
       account: augusto,
       tokenAddress: token.options.address,
-      web3proxy: web3proxy,
+      web3provider: web3provider,
     }
     user = new User(userOptions);
   });
@@ -61,7 +61,7 @@ describe('Web3Proxy', function() {
 
     it('should decode a single TX to create a hotel', async () => {
       let createHotelTx = await hotelManager.createHotel(hotelName, hotelDescription);
-      let decodedTx = await web3proxy.data.decodeTxInput(createHotelTx.transactionHash, index.options.address, ownerAccount);
+      let decodedTx = await web3provider.data.decodeTxInput(createHotelTx.transactionHash, index.options.address, ownerAccount);
       assert(!decodedTx.hotel);
       assert.equal(decodedTx.method.name, 'Register Hotel');
       assert.equal(decodedTx.method.params.find(e => e.name == 'name').value, hotelName);
@@ -78,7 +78,7 @@ describe('Web3Proxy', function() {
       const newDescription = 'Awesome Winding Tree Hotel';
       let editInfoTx = await hotelManager.changeHotelInfo(hotelAddress, newName, newDescription);
 
-      let decodedTxs = await web3proxy.data.getDecodedTransactions(ownerAccount, index.options.address, 0, 'test');
+      let decodedTxs = await web3provider.data.getDecodedTransactions(ownerAccount, index.options.address, 0, 'test');
 
       let decodedCreateHotelTx = decodedTxs.find(tx => tx.hash == createHotelTx.transactionHash);
       assert(!decodedCreateHotelTx.hotel);
@@ -106,7 +106,7 @@ describe('Web3Proxy', function() {
         Manager,
         hotelAddress,
         unitAddress
-      } = await help.generateCompleteHotel(index.options.address, ownerAccount, 1.5, web3proxy));
+      } = await help.generateCompleteHotel(index.options.address, ownerAccount, 1.5, web3provider));
     });
 
     it('returns a single booking made by an address', async() => {
@@ -118,12 +118,12 @@ describe('Web3Proxy', function() {
         daysAmount,
         guestData
       );
-      const txs = await web3proxy.data.getBookingTransactions(userOptions.account, index.options.address, 0, 'test');
+      const txs = await web3provider.data.getBookingTransactions(userOptions.account, index.options.address, 0, 'test');
 
       bookTx = txs.find(tx => tx.hash === bookTx.transactionHash);
       assert.equal(web3.utils.toChecksumAddress(bookTx.hotel), hotelAddress);
       assert.equal(web3.utils.toChecksumAddress(bookTx.unit), unitAddress);
-      assert.equal(bookTx.unitType, web3proxy.utils.bytes32ToString(await web3proxy.contracts.getContractInstance('HotelUnit', unitAddress).methods.unitType().call()));
+      assert.equal(bookTx.unitType, web3provider.utils.bytes32ToString(await web3provider.contracts.getContractInstance('HotelUnit', unitAddress).methods.unitType().call()));
       assert.equal(bookTx.fromDate.toDateString(), fromDate.toDateString());
       let toDate = fromDate;
       toDate.setDate(fromDate.getDate() + daysAmount);
@@ -141,11 +141,11 @@ describe('Web3Proxy', function() {
         daysAmount,
         guestData
       );
-      const txs = await web3proxy.data.getBookingTransactions(userOptions.account, index.options.address, 0, 'test');
+      const txs = await web3provider.data.getBookingTransactions(userOptions.account, index.options.address, 0, 'test');
       bookTx = txs.find(tx => tx.hash === bookTx.transactionHash);
       assert.equal(web3.utils.toChecksumAddress(bookTx.hotel), hotelAddress);
       assert.equal(web3.utils.toChecksumAddress(bookTx.unit), unitAddress);
-      assert.equal(bookTx.unitType, web3proxy.utils.bytes32ToString(await web3proxy.contracts.getContractInstance('HotelUnit', unitAddress).methods.unitType().call()));
+      assert.equal(bookTx.unitType, web3provider.utils.bytes32ToString(await web3provider.contracts.getContractInstance('HotelUnit', unitAddress).methods.unitType().call()));
       assert.equal(bookTx.fromDate.toDateString(), fromDate.toDateString());
       let toDate = fromDate;
       toDate.setDate(fromDate.getDate() + daysAmount);

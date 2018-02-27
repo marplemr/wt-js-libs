@@ -9,8 +9,7 @@ const help = require('./helpers/index');
 const library = require('../dist/node/wt-js-libs');
 const User = library.User;
 const BookingData = library.BookingData;
-const Web3Proxy = library.Web3Proxy;
-const HotelManager = library.HotelManager;
+const web3providerFactory = library.web3providerFactory;
 
 const provider = new Web3.providers.HttpProvider('http://localhost:8545')
 const web3 = new Web3(provider);
@@ -25,18 +24,18 @@ describe('BookingData', function() {
   let jakub;
   let hotelAddress;
   let unitAddress;
-  let web3proxy;
+  let web3provider;
 
   const sync = true;
 
   before(async function() {
-    web3proxy = Web3Proxy.getInstance(web3);
+    web3provider = web3providerFactory.getInstance(web3);
     accounts = await web3.eth.getAccounts();
     ({
       index,
       token,
       wallet
-    } = await help.createWindingTreeEconomy(accounts, web3proxy));
+    } = await help.createWindingTreeEconomy(accounts, web3provider));
 
     ownerAccount = wallet["1"].address;
     augusto = wallet["2"].address;
@@ -48,18 +47,18 @@ describe('BookingData', function() {
       Manager,
       hotelAddress,
       unitAddress
-    } = await help.generateCompleteHotel(index.options.address, ownerAccount, 1.5, web3proxy));
+    } = await help.generateCompleteHotel(index.options.address, ownerAccount, 1.5, web3provider));
 
     userOptions = {
       account: augusto,
       gasMargin: 1.5,
       tokenAddress: token.options.address,
-      web3proxy: web3proxy,
+      web3provider: web3provider,
     }
 
     user = new User(userOptions);
-    data = new BookingData({web3proxy: web3proxy});
-    hotel = web3proxy.contracts.getContractInstance('Hotel', hotelAddress);
+    data = new BookingData({web3provider: web3provider});
+    hotel = web3provider.contracts.getContractInstance('Hotel', hotelAddress);
   });
 
   describe('getCost | getLifCost', function(){
@@ -106,7 +105,7 @@ describe('BookingData', function() {
 
       let availability = await data.unitAvailability(unitAddress, fromDate, daysAmount);
       for(let date of availability) {
-        if (date.day == web3proxy.utils.formatDate(fromDate)) {
+        if (date.day == web3provider.utils.formatDate(fromDate)) {
           assert.equal(date.price, specialPrice);
           assert.equal(date.lifPrice, specialLifPrice);
         } else {
@@ -125,7 +124,7 @@ describe('BookingData', function() {
       let fromDateMoment = moment(fromDate);
       let availability = await data.unitMonthlyAvailability(unitAddress, fromDateMoment);
       assert.equal(Object.keys(availability).length, 30);
-      assert.equal(availability[web3proxy.utils.formatDate(fromDate)].price, specialPrice);
+      assert.equal(availability[web3provider.utils.formatDate(fromDate)].price, specialPrice);
     })
   })
 
@@ -164,7 +163,7 @@ describe('BookingData', function() {
         index.options.address,
         ownerAccount,
         1.5,
-        web3proxy
+        web3provider
       );
       const hotelAddressTwo = hotelTwo.hotelAddress;
       const unitAddressTwo = hotelTwo.unitAddress;
@@ -173,7 +172,7 @@ describe('BookingData', function() {
         account: jakub,
         gasMargin: 1.5,
         tokenAddress: token.options.address,
-        web3proxy: web3proxy
+        web3provider: web3provider
       }
 
       const jakubUser = new User(jakubOptions);
@@ -314,7 +313,7 @@ describe('BookingData', function() {
         index.options.address,
         ownerAccount,
         1.5,
-        web3proxy
+        web3provider
       );
       const managerTwo = hotelTwo.Manager;
       const hotelAddressTwo = hotelTwo.hotelAddress;
@@ -326,7 +325,7 @@ describe('BookingData', function() {
         account: jakub,
         gasMargin: 1.5,
         tokenAddress: token.options.address,
-        web3proxy: web3proxy
+        web3provider: web3provider
       }
 
       const jakubUser = new User(jakubOptions);

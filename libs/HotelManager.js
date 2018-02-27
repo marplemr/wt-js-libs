@@ -12,11 +12,11 @@ class HotelManager {
   /**
    * Instantiates a HotelManager with a web3 object, an owner account address, and the address of
    * the Index contract that has registered hotel assets.
-   * @param  {Object} options {web3proxy: <Web3Proxy>, owner: <Address>, gasMargin: <number>, indexAddress: <Address>, hotels: <Object>}
+   * @param  {Object} options {web3provider: <web3provider>, owner: <Address>, gasMargin: <number>, indexAddress: <Address>, hotels: <Object>}
    * @return {HotelManager}
    */
   constructor(options) {
-    this.web3proxy = options.web3proxy;
+    this.web3provider = options.web3provider;
     this.indexAddress = options.indexAddress;
     this.hotels = options.hotels || {};
     this.hotelsAddrs = [];
@@ -26,21 +26,21 @@ class HotelManager {
 
   getIndexInstance() {
     if (! this.WTIndex) {
-      this.WTIndex = this.web3proxy.contracts.getIndexInstance(this.indexAddress);
+      this.WTIndex = this.web3provider.contracts.getIndexInstance(this.indexAddress);
     }
     return this.WTIndex;
   }
 
   getHotelInstance(hotelAddress) {
-    return this.web3proxy.contracts.getHotelInstance(hotelAddress);
+    return this.web3provider.contracts.getHotelInstance(hotelAddress);
   }
 
   getHotelUnitInstance(unitAddress) {
-    return this.web3proxy.contracts.getHotelUnitInstance(unitAddress);
+    return this.web3provider.contracts.getHotelUnitInstance(unitAddress);
   }
 
   getHotelUnitTypeInstance(unitTypeAddress) {
-    return this.web3proxy.contracts.getHotelUnitTypeInstance(unitTypeAddress);
+    return this.web3provider.contracts.getHotelUnitTypeInstance(unitTypeAddress);
   }
 
 
@@ -54,7 +54,7 @@ class HotelManager {
    */
   async getHotel(hotelAddress) {
     const hotel = this.getHotelInstance(hotelAddress);
-    this.hotels[hotelAddress] = await this.web3proxy.data.getHotelInfo(hotel);
+    this.hotels[hotelAddress] = await this.web3provider.data.getHotelInfo(hotel);
     return this.hotels[hotelAddress];
   }
 
@@ -70,7 +70,7 @@ class HotelManager {
       .getHotelsByManager(this.owner)
       .call();
 
-    this.hotelsAddrs = this.hotelsAddrs.filter( addr => !this.web3proxy.utils.isZeroAddress(addr));
+    this.hotelsAddrs = this.hotelsAddrs.filter( addr => !this.web3provider.utils.isZeroAddress(addr));
 
     if (!this.hotelsAddrs.length) {
       return null;
@@ -99,13 +99,13 @@ class HotelManager {
    */
   async getReservation(unitAddress, day) {
     if (day instanceof Date)
-      day = this.web3proxy.utils.formatDate(day);
+      day = this.web3provider.utils.formatDate(day);
 
     const unit = this.getHotelUnitInstance(unitAddress);
     const result = await unit.methods.getReservation(day).call();
 
-    const specialPrice = this.web3proxy.utils.bnToPrice(result[0]);
-    const specialLifPrice = this.web3proxy.utils.lifWei2Lif(result[1]);
+    const specialPrice = this.web3provider.utils.bnToPrice(result[0]);
+    const specialLifPrice = this.web3provider.utils.lifWei2Lif(result[1]);
     const bookedBy = result[2];
 
     return {
@@ -163,19 +163,19 @@ class HotelManager {
     const options = {
       from: this.owner,
       to: this.getIndexInstance().options.address,
-      gas: await this.web3proxy.utils.addGasMargin(estimate, this.gasMargin),
-      nonce: await this.web3proxy.web3.eth.getTransactionCount(this.owner, 'pending'),
+      gas: await this.web3provider.utils.addGasMargin(estimate, this.gasMargin),
+      nonce: await this.web3provider.web3.eth.getTransactionCount(this.owner, 'pending'),
       data: data,
     }
 
     if (callbacks) {
-      return this.web3proxy.web3.eth.sendTransaction(options)
+      return this.web3provider.web3.eth.sendTransaction(options)
         .once('transactionHash', callbacks.transactionHash)
         .once('receipt', callbacks.receipt)
         .on('error', callbacks.error);
     }
 
-    return await this.web3proxy.web3.eth.sendTransaction(options);
+    return await this.web3provider.web3.eth.sendTransaction(options);
   }
 
   /**
@@ -188,7 +188,7 @@ class HotelManager {
     const {
       hotel,
       index
-    } = await this.web3proxy.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
+    } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
 
     const data = await this.getIndexInstance().methods
       .removeHotel(index)
@@ -198,20 +198,20 @@ class HotelManager {
       from: this.owner,
       to: this.getIndexInstance().options.address,
       data: data,
-      nonce: await this.web3proxy.web3.eth.getTransactionCount(this.owner, 'pending')
+      nonce: await this.web3provider.web3.eth.getTransactionCount(this.owner, 'pending')
     };
 
-    const estimate = await this.web3proxy.web3.eth.estimateGas(options);
-    options.gas = await this.web3proxy.utils.addGasMargin(estimate, this.gasMargin);
+    const estimate = await this.web3provider.web3.eth.estimateGas(options);
+    options.gas = await this.web3provider.utils.addGasMargin(estimate, this.gasMargin);
 
     if (callbacks) {
-      return this.web3proxy.web3.eth.sendTransaction(options)
+      return this.web3provider.web3.eth.sendTransaction(options)
         .once('transactionHash', callbacks.transactionHash)
         .once('receipt', callbacks.receipt)
         .on('error', callbacks.error);
     }
 
-    return await this.web3proxy.web3.eth.sendTransaction(options);
+    return await this.web3provider.web3.eth.sendTransaction(options);
   }
 
   /**
@@ -227,13 +227,13 @@ class HotelManager {
     const {
       hotel,
       index
-    } = await this.web3proxy.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
+    } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
 
     const data = await hotel.methods
       .changeConfirmation(value)
       .encodeABI();
 
-    return this.web3proxy.transactions.execute(data, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);
+    return this.web3provider.transactions.execute(data, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);
   }
 
   /**
@@ -248,13 +248,13 @@ class HotelManager {
     const {
       hotel,
       index
-    } = await this.web3proxy.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
+    } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
 
     const data = await hotel.methods
       .editInfo(name, description)
       .encodeABI();
 
-    return this.web3proxy.transactions.execute(data, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);
+    return this.web3provider.transactions.execute(data, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);
   }
 
   /**
@@ -271,13 +271,13 @@ class HotelManager {
     const {
       hotel,
       index
-    } = await this.web3proxy.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
+    } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
 
     const data = await hotel.methods
       .editAddress(lineOne, lineTwo, zipCode, country)
       .encodeABI();
 
-    return this.web3proxy.transactions.execute(data, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);
+    return this.web3provider.transactions.execute(data, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);
   }
 
   /**
@@ -293,15 +293,15 @@ class HotelManager {
     const {
       hotel,
       index
-    } = await this.web3proxy.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
+    } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
 
-    const {long, lat} = this.web3proxy.utils.locationToUint(longitude, latitude);
+    const {long, lat} = this.web3provider.utils.locationToUint(longitude, latitude);
 
     const data = await hotel.methods
       .editLocation(timezone, long, lat)
       .encodeABI();
 
-    return this.web3proxy.transactions.execute(data, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);
+    return this.web3provider.transactions.execute(data, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);
   }
 
   /**
@@ -315,13 +315,13 @@ class HotelManager {
     const {
       hotel,
       index
-    } = await this.web3proxy.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
+    } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
 
     const data = await hotel.methods
       .addImage(url)
       .encodeABI();
 
-    return this.web3proxy.transactions.execute(data, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);
+    return this.web3provider.transactions.execute(data, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);
   }
 
   /**
@@ -335,13 +335,13 @@ class HotelManager {
     const {
       hotel,
       index
-    } = await this.web3proxy.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
+    } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
 
     const data = await hotel.methods
       .removeImage(imageIndex)
       .encodeABI();
 
-    return this.web3proxy.transactions.execute(data, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);
+    return this.web3provider.transactions.execute(data, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);
   }
 
   /**
@@ -356,13 +356,13 @@ class HotelManager {
     const {
       hotel,
       index
-    } = await this.web3proxy.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
+    } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
 
     const data = await hotel.methods
       .continueCall(reservationId)
       .encodeABI();
 
-    return this.web3proxy.transactions.execute(data, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);
+    return this.web3provider.transactions.execute(data, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);
   }
 
   /**
@@ -376,15 +376,15 @@ class HotelManager {
     const {
       hotel,
       index
-    } = await this.web3proxy.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
+    } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
 
-    const unitTypeInstance = await this.web3proxy.deploy.deployUnitType(unitType, hotelAddress, this.owner, this.gasMargin);
+    const unitTypeInstance = await this.web3provider.deploy.deployUnitType(unitType, hotelAddress, this.owner, this.gasMargin);
 
     const data = hotel.methods
       .addUnitType(unitTypeInstance.options.address)
       .encodeABI();
 
-    return this.web3proxy.transactions.execute(data, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);
+    return this.web3provider.transactions.execute(data, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);
   }
 
   /**
@@ -398,16 +398,16 @@ class HotelManager {
     const {
       hotel,
       index
-    } = await this.web3proxy.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
+    } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
 
-    const typeIndex = await this.web3proxy.data.getUnitTypeIndex(hotel, unitType);
-    const typeHex = this.web3proxy.web3.utils.toHex(unitType);
+    const typeIndex = await this.web3provider.data.getUnitTypeIndex(hotel, unitType);
+    const typeHex = this.web3provider.web3.utils.toHex(unitType);
 
     const data = hotel.methods
       .removeUnitType(typeHex, typeIndex)
       .encodeABI();
 
-    return this.web3proxy.transactions.execute(data, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);
+    return this.web3provider.transactions.execute(data, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);
   }
 
   /**
@@ -425,9 +425,9 @@ class HotelManager {
     const {
       hotel,
       index
-    } = await this.web3proxy.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
+    } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
 
-    const typeHex = this.web3proxy.web3.utils.toHex(unitType);
+    const typeHex = this.web3provider.web3.utils.toHex(unitType);
     const address = await hotel.methods.getUnitType(typeHex).call();
     const instance = this.getHotelUnitTypeInstance(address);
 
@@ -439,7 +439,7 @@ class HotelManager {
       .callUnitType(typeHex, editData)
       .encodeABI();
 
-    return this.web3proxy.transactions.execute(hotelData, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);
+    return this.web3provider.transactions.execute(hotelData, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);
   }
 
   /**
@@ -454,9 +454,9 @@ class HotelManager {
     const {
       hotel,
       index
-    } = await this.web3proxy.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
+    } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
 
-    const typeHex = this.web3proxy.web3.utils.toHex(unitType);
+    const typeHex = this.web3provider.web3.utils.toHex(unitType);
     const address = await hotel.methods.getUnitType(typeHex).call();
     const instance = this.getHotelUnitTypeInstance(address);
 
@@ -468,7 +468,7 @@ class HotelManager {
       .callUnitType(typeHex, amenityData)
       .encodeABI();
 
-    return this.web3proxy.transactions.execute(hotelData, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);
+    return this.web3provider.transactions.execute(hotelData, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);
   }
 
   /**
@@ -483,9 +483,9 @@ class HotelManager {
     const {
       hotel,
       index
-    } = await this.web3proxy.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
+    } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
 
-    const typeHex = this.web3proxy.web3.utils.toHex(unitType);
+    const typeHex = this.web3provider.web3.utils.toHex(unitType);
     const address = await hotel.methods.getUnitType(typeHex).call();
     const instance = this.getHotelUnitTypeInstance(address);
 
@@ -497,7 +497,7 @@ class HotelManager {
       .callUnitType(typeHex, amenityData)
       .encodeABI();
 
-    return this.web3proxy.transactions.execute(hotelData, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);
+    return this.web3provider.transactions.execute(hotelData, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);
   }
 
   /**
@@ -512,9 +512,9 @@ class HotelManager {
     const {
       hotel,
       index
-    } = await this.web3proxy.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
+    } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
 
-    const typeHex = this.web3proxy.web3.utils.toHex(unitType);
+    const typeHex = this.web3provider.web3.utils.toHex(unitType);
     const address = await hotel.methods.getUnitType(typeHex).call();
     const instance = this.getHotelUnitTypeInstance(address);
 
@@ -526,7 +526,7 @@ class HotelManager {
       .callUnitType(typeHex, imageData)
       .encodeABI();
 
-    return this.web3proxy.transactions.execute(hotelData, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);
+    return this.web3provider.transactions.execute(hotelData, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);
   }
 
   /**
@@ -541,9 +541,9 @@ class HotelManager {
     const {
       hotel,
       index
-    } = await this.web3proxy.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
+    } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
 
-    const typeHex = this.web3proxy.web3.utils.toHex(unitType);
+    const typeHex = this.web3provider.web3.utils.toHex(unitType);
     const address = await hotel.methods.getUnitType(typeHex).call();
     const instance = this.getHotelUnitTypeInstance(address);
 
@@ -555,7 +555,7 @@ class HotelManager {
       .callUnitType(typeHex, imageData)
       .encodeABI();
 
-    return this.web3proxy.transactions.execute(hotelData, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);
+    return this.web3provider.transactions.execute(hotelData, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);
   }
 
   /**
@@ -569,15 +569,15 @@ class HotelManager {
     const {
       hotel,
       index
-    } = await this.web3proxy.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
+    } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
 
-    const instance = await this.web3proxy.deploy.deployUnit(unitType, hotelAddress, this.owner, this.gasMargin)
+    const instance = await this.web3provider.deploy.deployUnit(unitType, hotelAddress, this.owner, this.gasMargin)
 
     const data = hotel.methods
       .addUnit(instance.options.address)
       .encodeABI();
 
-    return this.web3proxy.transactions.execute(data, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);
+    return this.web3provider.transactions.execute(data, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);
   }
 
   /**
@@ -591,13 +591,13 @@ class HotelManager {
     const {
       hotel,
       index
-    } = await this.web3proxy.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
+    } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
 
     const data = hotel.methods
       .removeUnit(unitAddress)
       .encodeABI();
 
-    return this.web3proxy.transactions.execute(data, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);
+    return this.web3provider.transactions.execute(data, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);
   }
 
   /**
@@ -612,7 +612,7 @@ class HotelManager {
     const {
       hotel,
       index
-    } = await this.web3proxy.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
+    } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
 
     const unit = this.getHotelUnitInstance(unitAddress);
 
@@ -624,7 +624,7 @@ class HotelManager {
       .callUnit(unit.options.address, unitData)
       .encodeABI();
 
-    return this.web3proxy.transactions.execute(hotelData, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);
+    return this.web3provider.transactions.execute(hotelData, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);
   }
 
   /**
@@ -639,9 +639,9 @@ class HotelManager {
     const {
       hotel,
       index
-    } = await this.web3proxy.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
+    } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
 
-    const uintPrice = this.web3proxy.utils.priceToUint(price);
+    const uintPrice = this.web3provider.utils.priceToUint(price);
     const unit = this.getHotelUnitInstance(unitAddress);
 
     const unitData = unit.methods
@@ -652,7 +652,7 @@ class HotelManager {
       .callUnit(unit.options.address, unitData)
       .encodeABI();
 
-    return this.web3proxy.transactions.execute(hotelData, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);
+    return this.web3provider.transactions.execute(hotelData, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);
   }
 
   /**
@@ -667,9 +667,9 @@ class HotelManager {
     const {
       hotel,
       index
-    } = await this.web3proxy.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
+    } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
 
-    const weiPrice = this.web3proxy.utils.lif2LifWei(price);
+    const weiPrice = this.web3provider.utils.lif2LifWei(price);
     const unit = this.getHotelUnitInstance(unitAddress);
 
     const unitData = unit.methods
@@ -680,7 +680,7 @@ class HotelManager {
       .callUnit(unit.options.address, unitData)
       .encodeABI();
 
-    return this.web3proxy.transactions.execute(hotelData, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);
+    return this.web3provider.transactions.execute(hotelData, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);
   }
 
   /**
@@ -698,13 +698,13 @@ class HotelManager {
     const {
       hotel,
       index
-    } = await this.web3proxy.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
+    } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
 
-    if(! this.web3proxy.utils.currencyCodes.number(code)) {
+    if(! this.web3provider.utils.currencyCodes.number(code)) {
       throw new Error('Invalid currency code');
     }
 
-    code = this.web3proxy.utils.currencyCodeToHex(code);
+    code = this.web3provider.utils.currencyCodeToHex(code);
     const unit = this.getHotelUnitInstance(unitAddress);
 
     const unitData = unit.methods
@@ -715,7 +715,7 @@ class HotelManager {
       .callUnit(unit.options.address, unitData)
       .encodeABI();
 
-    return this.web3proxy.transactions.execute(hotelData, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);
+    return this.web3provider.transactions.execute(hotelData, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);
 
     // -------------------------------- NB ----------------------------------------
     // We probably need to iterate through a range of dates and
@@ -738,10 +738,10 @@ class HotelManager {
     const {
       hotel,
       index
-    } = await this.web3proxy.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
+    } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
 
-    const fromDay = this.web3proxy.utils.formatDate(fromDate);
-    const uintPrice = this.web3proxy.utils.priceToUint(price);
+    const fromDay = this.web3provider.utils.formatDate(fromDate);
+    const uintPrice = this.web3provider.utils.priceToUint(price);
 
     const unit = this.getHotelUnitInstance(unitAddress);
 
@@ -753,7 +753,7 @@ class HotelManager {
       .callUnit(unit.options.address, unitData)
       .encodeABI();
 
-    return this.web3proxy.transactions.execute(hotelData, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);
+    return this.web3provider.transactions.execute(hotelData, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);
   }
 
   /**
@@ -771,10 +771,10 @@ class HotelManager {
     const {
       hotel,
       index
-    } = await this.web3proxy.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
+    } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
 
-    const lifPrice = this.web3proxy.utils.lif2LifWei(price);
-    const fromDay = this.web3proxy.utils.formatDate(fromDate);
+    const lifPrice = this.web3provider.utils.lif2LifWei(price);
+    const fromDay = this.web3provider.utils.formatDate(fromDate);
     const unit = this.getHotelUnitInstance(unitAddress);
 
     const unitData = unit.methods
@@ -785,7 +785,7 @@ class HotelManager {
       .callUnit(unit.options.address, unitData)
       .encodeABI();
 
-    return this.web3proxy.transactions.execute(hotelData, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);
+    return this.web3provider.transactions.execute(hotelData, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);
   }
 
   /**

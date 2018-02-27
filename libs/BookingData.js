@@ -11,23 +11,23 @@ class BookingData {
 
   /**
    * Instantiates with a web3 object whose provider has been set
-   * @param  {Object} { web3proxy: <Web3Proxy> }
+   * @param  {Object} { web3provider: <web3provider> }
    * @return {BookingData}
    */
   constructor(options) {
-    this.web3proxy = options.web3proxy;
+    this.web3provider = options.web3provider;
   }
 
   getHotelUnitInstance(unitAddress) {
-    return this.web3proxy.contracts.getHotelUnitInstance(unitAddress);
+    return this.web3provider.contracts.getHotelUnitInstance(unitAddress);
   }
 
   getHotelInstance(hotelAddress) {
-    return this.web3proxy.contracts.getHotelInstance(hotelAddress);
+    return this.web3provider.contracts.getHotelInstance(hotelAddress);
   }
 
   addressToChecksum(address) {
-    return this.web3proxy.web3.utils.toChecksumAddress(address);
+    return this.web3provider.web3.utils.toChecksumAddress(address);
   }
 
   /**
@@ -41,10 +41,10 @@ class BookingData {
       const cost = await lib.getCost('0xab3..cd', new Date('5/31/2020'), 5);
    */
   async getCost(unitAddress, fromDate, daysAmount){
-    const fromDay = this.web3proxy.utils.formatDate(fromDate);
-    const unit = this.web3proxy.contracts.getHotelUnitInstance(unitAddress);
+    const fromDay = this.web3provider.utils.formatDate(fromDate);
+    const unit = this.web3provider.contracts.getHotelUnitInstance(unitAddress);
     const cost = await unit.methods.getCost(fromDay, daysAmount).call();
-    return this.web3proxy.utils.bnToPrice(cost);
+    return this.web3provider.utils.bnToPrice(cost);
   }
 
   /**
@@ -58,11 +58,11 @@ class BookingData {
       const cost = await lib.getCost('0xab3..cd', new Date('5/31/2020'), 5);
    */
   async getLifCost(unitAddress, fromDate, daysAmount){
-    const fromDay = this.web3proxy.utils.formatDate(fromDate);
+    const fromDay = this.web3provider.utils.formatDate(fromDate);
     const unit = this.getHotelUnitInstance(unitAddress);
     const wei = await unit.methods.getLifCost(fromDay, daysAmount).call();
 
-    return this.web3proxy.utils.lifWei2Lif(wei);
+    return this.web3provider.utils.lifWei2Lif(wei);
   }
 
   /**
@@ -74,23 +74,23 @@ class BookingData {
    */
   async unitAvailability(unitAddress, fromDate, daysAmount) {
     const unit = this.getHotelUnitInstance(unitAddress);
-    const fromDay = this.web3proxy.utils.formatDate(fromDate);
+    const fromDay = this.web3provider.utils.formatDate(fromDate);
     const range = _.range(fromDay, fromDay + daysAmount);
     const defaultPrice = (await unit.methods.defaultPrice().call()) / 100;
-    const defaultLifPrice = this.web3proxy.utils.lifWei2Lif(await unit.methods.defaultLifPrice().call());
+    const defaultLifPrice = this.web3provider.utils.lifWei2Lif(await unit.methods.defaultLifPrice().call());
     let availability = [];
 
     for (let day of range) {
       const reservationResult = await unit.methods.getReservation(day).call();
-      const specialPrice = this.web3proxy.utils.bnToPrice(reservationResult[0]);
-      const specialLifPrice = this.web3proxy.utils.lifWei2Lif(reservationResult[1], this.context);
+      const specialPrice = this.web3provider.utils.bnToPrice(reservationResult[0]);
+      const specialLifPrice = this.web3provider.utils.lifWei2Lif(reservationResult[1], this.context);
       const bookedBy = reservationResult[2];
 
       availability.push({
         day: day,
         price: (specialPrice > 0) ? specialPrice : defaultPrice,
         lifPrice: (specialLifPrice > 0) ? specialLifPrice : defaultLifPrice,
-        available: this.web3proxy.utils.isZeroAddress(bookedBy) ? true : false
+        available: this.web3provider.utils.isZeroAddress(bookedBy) ? true : false
       });
     }
     return availability;
@@ -191,9 +191,9 @@ class BookingData {
         //If guest data can't be retreived, it means the booking required a
         //confirmation, so the guestData can be found in the CallStarted tx
         if (await hotel.methods.waitConfirmation().call() == true) {
-          guestData = await this.web3proxy.data.getGuestData(startedMappedByFinished[event.transactionHash]);
+          guestData = await this.web3provider.data.getGuestData(startedMappedByFinished[event.transactionHash]);
         } else {
-          guestData = await this.web3proxy.data.getGuestData(event.transactionHash);
+          guestData = await this.web3provider.data.getGuestData(event.transactionHash);
         }
 
         bookings.push({
@@ -203,7 +203,7 @@ class BookingData {
           id: event.id,
           from: event.returnValues.from,
           unit: event.returnValues.unit,
-          fromDate: this.web3proxy.utils.parseDate(event.returnValues.fromDay),
+          fromDate: this.web3provider.utils.parseDate(event.returnValues.fromDay),
           daysAmount: event.returnValues.daysAmount
         })
       };
@@ -267,12 +267,12 @@ class BookingData {
       })
 
       for(let event of unfinished) {
-        const guestData = await this.web3proxy.data.getGuestData(event.transactionHash);
+        const guestData = await this.web3provider.data.getGuestData(event.transactionHash);
 
         //get calldata and decode it for booking data
         let publicCallData = await hotel.methods.getPublicCallData(event.returnValues.dataHash).call();
         let bookData = {};
-        this.web3proxy.contracts.abiDecoder.decodeMethod(publicCallData).params.forEach((param) => {
+        this.web3provider.contracts.abiDecoder.decodeMethod(publicCallData).params.forEach((param) => {
           bookData[param.name] = param.value;
         });
 
@@ -285,7 +285,7 @@ class BookingData {
           dataHash: event.returnValues.dataHash,
           hotel: address,
           unit: this.addressToChecksum(bookData.unitAddress),
-          fromDate: this.web3proxy.utils.parseDate(bookData.fromDay),
+          fromDate: this.web3provider.utils.parseDate(bookData.fromDay),
           daysAmount: bookData.daysAmount
         })
       };

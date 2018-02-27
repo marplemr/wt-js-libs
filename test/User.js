@@ -6,7 +6,7 @@ const _ = require('lodash');
 const Web3 = require('web3');
 const provider = new Web3.providers.HttpProvider('http://localhost:8545')
 const web3 = new Web3(provider);
-const Web3Proxy = require('../libs/web3proxy');
+const web3providerFactory = require('../libs/web3provider');
 
 const User = require('../libs/User');
 const help = require('./helpers/index');
@@ -17,25 +17,25 @@ describe('User', function() {
   const tokenAddress = '0xe91036d59eAd8b654eE2F5b354245f6D7eD2487e';
   const unitAddress = '0xdf3b7a20D5A08957AbE8d9366efcC38cfF00aea6';
   const gasMargin = 1.5;
-  let web3proxy;
+  let web3provider;
   let user;
 
   beforeEach( async function() {
-    web3proxy = Web3Proxy.getInstance(web3);
+    web3provider = web3providerFactory.getInstance(web3);
   });
 
   describe('balanceCheck', function() {
     beforeEach(() => {
-      sinon.stub(web3proxy.contracts, 'getTokenInstance').returns({
+      sinon.stub(web3provider.contracts, 'getTokenInstance').returns({
         methods: {
-          balanceOf: help.stubContractMethodResult(new BN(web3proxy.utils.lif2LifWei(500)))
+          balanceOf: help.stubContractMethodResult(new BN(web3provider.utils.lif2LifWei(500)))
         }
       });
-      user = new User({web3proxy: web3proxy, account: augusto, tokenAddress: tokenAddress, gasMargin: gasMargin});
+      user = new User({web3provider: web3provider, account: augusto, tokenAddress: tokenAddress, gasMargin: gasMargin});
     });
 
     afterEach(() => {
-      web3proxy.contracts.getTokenInstance.restore();
+      web3provider.contracts.getTokenInstance.restore();
     });
 
     it('should return true if balance is greater than cost', async () => {
@@ -59,23 +59,23 @@ describe('User', function() {
     let sendTransactionStub;
     
     beforeEach(() => {
-      sinon.stub(web3proxy.contracts, 'getHotelInstance').returns({
+      sinon.stub(web3provider.contracts, 'getHotelInstance').returns({
         methods: {
           book: help.stubContractMethodResult({}, 'book-encodedABI'),
           beginCall: help.stubContractMethodResult({}, 'beginCall-encodedABI'),
         }
       });
-      sendTransactionStub = sinon.stub(web3proxy.web3.eth, 'sendTransaction').returns({});
-      sinon.stub(web3proxy.web3.eth, 'estimateGas').returns(estimatedGas);
-      sinon.stub(web3proxy.web3.eth.net, 'getId').returns('not-a-test');
-      user = new User({web3proxy: web3proxy, account: augusto, tokenAddress: tokenAddress, gasMargin: gasMargin});
+      sendTransactionStub = sinon.stub(web3provider.web3.eth, 'sendTransaction').returns({});
+      sinon.stub(web3provider.web3.eth, 'estimateGas').returns(estimatedGas);
+      sinon.stub(web3provider.web3.eth.net, 'getId').returns('not-a-test');
+      user = new User({web3provider: web3provider, account: augusto, tokenAddress: tokenAddress, gasMargin: gasMargin});
     });
 
     afterEach(() => {
-      web3proxy.contracts.getHotelInstance.restore();
+      web3provider.contracts.getHotelInstance.restore();
       sendTransactionStub.restore();
-      web3proxy.web3.eth.estimateGas.restore();
-      web3proxy.web3.eth.net.getId.restore();
+      web3provider.web3.eth.estimateGas.restore();
+      web3provider.web3.eth.net.getId.restore();
     });
 
     it('should create a blockchain transaction', async () => {
@@ -113,35 +113,35 @@ describe('User', function() {
     const guestData = 'guestData';
 
     beforeEach(() => {
-      sinon.stub(web3proxy.contracts, 'getHotelInstance').returns({
+      sinon.stub(web3provider.contracts, 'getHotelInstance').returns({
         methods: {
           bookWithLif: help.stubContractMethodResult({}, 'bookWithLif-encodedABI'),
           beginCall: help.stubContractMethodResult({}, 'beginCall-encodedABI'),
         }
       });
-      sendTransactionStub = sinon.stub(web3proxy.web3.eth, 'sendTransaction').returns({});
-      sinon.stub(web3proxy.web3.eth, 'estimateGas').returns(estimatedGas);
-      sinon.stub(web3proxy.web3.eth.net, 'getId').returns('not-a-test');
-      sinon.stub(web3proxy.contracts, 'getTokenInstance').returns({
+      sendTransactionStub = sinon.stub(web3provider.web3.eth, 'sendTransaction').returns({});
+      sinon.stub(web3provider.web3.eth, 'estimateGas').returns(estimatedGas);
+      sinon.stub(web3provider.web3.eth.net, 'getId').returns('not-a-test');
+      sinon.stub(web3provider.contracts, 'getTokenInstance').returns({
         options: {
           address: tokenAddress,
         },
         methods: {
-          balanceOf: help.stubContractMethodResult(new BN(web3proxy.utils.lif2LifWei(500))),
+          balanceOf: help.stubContractMethodResult(new BN(web3provider.utils.lif2LifWei(500))),
           approveData: help.stubContractMethodResult(true, 'approvalData-encodedABI'),
         }
       });
-      user = new User({web3proxy: web3proxy, account: augusto, tokenAddress: tokenAddress, gasMargin: gasMargin});
+      user = new User({web3provider: web3provider, account: augusto, tokenAddress: tokenAddress, gasMargin: gasMargin});
       sinon.stub(user.bookings, 'getLifCost').returns(120);
       sinon.stub(user.bookings, 'unitIsAvailable').returns(true);
     });
 
     afterEach(() => {
-      web3proxy.contracts.getHotelInstance.restore();
-      web3proxy.contracts.getTokenInstance.restore();
+      web3provider.contracts.getHotelInstance.restore();
+      web3provider.contracts.getTokenInstance.restore();
       sendTransactionStub.restore();
-      web3proxy.web3.eth.estimateGas.restore();
-      web3proxy.web3.eth.net.getId.restore();
+      web3provider.web3.eth.estimateGas.restore();
+      web3provider.web3.eth.net.getId.restore();
       user.bookings.getLifCost.restore();
       user.bookings.unitIsAvailable.restore();
     });

@@ -20,7 +20,7 @@ async function generateCompleteHotel(
   indexAddress,
   ownerAccount,
   gasMargin,
-  web3proxy,
+  web3provider,
   sync=true
 ){
   const hotelName = help.randomString(10);
@@ -31,7 +31,7 @@ async function generateCompleteHotel(
     indexAddress: indexAddress,
     owner: ownerAccount,
     gasMargin: gasMargin,
-    web3proxy: web3proxy
+    web3provider: web3provider
   })
 
   await manager.createHotel(hotelName, hotelDescription, sync);

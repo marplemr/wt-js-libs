@@ -12,7 +12,7 @@ class HotelEvents extends EventEmitter {
 
   /**
    * HotelEvents constructor
-   * @param  {Object} options{web3proxy: <Web3Proxy>}
+   * @param  {Object} options{web3provider: <web3provider>}
    * @return {HotelEvents}
    */
   constructor(options) {
@@ -25,10 +25,10 @@ class HotelEvents extends EventEmitter {
     this.subscriptions = [];
 
     /**
-     * Web3proxy instance initialised with a provider.
+     * web3provider instance initialised with a provider.
      * @type {Object}
      */
-    this.web3proxy = options.web3proxy;
+    this.web3provider = options.web3provider;
   }
 
   /**
@@ -39,7 +39,7 @@ class HotelEvents extends EventEmitter {
   async _emitEvent(err, event){
     if(!event) return;
 
-    const guestData = await this.web3proxy.data.getGuestData(event.transactionHash);
+    const guestData = await this.web3provider.data.getGuestData(event.transactionHash);
 
     const defaults = {
       address: event.address,
@@ -53,7 +53,7 @@ class HotelEvents extends EventEmitter {
       "Book": {
         from: event.returnValues.from,
         unit: event.returnValues.unit,
-        fromDate: this.web3proxy.utils.parseDate(event.returnValues.fromDay),
+        fromDate: this.web3provider.utils.parseDate(event.returnValues.fromDay),
         daysAmount: event.returnValues.daysAmount
       },
       "CallStarted": {
@@ -89,7 +89,7 @@ class HotelEvents extends EventEmitter {
 
     let events;
     for (let address of hotelsToMonitor){
-      const hotel = this.web3proxy.contracts.getContractInstance('Hotel', address);
+      const hotel = this.web3provider.contracts.getContractInstance('Hotel', address);
 
       hotel.events.Book({}, this._emitEvent.bind(this));
       hotel.events.CallStarted({}, this._emitEvent.bind(this));

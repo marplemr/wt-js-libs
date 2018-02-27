@@ -3,7 +3,7 @@ const request = require('superagent');
 
 
 /**
- * Async method that gets the index of a unit type the user intends to remove
+ * Async method that gets the index of a unit type the user intends to work with
  * @param  {Instance} hotel    Hotel
  * @param  {String}   unitType ex: 'BASIC_ROOM'
  * @return {Number}

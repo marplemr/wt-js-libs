@@ -6,7 +6,7 @@ const provider = new Web3.providers.HttpProvider('http://localhost:8545')
 const web3 = new Web3(provider);
 
 const library = require('../dist/node/wt-js-libs');
-const Web3Proxy = library.Web3Proxy;
+const web3providerFactory = library.web3providerFactory;
 const HotelManager = library.HotelManager;
 
 describe('HotelManager', function() {
@@ -19,10 +19,10 @@ describe('HotelManager', function() {
   let fundingSource;
   let daoAccount;
   let ownerAccount;
-  let web3proxy;
+  let web3provider;
 
   before(async function(){
-    web3proxy = Web3Proxy.getInstance(web3);
+    web3provider = web3providerFactory.getInstance(web3);
     const wallet = await web3.eth.accounts.wallet.create(2);
     const accounts = await web3.eth.getAccounts();
 
@@ -30,18 +30,18 @@ describe('HotelManager', function() {
     ownerAccount = wallet["0"].address;
     daoAccount = wallet["1"].address;
 
-    await web3proxy.accounts.fundAccount(fundingSource, ownerAccount, '50');
-    await web3proxy.accounts.fundAccount(fundingSource, daoAccount, '50');
+    await web3provider.accounts.fundAccount(fundingSource, ownerAccount, '50');
+    await web3provider.accounts.fundAccount(fundingSource, daoAccount, '50');
   })
 
   beforeEach(async function() {
-    index = await web3proxy.deploy.deployIndex(daoAccount, gasMargin);
+    index = await web3provider.deploy.deployIndex(daoAccount, gasMargin);
 
     lib = new HotelManager({
       indexAddress: index.options.address,
       owner: ownerAccount,
       gasMargin: gasMargin,
-      web3proxy: web3proxy
+      web3provider: web3provider
     });
   });
 
@@ -426,7 +426,7 @@ describe('HotelManager', function() {
         daysAmount
       )
 
-      const fromDay = web3proxy.utils.formatDate(fromDate);
+      const fromDay = web3provider.utils.formatDate(fromDate);
       const range = _.range(fromDay, fromDay + daysAmount);
 
       for (let day of range) {
@@ -453,7 +453,7 @@ describe('HotelManager', function() {
         daysAmount
       )
 
-      const fromDay = web3proxy.utils.formatDate(fromDate);
+      const fromDay = web3provider.utils.formatDate(fromDate);
       const range = _.range(fromDay, fromDay + daysAmount);
 
       for (let day of range) {

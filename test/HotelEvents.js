@@ -7,7 +7,7 @@ const _ = require('lodash');
 const Web3 = require('web3');
 const provider = new Web3.providers.HttpProvider('http://localhost:8545')
 const web3 = new Web3(provider);
-const Web3Proxy = require('../libs/web3proxy');
+const web3providerFactory = require('../libs/web3provider');
 
 const HotelEvents = require('../libs/HotelEvents.js');
 
@@ -21,16 +21,16 @@ xdescribe('HotelEvents', function() {
   let hotelAddress;
   let unitAddress;
   let hotelEvents;
-  let web3proxy;
+  let web3provider;
 
   before(async function(){
-    web3proxy = Web3Proxy.getInstance(web3);
+    web3provider = web3providerFactory.getInstance(web3);
     accounts = await web3.eth.getAccounts();
     ({
       index,
       token,
       wallet
-    } = await help.createWindingTreeEconomy(accounts, web3proxy));
+    } = await help.createWindingTreeEconomy(accounts, web3provider));
 
     ownerAccount = wallet["1"].address;
     augusto = wallet["2"].address;
@@ -46,17 +46,17 @@ xdescribe('HotelEvents', function() {
         Manager,
         hotelAddress,
         unitAddress
-      } = await help.generateCompleteHotel(index.options.address, ownerAccount, 1.5, web3proxy));
+      } = await help.generateCompleteHotel(index.options.address, ownerAccount, 1.5, web3provider));
 
       userOptions = {
         account: augusto,
         gasMargin: 1.5,
         tokenAddress: token.options.address,
-        web3proxy: web3proxy
+        web3provider: web3provider
       }
 
       user = new User(userOptions);
-      hotelEvents = new HotelEvents({web3proxy: web3proxy});
+      hotelEvents = new HotelEvents({web3provider: web3provider});
 
       hotel = utils.getInstance('Hotel', hotelAddress);
       await Manager.setDefaultLifPrice(hotelAddress, unitAddress, price);

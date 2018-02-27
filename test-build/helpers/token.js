@@ -7,12 +7,12 @@ const binary = LifCrowdsale.bytecode;
  * and returns a usable LifToken instance.
  * @return {Instance} LifToken
  */
-async function runTokenGenerationEvent(web3proxy) {
-  const rate = web3proxy.web3.utils.toBN(100000000000);
-  const accounts = await web3proxy.web3.eth.getAccounts();
-  const crowdsale = await simulateCrowdsale(web3proxy, rate, [40,30,20,10,0], accounts, 1);
+async function runTokenGenerationEvent(web3provider) {
+  const rate = web3provider.web3.utils.toBN(100000000000);
+  const accounts = await web3provider.web3.eth.getAccounts();
+  const crowdsale = await simulateCrowdsale(web3provider, rate, [40,30,20,10,0], accounts, 1);
   const tokenAddress = await crowdsale.methods.token().call();
-  return web3proxy.contracts.getContractInstance('LifToken', tokenAddress);
+  return web3provider.contracts.getContractInstance('LifToken', tokenAddress);
 }
 
 
@@ -31,10 +31,10 @@ async function runTokenGenerationEvent(web3proxy) {
   const token = utils.getInstance('LifToken', tokenAddress, web3);
   const balance = await token.methods.balanceOf(account[0]).call();
  */
-async function simulateCrowdsale(web3proxy, rate, balances, accounts, weiPerUSD) {
+async function simulateCrowdsale(web3provider, rate, balances, accounts, weiPerUSD) {
   // Set deployment time conditions
-  await increaseTimeTestRPC(web3proxy, 1);
-  const startTime = await latestTime(web3proxy) + 5;
+  await increaseTimeTestRPC(web3provider, 1);
+  const startTime = await latestTime(web3provider) + 5;
   const endTime = startTime + 20;
 
   // Deploy crowdsale contract
@@ -49,7 +49,7 @@ async function simulateCrowdsale(web3proxy, rate, balances, accounts, weiPerUSD)
     accounts[1],
   ];
 
-  const contract = await new web3proxy.web3.eth.Contract(abi);
+  const contract = await new web3provider.web3.eth.Contract(abi);
 
   const constructorOptions = {
     data: binary,
@@ -66,32 +66,32 @@ async function simulateCrowdsale(web3proxy, rate, balances, accounts, weiPerUSD)
     data: deployData
   };
 
-  const tx = await web3proxy.web3.eth.sendTransaction(deployOptions);
-  const crowdsale = new web3proxy.web3.eth.Contract(abi, tx.contractAddress);
+  const tx = await web3provider.web3.eth.sendTransaction(deployOptions);
+  const crowdsale = new web3provider.web3.eth.Contract(abi, tx.contractAddress);
 
   // Setup
-  let latest = await latestTime(web3proxy);
-  await increaseTimeTestRPCTo(web3proxy, latest + 1);
+  let latest = await latestTime(web3provider);
+  await increaseTimeTestRPCTo(web3provider, latest + 1);
 
   await crowdsale.methods
     .setWeiPerUSDinTGE(weiPerUSD)
     .send({from: accounts[0], gas: 6000000});
 
-  await increaseTimeTestRPCTo(web3proxy, startTime + 3);
+  await increaseTimeTestRPCTo(web3provider, startTime + 3);
 
   // Run
   for (let i = 0; i < 5; i++) {
     if (balances[i] > 0) {
       const options = {
         to: crowdsale.options.address,
-        value: web3proxy.web3.utils.toWei(web3proxy.web3.utils.toBN(i + 1), 'ether'),
+        value: web3provider.web3.utils.toWei(web3provider.web3.utils.toBN(i + 1), 'ether'),
         from: accounts[i + 1],
         gas: 600000
       };
-      const tx = await web3proxy.web3.eth.sendTransaction(options);
+      const tx = await web3provider.web3.eth.sendTransaction(options);
     }
   }
-  await increaseTimeTestRPCTo(web3proxy, endTime+1);
+  await increaseTimeTestRPCTo(web3provider, endTime+1);
 
   // Finalize
   await crowdsale.methods
@@ -106,8 +106,8 @@ async function simulateCrowdsale(web3proxy, rate, balances, accounts, weiPerUSD)
  * @param  {Object} web3
  * @return {String} timestamp
  */
-async function latestTime(web3proxy) {
-  const block = await web3proxy.web3.eth.getBlock('latest');
+async function latestTime(web3provider) {
+  const block = await web3provider.web3.eth.getBlock('latest');
   return block.timestamp;
 };
 
@@ -116,11 +116,11 @@ async function latestTime(web3proxy) {
  * @param  {Number} duration
  * @return {Promise}
  */
-function increaseTimeTestRPC(web3proxy, duration) {
+function increaseTimeTestRPC(web3provider, duration) {
   const id = Date.now();
 
   return new Promise((resolve, reject) => {
-    web3proxy.web3.currentProvider.send({
+    web3provider.web3.currentProvider.send({
       jsonrpc: '2.0',
       method: 'evm_increaseTime',
       params: [duration],
@@ -129,7 +129,7 @@ function increaseTimeTestRPC(web3proxy, duration) {
       if (err1) {
         return reject(err1);
       }
-      web3proxy.web3.currentProvider.send({
+      web3provider.web3.currentProvider.send({
         jsonrpc: '2.0',
         method: 'evm_mine',
         id: id+1,
@@ -145,11 +145,11 @@ function increaseTimeTestRPC(web3proxy, duration) {
  * @param  {Number} target timestamp
  * @return {Promise}
  */
-async function increaseTimeTestRPCTo(web3proxy, target) {
-  let now = await latestTime(web3proxy);
+async function increaseTimeTestRPCTo(web3provider, target) {
+  let now = await latestTime(web3provider);
   if (target < now) throw Error(`Cannot increase current time(${now}) to a moment in the past(${target})`);
   let diff = target - now;
-  return increaseTimeTestRPC(web3proxy, diff);
+  return increaseTimeTestRPC(web3provider, diff);
 }
 
 module.exports = {

@@ -4,6 +4,7 @@ const utils = require('./utils');
 const data = require('./data');
 const deploy = require('./deploy');
 const transactions = require('./transactions');
+const errors = require('./errors');
 
 const getInstance = function (web3) {
     if (! web3) {
@@ -14,6 +15,7 @@ const getInstance = function (web3) {
     return {
         web3: web3,
         accounts: accounts(web3, initializedUtils),
+        errors: errors,
         utils: initializedUtils,
         contracts: initializedContracts,
         data: data(web3, initializedUtils, initializedContracts),
