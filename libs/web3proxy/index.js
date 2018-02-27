@@ -19,7 +19,7 @@ const getInstance = function (web3) {
         contracts: initializedContracts,
         data: data(web3, initializedUtils, initializedContracts),
         deploy: deploy(web3, initializedUtils, initializedContracts),
-        transactions: transactions(web3, initializedUtils, initializedContracts),
+        transactions: transactions(web3, initializedUtils),
     }
 };
 

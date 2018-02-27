@@ -519,58 +519,8 @@ describe('HotelManager', function() {
 
   });
 
-  describe('Decoding TX', () => {
-
-    it('should decode a single TX to create a hotel', async () => {
-      let createHotelTx = await lib.createHotel(hotelName, hotelDescription);
-      let decodedTx = await web3proxy.transactions.decodeTxInput(createHotelTx.transactionHash, index.options.address, ownerAccount);
-      assert(!decodedTx.hotel);
-      assert.equal(decodedTx.method.name, 'Register Hotel');
-      assert.equal(decodedTx.method.params.find(e => e.name == 'name').value, hotelName);
-      assert.equal(decodedTx.method.params.find(e => e.name == 'description').value, hotelDescription);
-    });
-
-    it('should decode multiple TXs to create and edit a hotel', async () => {
-      let createHotelTx = await lib.createHotel(hotelName, hotelDescription);
-
-      const hotels = await lib.getHotels();
-      let hotelAddress = Object.keys(hotels)[0];
-
-      const newName = 'Awesome WTHotel';
-      const newDescription = 'Awesome Winding Tree Hotel';
-      let editInfoTx = await lib.changeHotelInfo(hotelAddress, newName, newDescription);
-
-      let decodedTxs = await web3proxy.data.getDecodedTransactions(ownerAccount, index.options.address, 0, 'test');
-
-      let decodedCreateHotelTx = decodedTxs.find(tx => tx.hash == createHotelTx.transactionHash);
-      assert(!decodedCreateHotelTx.hotel);
-      assert.equal(decodedCreateHotelTx.method.name, 'Register Hotel');
-      assert.equal(decodedCreateHotelTx.method.params.find(e => e.name == 'name').value, hotelName);
-      assert.equal(decodedCreateHotelTx.method.params.find(e => e.name == 'description').value, hotelDescription);
-
-      let decodedEditInfoTx = decodedTxs.find(tx => tx.hash == editInfoTx.transactionHash);
-      assert.equal(decodedEditInfoTx.method.name, 'Edit Info');
-      assert.equal(decodedEditInfoTx.hotel, hotelAddress);
-      assert.equal(decodedEditInfoTx.method.params.find(e => e.name == '_name').value, newName);
-      assert.equal(decodedEditInfoTx.method.params.find(e => e.name == '_description').value, newDescription);
-    });
-
-  });
-
-  describe('get Tx info from txHash', () => {
-
-    it('get transaction info for mined transaction', async()=>{
-      const {transactionHash} = await lib.createHotel(hotelName, hotelDescription);
-      const {status, method} = await lib.getTx(transactionHash)
-      assert.equal(status, 'mined');
-      assert.equal(method.name, 'Register Hotel');
-      assert.equal(method.params.find(e => e.name == 'name').value, hotelName);
-      assert.equal(method.params.find(e => e.name == 'description').value, hotelDescription);
-    });
-  });
-
-  describe('Create full hotel', ()=> {
-    it('Should create a complete hotel', async()=>{
+  describe('Create full hotel', () => {
+    it('Should create a complete hotel', async() => {
       const hotelToCreate = {
         name: 'Test Hotel',
         description: 'Test Hotel desccription',
@@ -660,15 +610,15 @@ describe('HotelManager', function() {
       assert.equal(unitTypesToCreate['FAMILY_CABIN'].maxGuests, unitTypes['FAMILY_CABIN'].maxGuests);
       assert.equal(unitTypesToCreate['FAMILY_CABIN'].price, unitTypes['FAMILY_CABIN'].price);
 
-      const unitsToCreate = hotelToCreate.units.sort((a,b)=>a.defaultLifPrice<b.defaultLifPrice)
-      const units = Object.values(hotel.units).sort((a,b)=>a.defaultLifPrice<b.defaultLifPrice)
+      const unitsToCreate = hotelToCreate.units.sort((a,b) => a.defaultLifPrice < b.defaultLifPrice);
+      const units = Object.values(hotel.units).sort((a,b) => a.defaultLifPrice < b.defaultLifPrice);
 
       for (let i = 0; i < units.length; i++) {
-        assert.equal(units[i].active, unitsToCreate[i].active)
-        assert.equal(units[i].unitType, unitsToCreate[i].unitType)
-        assert.equal(units[i].defaultPrice, unitsToCreate[i].defaultPrice)
-        assert.equal(units[i].defaultLifPrice, unitsToCreate[i].defaultLifPrice)
-        assert.equal(units[i].currencyCode, 'CHW')
+        assert.equal(units[i].active, unitsToCreate[i].active);
+        assert.equal(units[i].unitType, unitsToCreate[i].unitType);
+        assert.equal(units[i].defaultPrice, unitsToCreate[i].defaultPrice);
+        assert.equal(units[i].defaultLifPrice, unitsToCreate[i].defaultLifPrice);
+        assert.equal(units[i].currencyCode, 'CHW');
       }
     });
   });

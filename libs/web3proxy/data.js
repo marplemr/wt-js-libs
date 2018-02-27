@@ -157,7 +157,6 @@ async function getHotelInfo(web3, utils, contracts, wtHotel) {
 }
 
 //modified version of https://ethereum.stackexchange.com/questions/2531/common-useful-javascript-snippets-for-geth/3478#3478
-//only used for testing getDecodedTransactions locally
 async function _getTransactionsByAccount(web3, myaccount, startBlockNumber, endBlockNumber) {
   if (endBlockNumber == null) {
     endBlockNumber = await web3.eth.getBlockNumber();
@@ -183,6 +182,89 @@ async function _getTransactionsByAccount(web3, myaccount, startBlockNumber, endB
 // Populated during init
 let getTransactionsByAccount;
 
+function _beginCall(abiDecoder, _method, _txData, _tx) {
+  const newMethod = abiDecoder.decodeMethod(_method.params.find(call => call.name === 'publicCallData').value);
+  if(newMethod.name == 'book') {
+    newMethod.name = 'requestToBook';
+  }
+  if(newMethod.name == 'bookWithLif') {
+    newMethod.name = 'requestToBookWithLif';
+  }
+  if (!_txData.hotel) {
+    _txData.hotel = _tx.to;
+  }
+  return newMethod
+}
+
+async function _callHotel(web3, contracts, hotelInstances, _method, _txData, _hotelsAddrs){
+  let hotelIndex = _method.params.find(call => call.name === 'index').value;
+  _txData.hotel = _hotelsAddrs[hotelIndex];
+  let newMethod = contracts.abiDecoder.decodeMethod(_method.params.find(call => call.name === 'data').value);
+  if(newMethod.name == 'callUnitType' || newMethod.name == 'callUnit') {
+    newMethod = contracts.abiDecoder.decodeMethod(method.params.find(call => call.name === 'data').value);
+  }
+  if(newMethod.name == 'continueCall') {
+    let msgDataHash = newMethod.params.find(call => call.name === 'msgDataHash').value;
+    if(!hotelInstances[txData.hotel]) {
+      hotelInstances[txData.hotel] = await contracts.getHotelInstance(txData.hotel);
+    }
+    let publicCallData = await hotelInstances[txData.hotel].methods.getPublicCallData(msgDataHash).call();
+    newMethod = contracts.abiDecoder.decodeMethod(publicCallData);
+    if(newMethod.name == 'bookWithLif') {
+      newMethod.name = 'confirmLifBooking';
+      let receipt = await web3.eth.getTransactionReceipt(tx.hash);
+      txData.lifAmount = contracts.abiDecoder.decodeLogs(receipt.logs).find(log => log.name == 'Transfer').events.find(e => e.name == 'value').value;
+    }
+    if(newMethod.name == 'book') {
+      newMethod.name = 'confirmBooking';
+    }
+  }
+  return newMethod;
+}
+
+async function _getRawTxs(networkName, walletAddress, startBlock) {
+  if(networkName === 'test') {
+    return getTransactionsByAccount(walletAddress, 0, null);
+  }
+  rawTxs = await request.get('http://' + networkName + '.etherscan.io/api')
+    .query({
+      module: 'account',
+      action: 'txlist',
+      address: walletAddress,
+      startBlock: startBlock,
+      endBlock: 'latest',
+      apikey: '6I7UFMJTUXG6XWXN8BBP86DWNHC9MI893F'
+    });
+  return rawTxs.body.result;
+}
+
+
+/**
+  Decodes the method called for a single TX
+*/
+async function decodeTxInput(web3, utils, contracts, txHash, indexAddress, walletAddress) {
+  let wtIndex = contracts.getIndexInstance(indexAddress);
+  let hotelsAddrs = await wtIndex.methods
+      .getHotelsByManager(walletAddress)
+      .call();
+  let hotelInstances = [];
+
+  let tx = await web3.eth.getTransaction(txHash);
+  let txData = {hash: txHash};
+  txData.status = tx.blockNumber ? 'mined' : 'pending';
+  let method = contracts.abiDecoder.decodeMethod(tx.input);
+  if(method.name == 'callHotel') {
+    method = await _callHotel(web3, contracts, hotelInstances, method, txData, hotelsAddrs);
+  }
+  if(method.name == 'beginCall') {
+    method = _beginCall(contracts.abiDecoder, method, txData, tx);
+  }
+  method.name = utils.splitCamelCaseToString(method.name);
+  txData.method = method;
+  return txData;
+}
+
+
 /**
   Returns all transactions between a hotel manager and WTIndex.
   Uses the etherscan API (unless running a local blockchain).
@@ -192,10 +274,8 @@ let getTransactionsByAccount;
   @param {Object}  web3          Web3 instance
   @param {String}  networkName   Name of the ethereum network ('api' for main, 'test' for local)
 */
-// TODO tests
 async function getDecodedTransactions(web3, utils, contracts, walletAddress, indexAddress, startBlock, networkName) {
   let txs = [];
-  let rawTxs = [];
 
   //Get manager's hotel addresses
   let wtIndex = contracts.getIndexInstance(indexAddress);
@@ -204,23 +284,7 @@ async function getDecodedTransactions(web3, utils, contracts, walletAddress, ind
       .call();
   let hotelInstances = [];
   let wtAddresses = [indexAddress].concat(hotelsAddrs);
-
-  //Obtain TX data, either from etherscan or from local chain
-  if(networkName != 'test') {
-    rawTxs = await request.get('http://'+networkName+'.etherscan.io/api')
-      .query({
-        module: 'account',
-        action: 'txlist',
-        address: walletAddress,
-        startBlock: startBlock,
-        endBlock: 'latest',
-        apikey: '6I7UFMJTUXG6XWXN8BBP86DWNHC9MI893F'
-      });
-    rawTxs = rawTxs.body.result;
-    indexAddress = indexAddress.toLowerCase();
-  } else {
-    rawTxs = await getTransactionsByAccount(walletAddress, 0, null, web3);
-  }
+  let rawTxs = await _getRawTxs(networkName, walletAddress, startBlock);
 
   //Decode the TXs
   const start = async () => {
@@ -231,41 +295,17 @@ async function getDecodedTransactions(web3, utils, contracts, walletAddress, ind
         txData.timeStamp = tx.timeStamp;
         let method = contracts.abiDecoder.decodeMethod(tx.input);
         if(method.name == 'callHotel') {
-          let hotelIndex = method.params.find(call => call.name === 'index').value;
-          txData.hotel = hotelsAddrs[hotelIndex];
-          method = contracts.abiDecoder.decodeMethod(method.params.find(call => call.name === 'data').value);
-          if(method.name == 'callUnitType' || method.name == 'callUnit') {
-            method = contracts.abiDecoder.decodeMethod(method.params.find(call => call.name === 'data').value);
-          }
-          if(method.name == 'continueCall') {
-            let msgDataHash = method.params.find(call => call.name === 'msgDataHash').value;
-            if(!hotelInstances[txData.hotel]) {
-              hotelInstances[txData.hotel] = await contracts.getContractInstance('Hotel', txData.hotel);
-            }
-            let publicCallData = await hotelInstances[txData.hotel].methods.getPublicCallData(msgDataHash).call();
-            method = contracts.abiDecoder.decodeMethod(publicCallData);
-            if(method.name == 'bookWithLif') {
-              method.name = 'confirmLifBooking';
-              let receipt = await web3.eth.getTransactionReceipt(tx.hash);
-              txData.lifAmount = contracts.abiDecoder.decodeLogs(receipt.logs).find(log => log.name == 'Transfer').events.find(e => e.name == 'value').value;
-            }
-            if(method.name == 'book') {
-              method.name = 'confirmBooking';
-            }
-          }
+          method = await _callHotel(web3, contracts, hotelInstances, method, txData, hotelsAddrs);
         }
         //Only called when requesting to book a unit
         if(method.name == 'beginCall') {
-          method = contracts.abiDecoder.decodeMethod(method.params.find(call => call.name === 'publicCallData').value);
-          if(method.name == 'book') method.name = 'requestToBook';
-          if(method.name == 'bookWithLif') method.name = 'requestToBookWithLif';
-          txData.hotel = tx.to;
+          method = _beginCall(contracts.abiDecoder, method, txData, tx);
         }
         method.name = utils.splitCamelCaseToString(method.name);
         txData.method = method;
         txs.push(txData);
       }
-    }))
+    }));
   }
   await start();
 
@@ -283,7 +323,6 @@ async function getDecodedTransactions(web3, utils, contracts, walletAddress, ind
 */
 async function getBookingTransactions(web3, utils, contracts, walletAddress, indexAddress, startBlock, networkName) {
   let txs = [];
-  let rawTxs = [];
 
   //Get manager's hotel addresses
   let wtIndex = contracts.getIndexInstance(indexAddress);
@@ -293,24 +332,7 @@ async function getBookingTransactions(web3, utils, contracts, walletAddress, ind
   let lifTokenAddr = await wtIndex.methods.LifToken().call();
   let hotelInstances = [];
   let wtAddresses = [lifTokenAddr].concat(hotelsAddrs);
-
-
-  //Obtain TX data, either from etherscan or from local chain
-  if(networkName != 'test') {
-    rawTxs = await request.get('http://' + networkName + '.etherscan.io/api')
-      .query({
-        module: 'account',
-        action: 'txlist',
-        address: walletAddress,
-        startBlock: startBlock,
-        endBlock: 'latest',
-        apikey: '6I7UFMJTUXG6XWXN8BBP86DWNHC9MI893F'
-      });
-    rawTxs = rawTxs.body.result;
-    indexAddress = indexAddress.toLowerCase();
-  } else {
-    rawTxs = await getTransactionsByAccount(walletAddress, 0, null);
-  }
+  let rawTxs = await _getRawTxs(networkName, walletAddress, startBlock);
 
   //Decode the TXs
   const start = async () => {
@@ -327,10 +349,7 @@ async function getBookingTransactions(web3, utils, contracts, walletAddress, ind
         }
         //Only called when requesting to book a unit
         if(method.name == 'beginCall') {
-          method = contracts.abiDecoder.decodeMethod(method.params.find(call => call.name === 'publicCallData').value);
-          if(method.name == 'book') method.name = 'requestToBook';
-          if(method.name == 'bookWithLif') method.name = 'requestToBookWithLif';
-          if(!txData.hotel) txData.hotel = tx.to;
+          method = _beginCall(contracts.abiDecoder, method, txData, tx);
           //Get Hotel info
           if(!hotelInstances[txData.hotel]) {
             hotelInstances[txData.hotel] = await contracts.getContractInstance('Hotel', txData.hotel);
@@ -356,12 +375,10 @@ async function getBookingTransactions(web3, utils, contracts, walletAddress, ind
           txData.method = method;
           txs.push(txData);
         }
-
       }
-    }))
+    }));
   }
   await start();
-
   return txs;
 }
 
@@ -389,6 +406,7 @@ async function getGuestData(web3, abiDecoder, hash) {
 module.exports = function (web3, utils, contracts) {
   getTransactionsByAccount = _.partial(_getTransactionsByAccount, web3);
   return {
+      decodeTxInput: _.partial(decodeTxInput, web3, utils, contracts),
       getGuestData: _.partial(getGuestData, web3, contracts.abiDecoder),
       getUnitTypeIndex: _.partial(getUnitTypeIndex, web3),
       getHotelInfo: _.partial(getHotelInfo, web3, utils, contracts),
