@@ -33,39 +33,41 @@ class BookingData {
   /**
    * Gets the national currency cost of a booking for a range of days. Check-in is on the
    * first day, check-out on the last.
-   * @param  {Address}          unitAddress  Unit contract to edit
-   * @param  {Date}            fromDate     check-in date
+   * @param  {Address}          hotelAddress  Hotel of the unit
+   * @param  {Address}          unitAddress  Unit
+   * @param  {Date }            fromDate     check-in date
    * @param  {Number}           daysAmount   integer number of days to book.
    * @return {Number}           Floating point cost ex: 100.00
    * @example
-      const cost = await lib.getCost('0xab3..cd', new Date('5/31/2020'), 5);
+      const cost = await lib.getCost('0xad5..cd', '0xab3..cd', new Date('5/31/2020'), 5);
    */
-  async getCost(unitAddress, fromDate, daysAmount = 0){
-    validate.addressAndRange({unitAddress, fromDate, daysAmount});
+  async getCost(hotelAddress, unitAddress, fromDate, daysAmount = 0){
+    // TODO validate.addressAndRange({unitAddress, fromDate, daysAmount});
 
     const fromDay = this.web3provider.utils.formatDate(fromDate);
-    const unit = this.web3provider.contracts.getHotelUnitInstance(unitAddress);
-    const cost = await unit.methods.getCost(fromDay, daysAmount).call();
+    const hotel = this.web3provider.contracts.getHotelInstance(hotelAddress);
+    const cost = await hotel.methods.getCost(unitAddress, fromDay, daysAmount).call();
     return this.web3provider.utils.bnToPrice(cost);
   }
 
   /**
    * Gets the LifToken cost of a booking for a range of days. Check-in is on the first day,
    * check-out on the last.
-   * @param  {Address}          unitAddress  Unit contract to edit
+   * @param  {Address}          hotelAddress  Hotel of the unit
+   * @param  {Address}          unitAddress  Unit
    * @param  {Date }            fromDate     check-in date
    * @param  {Number}           daysAmount   integer number of days to book.
    * @return {Number}           Lif
    * @example
-      const cost = await lib.getCost('0xab3..cd', new Date('5/31/2020'), 5);
+      const cost = await lib.getCost('0xad5..cd', '0xab3..cd', new Date('5/31/2020'), 5);
    */
-  async getLifCost(unitAddress, fromDate, daysAmount = 0){
-    validate.addressAndRange({unitAddress, fromDate, daysAmount});
+  async getLifCost(hotelAddress, unitAddress, fromDate, daysAmount = 0){
+    // TODO validate.addressAndRange({unitAddress, fromDate, daysAmount});
 
     const fromDay = this.web3provider.utils.formatDate(fromDate);
+    const hotel = thi.getHotelInstance(hotelAddress);
     const unit = this.getHotelUnitInstance(unitAddress);
-    const wei = await unit.methods.getLifCost(fromDay, daysAmount).call();
-
+    const wei = await hotel.methods.getLifCost(unitAddress, fromDay, daysAmount).call();
     return this.web3provider.utils.lifWei2Lif(wei);
   }
 

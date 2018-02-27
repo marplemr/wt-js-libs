@@ -68,7 +68,6 @@ class User {
       .encodeABI();
   }
 
-
   /**
    * Initiates a token-payment booking
    * @param  {Address}    hotelAddress  Address of Hotel contract that controls the unit to book
@@ -81,8 +80,7 @@ class User {
   async bookWithLif(hotelAddress, unitAddress, fromDate, daysAmount, guestData, callbacks) {
     validate.bookInfo({hotelAddress, unitAddress, fromDate, daysAmount, guestData});
 
-    const fromDay = this.web3provider.utils.formatDate(fromDate);
-    const cost = await this.bookings.getLifCost(unitAddress, fromDay, daysAmount);
+    const cost = await this.bookings.getLifCost(hotelAddress, unitAddress, fromDay, daysAmount);
     const enough = await this.balanceCheck(cost);
     const available = await this.bookings.unitIsAvailable(unitAddress, fromDate, daysAmount);
     const guestDataHex = this.web3provider.web3.utils.toHex(guestData);
