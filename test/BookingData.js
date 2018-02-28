@@ -97,7 +97,7 @@ describe('BookingData', function() {
     });
 
     it('returns a unit\'s price and availability for a range of dates', async () => {
-      let availability = await bookingData.unitAvailability(unitAddress, fromDate, daysAmount);
+      let availability = await bookingData.unitAvailability(hotelAddress, unitAddress, fromDate, daysAmount);
       for(let date of availability) {
         if (date.day == web3provider.utils.formatDate(fromDate)) {
           assert.equal(date.price, specialPrice);
@@ -111,7 +111,7 @@ describe('BookingData', function() {
 
     it('given a single moment date, returns units price and availability for that month', async() => {
       let fromDateMoment = moment(fromDate);
-      let availability = await bookingData.unitMonthlyAvailability(unitAddress, fromDateMoment);
+      let availability = await bookingData.unitMonthlyAvailability(hotelAddress, unitAddress, fromDateMoment);
       assert.equal(Object.keys(availability).length, 30);
       assert.equal(availability[web3provider.utils.formatDate(fromDate)].price, specialPrice);
     })

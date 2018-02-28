@@ -73,27 +73,32 @@ class BookingData {
 
   /**
    * Checks the availability of a unit for a range of days
+   * @param  {Address} hotelAddress 
    * @param  {Address} unitAddress Unit contract address
    * @param  {Date}    fromDate    check-in date
    * @param  {Number}  daysAmount  number of days
    * @return {Boolean}
    */
-  async unitAvailability(unitAddress, fromDate, daysAmount = 0) {
-    validate.addressAndRange({unitAddress, fromDate, daysAmount});
+  async unitAvailability(hotelAddress, unitAddress, fromDate, daysAmount) {
+    // TODO validate.addressAndRange({unitAddress, fromDate, daysAmount});
 
     const unit = this.getHotelUnitInstance(unitAddress);
+    const hotel = this.getHotelInstance(hotelAddress);
     const fromDay = this.web3provider.utils.formatDate(fromDate);
+    
+    // If unit is not active, fail fast
     const isActive = await unit.methods.active().call();
     if (!isActive) {
       return false;
     }
+
     const unitType = await unit.methods.unitType().call();
     const unitTypeAddress = await hotel.methods.getUnitType(unitType).call();
-    const unitTypeInstance = utils.getInstance('HotelUnitType', unitTypeAddress, this.context);
+    const unitTypeInstance = this.web3provider.contracts.getHotelUnitTypeInstance(unitTypeAddress);
 
     const range = _.range(fromDay, fromDay + daysAmount);
     const defaultPrice = (await unitTypeInstance.methods.defaultPrice().call()) / 100;
-    const defaultLifPrice = utils.lifWei2Lif(await unitTypeInstance.methods.defaultLifPrice().call(), this.context);
+    const defaultLifPrice = this.web3provider.utils.lifWei2Lif(await unitTypeInstance.methods.defaultLifPrice().call());
     let availability = [];
 
     for (let day of range) {
@@ -119,10 +124,9 @@ class BookingData {
    * @param  {Number}  daysAmount  number of days
    * @return {Boolean}
    */
-  async unitIsAvailable(unitAddress, fromDate, daysAmount=0) {
-    validate.addressAndRange({unitAddress, fromDate, daysAmount});
-
-    const availability = await this.unitAvailability(unitAddress, fromDate, daysAmount);
+  async unitIsAvailable(hotelAddress, unitAddress, fromDate, daysAmount) {
+    // TODO validate args
+    const availability = await this.unitAvailability(hotelAddress, unitAddress, fromDate, daysAmount);
     return _.every(availability, (dayAvailability) => {
       return dayAvailability.available;
     });
@@ -134,13 +138,12 @@ class BookingData {
    * @param  {Moment}  date        Moment object
    * @return {Object}  Mapping of number of days since epoch to unit's price and availability for that day
    */
-  async unitMonthlyAvailability(unitAddress, date) {
-    validate.addressAndDate({unitAddress, date});
-
+  async unitMonthlyAvailability(hotelAddress, unitAddress, date) {
+    // TODO validate.addressAndDate({unitAddress, date});
     let fromDate = moment().year(date.year()).month(date.month()).date(1);
     let toDate = moment(fromDate).endOf('month');
     let daysAmount = toDate.diff(fromDate, 'days');
-    const availability = await this.unitAvailability(unitAddress, fromDate, daysAmount);
+    const availability = await this.unitAvailability(hotelAddress, unitAddress, fromDate, daysAmount);
     return _.keyBy(availability, 'day');
   }
 

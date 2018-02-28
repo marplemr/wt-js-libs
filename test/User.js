@@ -92,7 +92,11 @@ describe('User', function() {
       assert.equal(sendTransactionStub.firstCall.args[0].data, 'beginCall-encodedABI');
     });
 
-    it('should apply gas margin in a non-test network', async () => {
+    it('should make the reservation when manager confirms', async() => {
+      // Pre booking request
+      let isAvailable = await data.unitIsAvailable(hotelAddress, unitAddress, fromDate, daysAmount);
+      assert.isTrue(isAvailable);
+
       await user.book(
         hotelAddress,
         unitAddress,
@@ -146,7 +150,9 @@ describe('User', function() {
       user.bookings.unitIsAvailable.restore();
     });
 
-    it('should create a blockchain transaction', async () => {
+    it('should make a booking: days reserved', async () => {
+      let isAvailable = await data.unitIsAvailable(hotelAddress, unitAddress, fromDate, daysAmount);
+      assert.isTrue(isAvailable);
       await user.bookWithLif(
         hotelAddress,
         unitAddress,
