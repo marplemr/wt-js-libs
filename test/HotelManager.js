@@ -209,43 +209,25 @@ describe('HotelManager', function() {
       assert.equal(sendTransactionStub.firstCall.args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':' + 'encoded-editinfo-' + newName + ':' + newDescription);
     });
 
-    it('should create a transaction that changes the hotel address', async function(){
-      const lineOne = 'Address one';
-      const lineTwo = 'Address two';
-      const zip = '57575';
-      const country = 'Spain';
-      await hotelManager.changeHotelAddress(hotelAddress, lineOne, lineTwo, zip, country);
-      assert.equal(sendTransactionStub.callCount, 1);
-      assert.equal(sendTransactionStub.firstCall.args[0].from, ownerAccount);
-      assert.equal(sendTransactionStub.firstCall.args[0].to, indexAddress);
-      assert.equal(sendTransactionStub.firstCall.args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':' + 'encoded-editaddress-' + [lineOne, lineTwo, zip, country].join(':'));
+    it('changeHotelLocation: edits the hotel address', async function(){
+      const lineOne = 'Common street 123';
+      const lineTwo = '';
+      const zip = '6655';
+      const country = 'ES';
+      const timezone = 'Europe/Madrid';
+      const longitude = 40.426371;
+      const latitude = -3.703578;
 
-    });
+      await lib.changeHotelLocation(address, lineOne, lineTwo, zip, country, timezone, longitude, latitude);
+      const hotel = await lib.getHotel(address);
 
-    it('should create a transaction that changes the hotel location', async function(){
-      const timezone = 15;
-      const longitude = 50;
-      const latitude = 15;
-
-      await hotelManager.changeHotelLocation(hotelAddress, timezone, latitude, longitude);
-      const {long, lat} = web3provider.utils.locationToUint(longitude, latitude);
-      assert.equal(sendTransactionStub.callCount, 1);
-      assert.equal(sendTransactionStub.firstCall.args[0].from, ownerAccount);
-      assert.equal(sendTransactionStub.firstCall.args[0].to, indexAddress);
-      assert.equal(sendTransactionStub.firstCall.args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':' + 'encoded-editlocation-' + [timezone, long, lat].join(':'));
-    });
-
-    it('should create a transaction that set timezone to 0', async function(){
-      const timezone = 0;
-      const longitude = 50;
-      const latitude = 15;
-
-      await hotelManager.changeHotelLocation(hotelAddress, timezone, latitude, longitude);
-      const {long, lat} = web3provider.utils.locationToUint(longitude, latitude);
-      assert.equal(sendTransactionStub.callCount, 1);
-      assert.equal(sendTransactionStub.firstCall.args[0].from, ownerAccount);
-      assert.equal(sendTransactionStub.firstCall.args[0].to, indexAddress);
-      assert.equal(sendTransactionStub.firstCall.args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':' + 'encoded-editlocation-' + [timezone, long, lat].join(':'));
+      assert.equal(hotel.lineOne, lineOne);
+      assert.equal(hotel.lineTwo, lineTwo);
+      assert.equal(hotel.zip, zip);
+      assert.equal(web3.utils.toAscii(hotel.country), country);
+      assert.equal(hotel.longitude, longitude);
+      assert.equal(hotel.latitude, latitude);
+      assert.equal(hotel.timezone, timezone);
     });
 
     it('should create a transaction that adds an image to the hotel', async function() {

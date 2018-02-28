@@ -271,42 +271,21 @@ class HotelManager {
     return this.web3provider.transactions.execute(data, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);
   }
 
-  /**
-   * Edits a hotel's physical address data.
-   * @param  {Address} hotelAddress contract address
-   * @param  {String} lineOne       physical address data
-   * @param  {String} lineTwo       physical address data
-   * @param  {String} zipCode       physical address data
-   * @param  {String} country       physical address data
-   * @param  {Boolean} callbacks    object with callback functions
-   * @return {Promievent}
-   */
-  async changeHotelAddress(hotelAddress, lineOne, lineTwo, zipCode, country, callbacks) {
-    validate.physicalAddress({hotelAddress, lineOne, lineTwo, zipCode, country});
-
-    const {
-      hotel,
-      index
-    } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
-
-    const data = await hotel.methods
-      .editAddress(lineOne, lineTwo, zipCode, country)
-      .encodeABI();
-
-    return this.web3provider.transactions.execute(data, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);
-  }
-
-  /**
-   * Edits a hotel's coordinate location and timezone data.
-   * @param  {Address} hotelAddress contract address
-   * @param  {Number} timezone      positive integer timezone relative to GMT
-   * @param  {Number} latitude      GPS latitude location data e.g `-3.703578`
-   * @param  {Number} longitude     GPS longitude location data e.g `40.426371`
-   * @param  {Boolean} callbacks    object with callback functions
-   * @return {Promievent}
-   */
-  async changeHotelLocation(hotelAddress, timezone, latitude, longitude, callbacks) {
-    validate.hotelCoordinatesAndTimezone({hotelAddress, timezone, latitude, longitude});
+/**
+ * Edits a hotel's location and timezone.
+ * @param  {Address} hotelAddress contract address
+ * @param  {String} lineOne       physical address data
+ * @param  {String} lineTwo       physical address data
+ * @param  {String} zipCode       physical address data
+ * @param  {String} country       physical address data
+ * @param  {Number} timezone      positive integer timezone relative to GMT
+ * @param  {Number} latitude      GPS latitude location data e.g `-3.703578`
+ * @param  {Number} longitude     GPS longitude location data e.g `40.426371`
+ * @param  {Boolean} callbacks    object with callback functions
+ * @return {Promievent}
+ */
+  async changeHotelLocation(hotelAddress, lineOne, lineTwo, zipCode, country, timezone, longitude, latitude, callbacks){
+    // TODO validate.hotelCoordinatesAndTimezone({hotelAddress, timezone, latitude, longitude});
     const {
       hotel,
       index
@@ -315,7 +294,7 @@ class HotelManager {
     const {long, lat} = this.web3provider.utils.locationToUint(longitude, latitude);
 
     const data = await hotel.methods
-      .editLocation(timezone, long, lat)
+      .editLocation(lineOne, lineTwo, zipCode, this.web3.utils.toHex(country), timezone, long, lat)
       .encodeABI();
 
     return this.web3provider.transactions.execute(data, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);
