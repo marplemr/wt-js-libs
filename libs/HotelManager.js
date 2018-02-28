@@ -210,9 +210,9 @@ class HotelManager {
       data: data,
       nonce: await this.web3provider.web3.eth.getTransactionCount(this.owner, 'pending')
     };
-
-    const estimate = await this.web3provider.web3.eth.estimateGas(options);
-    options.gas = await this.web3provider.utils.addGasMargin(estimate, this.gasMargin);
+    // TODO for some reason estimateGas does not work well in this case
+    // const estimate = await this.web3.eth.estimateGas(options);
+    options.gas = 100000;
 
     if (callbacks) {
       return this.web3provider.web3.eth.sendTransaction(options)
