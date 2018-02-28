@@ -39,6 +39,7 @@
     "moment": "^2.18.1",
     "superagent": "^3.8.2",
     "web3": "^1.0.0-beta.23",
+    "web3-eth-abi": "^1.0.0-beta.30",
     "zeppelin-solidity": "^1.2.0"
   },
   "devDependencies": {

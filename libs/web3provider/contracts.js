@@ -1,5 +1,6 @@
 const _ = require('lodash');
 const abiDecoder = require('abi-decoder');
+const web3Abi = require('web3-eth-abi');
 
 const WTIndexContract = require('../../build/contracts/WTIndex.json');
 const HotelContract = require('../../build/contracts/Hotel.json');
@@ -61,6 +62,17 @@ const getHotelUnitTypeInstance = function (address) {
   return getContractInstance('HotelUnitType', address);
 }
 
+function getOverridingMethodEncodedFunctionCallData(contractName, methodName, parameters) {
+  if (! abis[contractName]) {
+    throw new Error("Invalid contract " + contractName);
+  }
+  const methodAbi = abis[contractName].filter((n) => n.name === methodName && n.inputs.length === parameters.length).pop();
+  if (! methodAbi) {
+    throw Error("Method not found on " + contractName + ", maybe you are using an invalid signature?");
+  }
+  return web3Abi.encodeFunctionCall(methodAbi, parameters);
+}
+
 module.exports = function (web3) {
   getContractInstance = _.partial(_getContractInstance, web3);
   return {
@@ -73,5 +85,6 @@ module.exports = function (web3) {
     getTokenInstance: getTokenInstance,
     getIndexInstance: getIndexInstance,
     getHotelUnitTypeInstance: getHotelUnitTypeInstance,
+    getOverridingMethodEncodedFunctionCallData: getOverridingMethodEncodedFunctionCallData,
   }
 };

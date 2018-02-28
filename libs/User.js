@@ -100,10 +100,9 @@ class User {
       daysAmount,
       guestDataHex
     );
-    const weiCost = this.web3provider.utils.lif2LifWei(cost);
-    const approvalData = await this.token.methods
-      .approveData(hotelAddress, weiCost, bookData)
-      .encodeABI();
+    const weiCost = utils.lif2LifWei(cost, this.context);
+    // Workaround for ERC827 same-named call through web3
+    const approvalData = this.web3proxy.contracts.getOverridingMethodEncodedFunctionCallData('LifToken', 'approve', [hotelAddress, weiCost, bookData]);
     const options = {
       from: this.account,
       to: this.token.options.address,
