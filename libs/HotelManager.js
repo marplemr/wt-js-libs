@@ -423,13 +423,11 @@ class HotelManager {
    * @param  {String} description   description: e.g. 'Simple. Clean.'
    * @param  {Number} minGuests     minimum number of guests that can stay in UnitType
    * @param  {Number} maxGuests     maximum number of guests that can stay in UnitType
-   * @param  {String} price         price of UnitType: e.g '50 euros'
    * @param  {Boolean} callbacks    object with callback functions
    * @return {Promievent}
    */
-  async editUnitType(hotelAddress, unitType, description, minGuests, maxGuests, price, callbacks) {
-    validate.unitTypeInfo({hotelAddress, unitType, description, minGuests, maxGuests, price});
-
+  async editUnitType(hotelAddress, unitType, description, minGuests, maxGuests, callbacks){
+    // TODO validate.unitTypeInfo({hotelAddress, unitType, description, minGuests, maxGuests, price});
     const {
       hotel,
       index
@@ -440,7 +438,7 @@ class HotelManager {
     const instance = this.getHotelUnitTypeInstance(address);
 
     const editData = instance.methods
-      .edit(description, minGuests, maxGuests, price)
+      .edit(description, minGuests, maxGuests)
       .encodeABI();
 
     const hotelData = hotel.methods
@@ -717,13 +715,10 @@ class HotelManager {
    * @param {Address}   hotelAddress  Hotel contract that controls the Unit being edited
    * @param  {String}   unitType      unique plain text id of UnitType, ex: 'BASIC_ROOM'
    * @param {Number}    code          Integer currency code btw 0 and 255
-   * @param {Function}  converter     ex `euro = kroneToEuro(krone)`
-   * @param {Date}      convertStart  date to begin search of specialPrices
-   * @param {Date}      convertEnd    date (inclusive) to end search of specialPrices
    * @param  {Boolean} callbacks    object with callback functions
    * @return {Promievent}
    */
-  async setCurrencyCode(hotelAddress, unitType, code, callbacks, converter, convertStart, convertEnd) {
+  async setCurrencyCode(hotelAddress, unitType, code, callbacks){
     // TODO validate.currencyCode({hotelAddress, unitAddress, code});
 
     if(! this.web3provider.utils.currencyCodes.number(code)) {
@@ -915,20 +910,19 @@ class HotelManager {
                                 unitType,
                                 hotelToCreate.unitTypes[unitType].info.description,
                                 hotelToCreate.unitTypes[unitType].info.minGuests,
-                                hotelToCreate.unitTypes[unitType].info.maxGuests,
-                                hotelToCreate.unitTypes[unitType].info.price)
-      }
-
-      for(let unitType of unitTypes){
+                                hotelToCreate.unitTypes[unitType].info.maxGuests)
+        
         for(let imageUrl of hotelToCreate.unitTypes[unitType].images){
           await this.addImageUnitType(hotelAddress, unitType, imageUrl)
         }
-      }
 
-      for(let unitType of unitTypes){
         for(let amenity of hotelToCreate.unitTypes[unitType].amenities){
           await this.addAmenity(hotelAddress, unitType, amenity)
         }
+
+        await this.setDefaultPrice(hotelAddress, unitType, hotelToCreate.unitTypes[unitType].defaultPrice);
+        await this.setDefaultLifPrice(hotelAddress, unitType, hotelToCreate.unitTypes[unitType].defaultLifPrice);
+        await this.setCurrencyCode(hotelAddress, unitType, hotelToCreate.unitTypes[unitType].currencyCode);
       }
 
       for(let unit of hotelToCreate.units){
@@ -941,9 +935,6 @@ class HotelManager {
       const sortedUnits = hotelToCreate.units.sort(
         (a,b) => a.unitType < b.unitType);
       for (let i = 0; i < sortedUnits.length; i++) {
-        await this.setCurrencyCode(hotelAddress,addressesByType[i], sortedUnits[i].currencyCode )
-        await this.setDefaultPrice(hotelAddress,addressesByType[i], sortedUnits[i].defaultPrice )
-        await this.setDefaultLifPrice(hotelAddress,addressesByType[i], sortedUnits[i].defaultLifPrice )
         await this.setUnitActive(hotelAddress,addressesByType[i], sortedUnits[i].active )
       }
       workingHotel = await this.getHotel(hotelAddress);

@@ -270,19 +270,27 @@ describe('HotelManager', function() {
       assert.equal(sendTransactionStub.firstCall.args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':' + 'encoded-removeunittype-' + [toHexResult, unitIndex].join(':'));
     });
 
+    it('addUnitType: initializes info correctly', async() => {
+      await lib.addUnitType(address, typeName);
+      let hotel = await lib.getHotel(address);
+
+      assert.isNull(hotel.unitTypes[typeName].info.description);
+      assert.equal(hotel.unitTypes[typeName].info.defaultPrice, 0);
+      assert.isNull(hotel.unitTypes[typeName].info.minGuests);
+      assert.isNull(hotel.unitTypes[typeName].info.maxGuests);
+    });
+
     it('should generate a transaction that updates a UnitType', async() => {
       const description = 'Adobe';
       const minGuests = 1;
       const maxGuests = 2;
-      const price = '250 euro';
 
       await hotelManager.editUnitType(
         hotelAddress,
         typeName,
         description,
         minGuests,
-        maxGuests,
-        price
+        maxGuests
       );
       assert.equal(sendTransactionStub.callCount, 1);
       assert.equal(sendTransactionStub.firstCall.args[0].from, ownerAccount);
