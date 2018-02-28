@@ -898,9 +898,8 @@ class HotelManager {
       const latest = hotelsArray.length - 1;
       hotelAddress = hotelsArray[latest];
 
-      await this.setRequireConfirmation(hotelAddress, hotelToCreate.waitConfirmation)
-      await this.changeHotelAddress(hotelAddress, hotelToCreate.lineOne, hotelToCreate.lineTwo, hotelToCreate.zip, hotelToCreate.country)
-      await this.changeHotelLocation(hotelAddress, hotelToCreate.timezone, hotelToCreate.latitude, hotelToCreate.longitude)
+      await this.setRequireConfirmation(hotelAddress, hotelToCreate.waitConfirmation);
+      await this.changeHotelLocation(hotelAddress, hotelToCreate.lineOne, hotelToCreate.lineTwo, hotelToCreate.zip, hotelToCreate.country, hotelToCreate.timezone, hotelToCreate.longitude, hotelToCreate.latitude);
 
       for(let imageUrl of hotelToCreate.images) {
         await this.addImageHotel(hotelAddress, imageUrl)
@@ -908,7 +907,7 @@ class HotelManager {
 
       const unitTypes = Object.keys(hotelToCreate.unitTypes)
       for(let unitType of unitTypes){
-        await this.addUnitType(hotelAddress, unitType)
+        await this.addUnitType(hotelAddress, unitType);
       }
 
       for(let unitType of unitTypes){
@@ -941,7 +940,6 @@ class HotelManager {
         (a,b) => workingHotel.units[a].unitType < workingHotel.units[b].unitType) : [];
       const sortedUnits = hotelToCreate.units.sort(
         (a,b) => a.unitType < b.unitType);
-      
       for (let i = 0; i < sortedUnits.length; i++) {
         await this.setCurrencyCode(hotelAddress,addressesByType[i], sortedUnits[i].currencyCode )
         await this.setDefaultPrice(hotelAddress,addressesByType[i], sortedUnits[i].defaultPrice )

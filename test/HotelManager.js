@@ -224,7 +224,7 @@ describe('HotelManager', function() {
       assert.equal(hotel.lineOne, lineOne);
       assert.equal(hotel.lineTwo, lineTwo);
       assert.equal(hotel.zip, zip);
-      assert.equal(web3.utils.toAscii(hotel.country), country);
+      assert.equal(hotel.country, country);
       assert.equal(hotel.longitude, longitude);
       assert.equal(hotel.latitude, latitude);
       assert.equal(hotel.timezone, timezone);
