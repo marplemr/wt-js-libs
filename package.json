@@ -33,6 +33,8 @@
   "dependencies": {
     "abi-decoder": "^1.0.8",
     "currency-codes": "^1.1.2",
+    "joi": "^13.1.2",
+    "joi-date-extensions": "^1.1.1",
     "kbpgp": "^2.0.72",
     "lodash": "^4.17.5",
     "moment": "^2.18.1",
@@ -46,7 +48,7 @@
     "babel-polyfill": "^6.23.0",
     "babel-preset-es2015": "^6.3.13",
     "babel-register": "^6.26.0",
-    "chai": "^3.5.0",
+    "chai": "^4.1.2",
     "chai-string": "^1.4.0",
     "bn.js": "^4.0.0",
     "esdoc": "^1.0.3",

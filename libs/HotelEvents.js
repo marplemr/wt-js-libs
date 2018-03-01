@@ -1,6 +1,7 @@
 const _ = require('lodash');
 const HotelManager = require('./HotelManager');
 const EventEmitter = require('events');
+const validate = require('./utils/validators');
 
 /**
  * Methods that let managers and clients subscribe to blockchain events emitted by booking
@@ -76,6 +77,8 @@ class HotelEvents extends EventEmitter {
    * @param  {Address|Address[]} _addresses Hotel contracts to listen to
    */
   subscribe(_addresses){
+    validate.addresses({_addresses});
+
     let hotelsToMonitor = [];
 
     (Array.isArray(_addresses))
@@ -101,4 +104,3 @@ class HotelEvents extends EventEmitter {
 }
 
 module.exports = HotelEvents;
-

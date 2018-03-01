@@ -3,6 +3,7 @@ const HotelEvents = require('./HotelEvents.js');
 const HotelManager = require('./HotelManager.js');
 const User = require('./User.js');
 const web3providerFactory = require('./web3provider/index.js');
+const validate = require('./utils/validators');
 
 module.exports = {
     BookingData: BookingData,
@@ -10,4 +11,5 @@ module.exports = {
     HotelManager: HotelManager,
     User: User,
     web3providerFactory: web3providerFactory,
+    validate: validate,
 };
