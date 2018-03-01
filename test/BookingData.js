@@ -78,6 +78,7 @@ describe('BookingData', function() {
           defaultLifPrice: help.stubContractMethodResult(new BN(web3provider.utils.lif2LifWei(lifPrice))),
           unitSpecialPrice: help.stubContractMethodResult(new BN(web3provider.utils.priceToUint(specialPrice))),
           unitSpecialLifPrice: help.stubContractMethodResult(new BN(web3provider.utils.lif2LifWei(specialLifPrice))),
+          active: help.stubContractMethodResult(true),
           getReservation: help.stubContractMethodResult((args) => {
             // behave accordingly to date
             if (web3provider.utils.formatDate(fromDate) == args.methodParams[0]) {

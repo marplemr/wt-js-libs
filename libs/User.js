@@ -1,3 +1,4 @@
+const validate = require('./utils/validators');
 const BookingData = require('./BookingData');
 
 /**
@@ -78,7 +79,7 @@ class User {
    * @return {Promievent}
    */
   async bookWithLif(hotelAddress, unitAddress, fromDate, daysAmount, guestData, callbacks) {
-    await utils.validate.bookInfo({hotelAddress, unitAddress, fromDate, daysAmount, guestData});
+    validate.bookInfo({hotelAddress, unitAddress, fromDate, daysAmount, guestData});
 
     const fromDay = this.web3provider.utils.formatDate(fromDate);
     const cost = await this.bookings.getLifCost(unitAddress, fromDay, daysAmount);
@@ -134,7 +135,7 @@ class User {
    * @return {Promievent}
    */
   async book(hotelAddress, unitAddress, fromDate, daysAmount, guestData, callbacks){
-    await utils.validate.bookInfo({hotelAddress, unitAddress, fromDate, daysAmount, guestData});
+    validate.bookInfo({hotelAddress, unitAddress, fromDate, daysAmount, guestData});
     const fromDay = this.web3provider.utils.formatDate(fromDate);
     const guestDataHex = this.web3provider.web3.utils.toHex(guestData);
 
@@ -170,7 +171,7 @@ class User {
    * @return {Boolean}
    */
   async balanceCheck(cost) {
-    await utils.validate.cost({cost});
+    validate.cost({cost});
 
     let weiCost = this.web3provider.utils.lif2LifWei(cost);
     weiCost = new this.web3provider.web3.utils.BN(weiCost);

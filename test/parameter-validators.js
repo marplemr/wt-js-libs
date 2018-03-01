@@ -1,6 +1,6 @@
 const {assert} = require('chai');
 
-const utils = require('../libs/utils/index');
+const validate = require('../libs/utils/validators');
 
 describe('Parametes validators', function(){
   describe('Booking data validators', function(){
@@ -10,7 +10,7 @@ describe('Parametes validators', function(){
       const daysAmount = 5;
       it('validate addressAndRange: Expect OK.', async () => {
         try {
-          await utils.validate.addressAndRange({unitAddress, fromDate, daysAmount});
+          validate.addressAndRange({unitAddress, fromDate, daysAmount});
         } catch (err){
           assert.isNull(err);
         }
@@ -18,7 +18,7 @@ describe('Parametes validators', function(){
 
       it('validate addressAndRange: Expect error.', async () => {
         try {
-          await utils.validate.addressAndRange({fromDate, daysAmount});
+          validate.addressAndRange({fromDate, daysAmount});
         } catch (err){
           assert.isNotNull(err);
         }
@@ -29,7 +29,7 @@ describe('Parametes validators', function(){
       const date = new Date('10/10/2020');
       it('validate addressAndDate: Expect OK.', async () => {
         try {
-          await utils.validate.addressAndDate({unitAddress, date});
+          validate.addressAndDate({unitAddress, date});
         } catch (err){
           assert.isNull(err);
         }
@@ -37,7 +37,7 @@ describe('Parametes validators', function(){
 
       it('validate addressAndDate: Expect error.', async () => {
         try {
-          await utils.validate.addressAndDate({date});
+          validate.addressAndDate({date});
         } catch (err){
           assert.isNotNull(err);
         }
@@ -50,7 +50,7 @@ describe('Parametes validators', function(){
       const fromBlock = 3;
       it('validate addressesAndBlock: Expect OK.', async () => {
         try {
-          await utils.validate.addressesAndBlock({_addresses, fromBlock});
+          validate.addressesAndBlock({_addresses, fromBlock});
         } catch (err){
           assert.isNull(err);
         }
@@ -58,14 +58,14 @@ describe('Parametes validators', function(){
       it('validate addressesAndBlock with single address: Expect OK.', async () => {
         const _addresses = '0x9ec823DB4c3B774e82DE9d8B94185Cb3d78277c7';
         try {
-          await utils.validate.addressesAndBlock({_addresses, fromBlock});
+          validate.addressesAndBlock({_addresses, fromBlock});
         } catch (err){
           assert.isNull(err);
         }
       })
       it('validate addressesAndBlock: Expect error.', async () => {
         try {
-          await utils.validate.addressesAndBlock({fromBlock});
+          validate.addressesAndBlock({fromBlock});
         } catch (err){
           assert.isNotNull(err);
         }
@@ -78,14 +78,14 @@ describe('Parametes validators', function(){
       const fromBlock = 3;
       it('validate addresses: Expect OK.', async () => {
         try {
-          await utils.validate.addresses({_addresses});
+          validate.addresses({_addresses});
         } catch (err){
           assert.isNull(err);
         }
       })
       it('validate addressesAndBlock: Expect error.', async () => {
         try {
-          await utils.validate.addresses({});
+          validate.addresses({});
         } catch (err){
           assert.isNotNull(err);
         }
@@ -102,14 +102,14 @@ describe('Parametes validators', function(){
         const guestData = 'guestData';
         it('validate bookInfo: Expect OK.', async () => {
           try {
-            await utils.validate.bookInfo({hotelAddress, unitAddress, fromDate, daysAmount, guestData});
+            validate.bookInfo({hotelAddress, unitAddress, fromDate, daysAmount, guestData});
           } catch (err){
             assert.isNull(err);
           }
         })
         it('validate bookInfo: Expect error.', async () => {
           try {
-            await utils.validate.bookInfo({unitAddress, fromDate, daysAmount, guestData});
+            validate.bookInfo({unitAddress, fromDate, daysAmount, guestData});
           } catch (err){
             assert.isNotNull(err);
           }
@@ -118,14 +118,14 @@ describe('Parametes validators', function(){
       describe('cost', function(){
         it('validate bookInfo: Expect OK.', async () => {
           try {
-            await utils.validate.cost({cost: '53'});
+            validate.cost({cost: '53'});
           } catch (err){
             assert.isNull(err);
           }
         })
         it('validate bookInfo: Expect error.', async () => {
           try {
-            await utils.validate.bookInfo({cost: 'bad'});
+            validate.bookInfo({cost: 'bad'});
           } catch (err){
             assert.isNotNull(err);
           }
@@ -137,14 +137,14 @@ describe('Parametes validators', function(){
       describe('cost', function(){
         it('validate bookInfo: Expect OK.', async () => {
           try {
-            await utils.validate.cost({cost: '53'});
+            validate.cost({cost: '53'});
           } catch (err){
             assert.isNull(err);
           }
         })
         it('validate bookInfo: Expect error.', async () => {
           try {
-            await utils.validate.bookInfo({cost: 'bad'});
+            validate.bookInfo({cost: 'bad'});
           } catch (err){
             assert.isNotNull(err);
           }
@@ -155,21 +155,21 @@ describe('Parametes validators', function(){
         it('validate addressAndDay: Expect ok.', async () => {
           try {
 
-            await utils.validate.addressAndDay({unitAddress, day: '1596'});
+            validate.addressAndDay({unitAddress, day: '1596'});
           } catch (err){
             assert.isNull(err);
           }
         })
         it('validate addressAndDay: Expect ok.', async () => {
           try {
-            await utils.validate.addressAndDay({unitAddress, day: new Date('10/10/2020')});
+            validate.addressAndDay({unitAddress, day: new Date('10/10/2020')});
           } catch (err){
             assert.isNotNull(err);
           }
         })
         it('validate addressAndDay: Expect err.', async () => {
           try {
-            await utils.validate.addressAndDay({unitAddress});
+            validate.addressAndDay({unitAddress});
           } catch (err){
             assert.isNotNull(err);
           }
@@ -180,14 +180,14 @@ describe('Parametes validators', function(){
         const description = 'Winding Tree Hotel'
         it('validate nameAndDescription: Expect OK.', async () => {
           try {
-            await utils.validate.nameAndDescription({name, description});
+            validate.nameAndDescription({name, description});
           } catch (err){
             assert.isNull(err);
           }
         })
         it('validate nameAndDescription: Expect error.', async () => {
           try {
-            await utils.validate.nameAndDescription({name});
+            validate.nameAndDescription({name});
           } catch (err){
             assert.isNotNull(err);
           }
@@ -198,14 +198,14 @@ describe('Parametes validators', function(){
         const value = true
         it('validate hotelAddressAndValue: Expect OK.', async () => {
           try {
-            await utils.validate.hotelAddressAndValue({hotelAddress, value});
+            validate.hotelAddressAndValue({hotelAddress, value});
           } catch (err){
             assert.isNull(err);
           }
         })
         it('validate hotelAddressAndValue: Expect error.', async () => {
           try {
-            await utils.validate.hotelAddressAndValue({hotelAddress});
+            validate.hotelAddressAndValue({hotelAddress});
           } catch (err){
             assert.isNotNull(err);
           }
@@ -219,14 +219,14 @@ describe('Parametes validators', function(){
         const country = 'Argentina'
         it('validate physicalAddress: Expect OK.', async () => {
           try {
-            await utils.validate.physicalAddress({hotelAddress, lineOne, lineTwo, zipCode, country})
+            validate.physicalAddress({hotelAddress, lineOne, lineTwo, zipCode, country})
           } catch (err){
             assert.isNull(err);
           }
         })
         it('validate physicalAddress: Expect error.', async () => {
           try {
-            await utils.validate.physicalAddress({lineOne, lineTwo, zipCode, country})
+            validate.physicalAddress({lineOne, lineTwo, zipCode, country})
           } catch (err){
             assert.isNotNull(err);
           }
@@ -239,14 +239,14 @@ describe('Parametes validators', function(){
         const latitude = 15;
         it('validate hotelCoordinatesAndTimezone: Expect OK.', async () => {
           try {
-            await utils.validate.hotelCoordinatesAndTimezone({hotelAddress, timezone, latitude, longitude})
+            validate.hotelCoordinatesAndTimezone({hotelAddress, timezone, latitude, longitude})
           } catch (err){
             assert.isNull(err);
           }
         })
         it('validate hotelCoordinatesAndTimezone: Expect error.', async () => {
           try {
-            await utils.validate.hotelCoordinatesAndTimezone({timezone, latitude, longitude})
+            validate.hotelCoordinatesAndTimezone({timezone, latitude, longitude})
           } catch (err){
             assert.isNotNull(err);
           }
@@ -257,14 +257,14 @@ describe('Parametes validators', function(){
         const url = 'picture.jpg';
         it('validate hotelAddressAndUrl: Expect OK.', async () => {
           try {
-            await utils.validate.hotelAddressAndUrl({hotelAddress, url})
+            validate.hotelAddressAndUrl({hotelAddress, url})
           } catch (err){
             assert.isNull(err);
           }
         })
         it('validate hotelAddressAndUrl: Expect error.', async () => {
           try {
-            await utils.validate.hotelAddressAndUrl({url})
+            validate.hotelAddressAndUrl({url})
           } catch (err){
             assert.isNotNull(err);
           }
@@ -275,14 +275,14 @@ describe('Parametes validators', function(){
         const imageIndex = 1;
         it('validate hotelAddressAndImageIndex: Expect OK.', async () => {
           try {
-            await utils.validate.hotelAddressAndImageIndex({hotelAddress, imageIndex})
+            validate.hotelAddressAndImageIndex({hotelAddress, imageIndex})
           } catch (err){
             assert.isNull(err);
           }
         })
         it('validate hotelAddressAndUrl: Expect error.', async () => {
           try {
-            await utils.validate.hotelAddressAndImageIndex({imageIndex})
+            validate.hotelAddressAndImageIndex({imageIndex})
           } catch (err){
             assert.isNotNull(err);
           }
@@ -293,14 +293,14 @@ describe('Parametes validators', function(){
         const reservationId = 'ID_1';
         it('validate hotelAddressAndreservationId: Expect OK.', async () => {
           try {
-            await utils.validate.hotelAddressAndreservationId({hotelAddress, reservationId})
+            validate.hotelAddressAndreservationId({hotelAddress, reservationId})
           } catch (err){
             assert.isNull(err);
           }
         })
         it('validate hotelAddressAndreservationId: Expect error.', async () => {
           try {
-            await utils.validate.hotelAddressAndreservationId({reservationId})
+            validate.hotelAddressAndreservationId({reservationId})
           } catch (err){
             assert.isNotNull(err);
           }
@@ -311,14 +311,14 @@ describe('Parametes validators', function(){
         const unitType = 'BASIC_ROOM';
         it('validate hotelAddressAndUnitType: Expect OK.', async () => {
           try {
-            await utils.validate.hotelAddressAndUnitType({hotelAddress, unitType})
+            validate.hotelAddressAndUnitType({hotelAddress, unitType})
           } catch (err){
             assert.isNull(err);
           }
         })
         it('validate hotelAddressAndUnitType: Expect error.', async () => {
           try {
-            await utils.validate.hotelAddressAndUnitType({unitType})
+            validate.hotelAddressAndUnitType({unitType})
           } catch (err){
             assert.isNotNull(err);
           }
@@ -330,7 +330,7 @@ describe('Parametes validators', function(){
         const amenity = 22;
         it('validate hotelAddressAndUnitType: Expect OK.', async () => {
           try {
-            await utils.validate.unitTypeAmenity({hotelAddress, unitType, amenity})
+            validate.unitTypeAmenity({hotelAddress, unitType, amenity})
           } catch (err){
             assert.isNull(err);
           }
@@ -349,7 +349,7 @@ describe('Parametes validators', function(){
         const url = 'picture.jpg';
         it('validate addImageUnitType: Expect OK.', async () => {
           try {
-            await utils.validate.addImageUnitType({hotelAddress, unitType, url})
+            validate.addImageUnitType({hotelAddress, unitType, url})
           } catch (err){
             assert.isNull(err);
           }
@@ -368,7 +368,7 @@ describe('Parametes validators', function(){
         const imageIndex = 0;
         it('validate addImageUnitType: Expect OK.', async () => {
           try {
-            await utils.validate.removeImageUnitType({hotelAddress, unitType, imageIndex})
+            validate.removeImageUnitType({hotelAddress, unitType, imageIndex})
           } catch (err){
             assert.isNull(err);
           }
@@ -386,7 +386,7 @@ describe('Parametes validators', function(){
         const unitAddress = '0x9ec823DB4c3B774e82DE9d8B94185Cb3d78277c9';
         it('validate hotelAddressAndUnitAddress: Expect OK.', async () => {
           try {
-            await utils.validate.hotelAddressAndUnitAddress({hotelAddress, unitAddress})
+            validate.hotelAddressAndUnitAddress({hotelAddress, unitAddress})
           } catch (err){
             assert.isNull(err);
           }
@@ -406,7 +406,7 @@ describe('Parametes validators', function(){
         const active = true
         it('validate unitActive: Expect OK.', async () => {
           try {
-            await utils.validate.unitActive({hotelAddress, unitAddress, active})
+            validate.unitActive({hotelAddress, unitAddress, active})
           } catch (err){
             assert.isNull(err);
           }
@@ -425,7 +425,7 @@ describe('Parametes validators', function(){
         const price = 22
         it('validate unitPrice: Expect OK.', async () => {
           try {
-            await utils.validate.unitPrice({hotelAddress, unitAddress, price})
+            validate.unitPrice({hotelAddress, unitAddress, price})
           } catch (err){
             assert.isNull(err);
           }
@@ -444,7 +444,7 @@ describe('Parametes validators', function(){
         const price = '22'
         it('validate unitLifPrice: Expect OK.', async () => {
           try {
-            await utils.validate.unitLifPrice({hotelAddress, unitAddress, price})
+            validate.unitLifPrice({hotelAddress, unitAddress, price})
           } catch (err){
             assert.isNull(err);
           }
@@ -464,7 +464,7 @@ describe('Parametes validators', function(){
         const code = 948
         it('validate currencyCode: Expect OK.', async () => {
           try {
-            await utils.validate.currencyCode({hotelAddress, unitAddress, code})
+            validate.currencyCode({hotelAddress, unitAddress, code})
           } catch (err){
             assert.isNull(err);
           }
@@ -486,7 +486,7 @@ describe('Parametes validators', function(){
         const daysAmount = 3
         it('validate unitSpecialPrice: Expect OK.', async () => {
           try {
-            await utils.validate.unitSpecialPrice({hotelAddress, unitAddress, price, fromDate, daysAmount})
+            validate.unitSpecialPrice({hotelAddress, unitAddress, price, fromDate, daysAmount})
           } catch (err){
             assert.isNull(err);
           }
@@ -507,7 +507,7 @@ describe('Parametes validators', function(){
         const daysAmount = 3
         it('validate unitSpecialLifPrice: Expect OK.', async () => {
           try {
-            await utils.validate.unitSpecialLifPrice({hotelAddress, unitAddress, price, fromDate, daysAmount})
+            validate.unitSpecialLifPrice({hotelAddress, unitAddress, price, fromDate, daysAmount})
           } catch (err){
             assert.isNull(err);
           }
