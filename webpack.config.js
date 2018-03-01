@@ -11,6 +11,10 @@ const createConfig = target => ({
   entry: {
     'wt-js-libs': './libs/index.js'
   },
+  // This is here to make joi happy
+  node: {
+    net: 'empty'
+  },
   module: {
     rules: [
       {
