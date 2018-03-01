@@ -9,7 +9,6 @@
   "scripts": {
     "test": "mocha --timeout 20000",
     "test-build": "npm run clean && npm run build && ./scripts/test-build.sh",
-    "postinstall": "scripts/install.sh",
     "recompile": "rimraf build && ./node_modules/.bin/truffle migrate --reset",
     "docs-build": "./node_modules/.bin/esdoc",
     "docs-view": "open ./docs/index.html",

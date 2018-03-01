@@ -39,7 +39,7 @@ describe('HotelManager', function() {
       methods: {
         callHotel: help.stubContractMethodResult({}, (args) => {return 'encoded-call-hotel-' + Object.values(args.methodParams).join(':')}, 37),
         registerHotel: help.stubContractMethodResult({}, (args) => {return 'encoded-register-hotel-' + args.methodParams[0]}, 37),
-        removeHotel: help.stubContractMethodResult({}, (args) => {return 'encoded-remove-hotel-' + args.methodParams[0]}, 37),
+        deleteHotel: help.stubContractMethodResult({}, (args) => {return 'encoded-remove-hotel-' + args.methodParams[0]}, 37),
         getHotelsByManager: help.stubContractMethodResult([hotelAddress], (args) => {return 'encoded-hotelsbymanager-' + args.methodParams[0]}, 37),
       }
     });
@@ -52,12 +52,12 @@ describe('HotelManager', function() {
         addImage: help.stubContractMethodResult({}, (args) => {return 'encoded-addimage-' + Object.values(args.methodParams).join(':')}, 37),
         removeImage: help.stubContractMethodResult({}, (args) => {return 'encoded-removeimage-' + Object.values(args.methodParams).join(':')}, 37),
         addUnitType: help.stubContractMethodResult({}, (args) => {return 'encoded-addunittype-' + Object.values(args.methodParams).join(':')}, 37),
-        removeUnitType: help.stubContractMethodResult({}, (args) => {return 'encoded-removeunittype-' + Object.values(args.methodParams).join(':')}, 37),
+        deleteUnitType: help.stubContractMethodResult({}, (args) => {return 'encoded-removeunittype-' + Object.values(args.methodParams).join(':')}, 37),
         getUnitType: help.stubContractMethodResult(unitTypeAddress, {}, 37),
         callUnitType: help.stubContractMethodResult({}, (args) => {return 'encoded-callunittype-' + Object.values(args.methodParams).join(':')}, 37),
         callUnit: help.stubContractMethodResult({}, (args) => {return 'encoded-callunit-ut-' + Object.values(args.methodParams).join(':')}, 37),
         addUnit: help.stubContractMethodResult({}, (args) => {return 'encoded-addunit-ut-' + Object.values(args.methodParams).join(':')}, 37),
-        removeUnit: help.stubContractMethodResult({}, (args) => {return 'encoded-removeunit-ut-' + Object.values(args.methodParams).join(':')}, 37),
+        deleteUnit: help.stubContractMethodResult({}, (args) => {return 'encoded-removeunit-ut-' + Object.values(args.methodParams).join(':')}, 37),
       }
     }, index: existingHotelIndex});
     sinon.stub(web3provider.contracts, 'getHotelUnitTypeInstance').returns({
@@ -67,6 +67,9 @@ describe('HotelManager', function() {
         removeAmenity: help.stubContractMethodResult({}, (args) => {return 'encoded-removeamenity-ut-' + Object.values(args.methodParams).join(':')}, 37),
         addImage: help.stubContractMethodResult({}, (args) => {return 'encoded-addimage-ut-' + Object.values(args.methodParams).join(':')}, 37),
         removeImage: help.stubContractMethodResult({}, (args) => {return 'encoded-removeimage-ut-' + Object.values(args.methodParams).join(':')}, 37),
+        setDefaultPrice: help.stubContractMethodResult({}, (args) => {return 'encoded-setdefaultprice-ut-' + Object.values(args.methodParams).join(':')}, 37),
+        setDefaultLifPrice: help.stubContractMethodResult({}, (args) => {return 'encoded-setdefaultlifprice-ut-' + Object.values(args.methodParams).join(':')}, 37),
+        setCurrencyCode: help.stubContractMethodResult({}, (args) => {return 'encoded-setcurrencycode-ut-' + Object.values(args.methodParams).join(':')}, 37),
       }
     });
     sinon.stub(web3provider.contracts, 'getHotelUnitInstance').returns({
@@ -74,12 +77,9 @@ describe('HotelManager', function() {
         address: unitAddress,
       },
       methods: {
-        setActive: help.stubContractMethodResult({}, (args) => {return 'encoded-setactive-ut-' + Object.values(args.methodParams).join(':')}, 37),
-        setDefaultPrice: help.stubContractMethodResult({}, (args) => {return 'encoded-setdefaultprice-ut-' + Object.values(args.methodParams).join(':')}, 37),
-        setDefaultLifPrice: help.stubContractMethodResult({}, (args) => {return 'encoded-setdefaultlifprice-ut-' + Object.values(args.methodParams).join(':')}, 37),
-        setSpecialPrice: help.stubContractMethodResult({}, (args) => {return 'encoded-setspecialprice-ut-' + Object.values(args.methodParams).join(':')}, 37),
-        setSpecialLifPrice: help.stubContractMethodResult({}, (args) => {return 'encoded-setspeciallifprice-ut-' + Object.values(args.methodParams).join(':')}, 37),
-        setCurrencyCode: help.stubContractMethodResult({}, (args) => {return 'encoded-setcurrencycode-ut-' + Object.values(args.methodParams).join(':')}, 37),
+        setActive: help.stubContractMethodResult({}, (args) => {return 'encoded-setactive-u-' + Object.values(args.methodParams).join(':')}, 37),
+        setSpecialPrice: help.stubContractMethodResult({}, (args) => {return 'encoded-setspecialprice-u-' + Object.values(args.methodParams).join(':')}, 37),
+        setSpecialLifPrice: help.stubContractMethodResult({}, (args) => {return 'encoded-setspeciallifprice-u-' + Object.values(args.methodParams).join(':')}, 37),
       }
     });
     sendTransactionStub = sinon.stub(web3provider.web3.eth, 'sendTransaction').callsFake(() => {
@@ -218,16 +218,14 @@ describe('HotelManager', function() {
       const longitude = 40.426371;
       const latitude = -3.703578;
 
-      await lib.changeHotelLocation(address, lineOne, lineTwo, zip, country, timezone, longitude, latitude);
-      const hotel = await lib.getHotel(address);
-
-      assert.equal(hotel.lineOne, lineOne);
-      assert.equal(hotel.lineTwo, lineTwo);
-      assert.equal(hotel.zip, zip);
-      assert.equal(hotel.country, country);
-      assert.equal(hotel.longitude, longitude);
-      assert.equal(hotel.latitude, latitude);
-      assert.equal(hotel.timezone, timezone);
+      await hotelManager.changeHotelLocation(hotelAddress, lineOne, lineTwo, zip, country, timezone, longitude, latitude);
+      assert.equal(sendTransactionStub.callCount, 1);
+      assert.equal(sendTransactionStub.firstCall.args[0].from, ownerAccount);
+      assert.equal(sendTransactionStub.firstCall.args[0].to, indexAddress);
+      const {long, lat} = web3provider.utils.locationToUint(longitude, latitude);;
+      assert.equal(sendTransactionStub.firstCall.args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':' + 'encoded-editlocation-' +
+        [lineOne, lineTwo, zip, toHexResult, timezone, long, lat].join(':')
+      );
     });
 
     it('should create a transaction that adds an image to the hotel', async function() {
@@ -271,13 +269,13 @@ describe('HotelManager', function() {
     });
 
     it('addUnitType: initializes info correctly', async() => {
-      await lib.addUnitType(address, typeName);
-      let hotel = await lib.getHotel(address);
-
-      assert.isNull(hotel.unitTypes[typeName].info.description);
-      assert.equal(hotel.unitTypes[typeName].info.defaultPrice, 0);
-      assert.isNull(hotel.unitTypes[typeName].info.minGuests);
-      assert.isNull(hotel.unitTypes[typeName].info.maxGuests);
+      await hotelManager.addUnitType(hotelAddress, typeName);
+      assert.equal(deployUnitTypeStub.callCount, 1);
+      assert.equal(sendTransactionStub.callCount, 1);
+      assert.equal(sendTransactionStub.firstCall.args[0].from, ownerAccount);
+      assert.equal(sendTransactionStub.firstCall.args[0].to, indexAddress);
+      assert.equal(sendTransactionStub.firstCall.args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':'
+        + 'encoded-addunittype-' + [unitTypeAddress].join(':'));
     });
 
     it('should generate a transaction that updates a UnitType', async() => {
@@ -297,7 +295,7 @@ describe('HotelManager', function() {
       assert.equal(sendTransactionStub.firstCall.args[0].to, indexAddress);
       assert.equal(sendTransactionStub.firstCall.args[0].data, 'encoded-call-hotel-' + existingHotelIndex +
         ':encoded-callunittype-' + [toHexResult].join(':') +
-        ':encoded-edit-ut-' + [description, minGuests, maxGuests, price].join(':'));
+        ':encoded-edit-ut-' + [description, minGuests, maxGuests].join(':'));
     });
 
     it('should generate a transaction to add amenity to UnitType', async () => {
@@ -376,29 +374,7 @@ describe('HotelManager', function() {
       assert.equal(sendTransactionStub.firstCall.args[0].to, indexAddress);
       assert.equal(sendTransactionStub.firstCall.args[0].data, 'encoded-call-hotel-' + existingHotelIndex +
         ':encoded-callunit-ut-' + [unitAddress].join(':') +
-        ':encoded-setactive-ut-' + [false].join(':'));
-    })
-
-    it('setDefaultPrice: set / get the default price', async() => {
-      const price = 100.00
-      await hotelManager.setDefaultPrice(hotelAddress, unitAddress, price);
-      assert.equal(sendTransactionStub.callCount, 1);
-      assert.equal(sendTransactionStub.firstCall.args[0].from, ownerAccount);
-      assert.equal(sendTransactionStub.firstCall.args[0].to, indexAddress);
-      assert.equal(sendTransactionStub.firstCall.args[0].data, 'encoded-call-hotel-' + existingHotelIndex +
-        ':encoded-callunit-ut-' + [unitAddress].join(':') +
-        ':encoded-setdefaultprice-ut-' + [price * 100].join(':'));
-    })
-
-    it('setDefaultLifPrice: set / get the default Lif price', async() => {
-      const lifPrice = 20
-      await hotelManager.setDefaultLifPrice(hotelAddress, unitAddress, lifPrice);
-      assert.equal(sendTransactionStub.callCount, 1);
-      assert.equal(sendTransactionStub.firstCall.args[0].from, ownerAccount);
-      assert.equal(sendTransactionStub.firstCall.args[0].to, indexAddress);
-      assert.equal(sendTransactionStub.firstCall.args[0].data, 'encoded-call-hotel-' + existingHotelIndex +
-        ':encoded-callunit-ut-' + [unitAddress].join(':') +
-        ':encoded-setdefaultlifprice-ut-' + [lifPrice * web3provider.utils.weiInLif].join(':'));
+        ':encoded-setactive-u-' + [false].join(':'));
     })
 
     it('setUnitSpecialPrice: sets the units price across a range of dates', async () => {
@@ -419,11 +395,11 @@ describe('HotelManager', function() {
       assert.equal(sendTransactionStub.firstCall.args[0].to, indexAddress);
       assert.equal(sendTransactionStub.firstCall.args[0].data, 'encoded-call-hotel-' + existingHotelIndex +
         ':encoded-callunit-ut-' + [unitAddress].join(':') +
-        ':encoded-setspecialprice-ut-' + [price * 100, fromDay, daysAmount].join(':'));
+        ':encoded-setspecialprice-u-' + [price * 100, fromDay, daysAmount].join(':'));
     });
 
     it('setUnitSpecialLifPrice: sets the units price across a range of dates', async () => {
-      const price =  100;
+      const price =  3;
       const fromDate = new Date('10/10/2020');
       const daysAmount = 5;
       const fromDay = web3provider.utils.formatDate(fromDate);
@@ -440,8 +416,35 @@ describe('HotelManager', function() {
       assert.equal(sendTransactionStub.firstCall.args[0].to, indexAddress);
       assert.equal(sendTransactionStub.firstCall.args[0].data, 'encoded-call-hotel-' + existingHotelIndex +
         ':encoded-callunit-ut-' + [unitAddress].join(':') +
-        ':encoded-setspeciallifprice-ut-' + [price * web3provider.utils.weiInLif, fromDay, daysAmount].join(':'));
+        ':encoded-setspeciallifprice-u-' + [web3provider.utils.lif2LifWei(price), fromDay, daysAmount].join(':'));
     });
+  });
+
+  describe('UnitType', () => {
+
+    it('setDefaultPrice: set / get the default price', async() => {
+      const price = 100.00
+      await hotelManager.setDefaultPrice(hotelAddress, unitAddress, price);
+      assert.equal(sendTransactionStub.callCount, 1);
+      assert.equal(sendTransactionStub.firstCall.args[0].from, ownerAccount);
+      assert.equal(sendTransactionStub.firstCall.args[0].to, indexAddress);
+      assert.equal(sendTransactionStub.firstCall.args[0].data, 'encoded-call-hotel-' + existingHotelIndex +
+        ':encoded-callunittype-' + [toHexResult].join(':') + 
+        ':encoded-setdefaultprice-ut-' + [web3provider.utils.priceToUint(price)].join(':')
+        );
+    })
+
+    it('setDefaultLifPrice: set / get the default Lif price', async() => {
+      const lifPrice = 20
+      await hotelManager.setDefaultLifPrice(hotelAddress, unitAddress, lifPrice);
+      assert.equal(sendTransactionStub.callCount, 1);
+      assert.equal(sendTransactionStub.firstCall.args[0].from, ownerAccount);
+      assert.equal(sendTransactionStub.firstCall.args[0].to, indexAddress);
+      assert.equal(sendTransactionStub.firstCall.args[0].data, 'encoded-call-hotel-' + existingHotelIndex +
+        ':encoded-callunittype-' + [toHexResult].join(':') + 
+        ':encoded-setdefaultlifprice-ut-' + [web3provider.utils.lif2LifWei(lifPrice)].join(':')
+        );
+    })
 
     it('setCurrencyCode: sets the setCurrencyCode', async() => {
       const currencyCode = 948;
@@ -451,7 +454,7 @@ describe('HotelManager', function() {
       assert.equal(sendTransactionStub.firstCall.args[0].from, ownerAccount);
       assert.equal(sendTransactionStub.firstCall.args[0].to, indexAddress);
       assert.equal(sendTransactionStub.firstCall.args[0].data, 'encoded-call-hotel-' + existingHotelIndex +
-        ':encoded-callunit-ut-' + [unitAddress].join(':') +
+        ':encoded-callunittype-' + [toHexResult].join(':') +
         ':encoded-setcurrencycode-ut-' + [currencyHex].join(':'));
     });
 
@@ -501,6 +504,9 @@ describe('HotelManager', function() {
             maxGuests: 8,
             price: '10'
           },
+          currencyCode: 948,
+          defaultPrice: 78.00,
+          defaultLifPrice: 2,
           images: ['image.url2', 'image.url3']
         },
         FAMILY_CABIN: {
@@ -511,6 +517,9 @@ describe('HotelManager', function() {
             maxGuests: 7,
             price: '11'
           },
+          currencyCode: 951,
+          defaultPrice: 79.00,
+          defaultLifPrice: 3,
           images: ['image.url22', 'image.url33']
         }
       },
@@ -518,25 +527,16 @@ describe('HotelManager', function() {
         {
           active: true,
           unitType: 'BASIC_ROOM',
-          currencyCode: 948,
-          defaultPrice: 78.00,
-          defaultLifPrice: 1,
           _addr: 'a',
         },
         {
           active: true,
           unitType: 'FAMILY_CABIN',
-          currencyCode: 948,
-          defaultPrice: 78.00,
-          defaultLifPrice: 2,
           _addr: 'b',
         },
         {
           active: false,
           unitType: 'BASIC_ROOM',
-          currencyCode: 948,
-          defaultPrice: 79.00,
-          defaultLifPrice: 3,
           _addr: 'c',
         }
       ]
@@ -561,51 +561,52 @@ describe('HotelManager', function() {
     it('Should create a complete hotel', async() =>{
       const {hotel} = await hotelManager.createFullHotel(hotelToCreate);
 
-      assert.equal(web3provider.web3.eth.sendTransaction.callCount, 33);
+      assert.equal(web3provider.web3.eth.sendTransaction.callCount, 29);
       const txCalls = web3provider.web3.eth.sendTransaction;
       assert.equal(txCalls.getCall(0).args[0].data, 'encoded-register-hotel-' + hotelToCreate.name);
       assert.equal(txCalls.getCall(1).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-changeconfirmation-' + hotelToCreate.waitConfirmation);
-      assert.equal(txCalls.getCall(2).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-editaddress-' + [hotelToCreate.lineOne, hotelToCreate.lineTwo, hotelToCreate.zip, hotelToCreate.country].join(':'));
       let {long, lat} = web3provider.utils.locationToUint(hotelToCreate.longitude, hotelToCreate.latitude);
-      assert.equal(txCalls.getCall(3).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-editlocation-' + [hotelToCreate.timezone, long, lat].join(':'));
-      assert.equal(txCalls.getCall(4).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-addimage-' + [hotelToCreate.images[0]].join(':'));
-      assert.equal(txCalls.getCall(5).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-addimage-' + [hotelToCreate.images[1]].join(':'));
+      assert.equal(txCalls.getCall(2).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-editlocation-' + [hotelToCreate.lineOne, hotelToCreate.lineTwo, hotelToCreate.zip, toHexResult, hotelToCreate.timezone, long, lat].join(':'));
+      assert.equal(txCalls.getCall(3).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-addimage-' + [hotelToCreate.images[0]].join(':'));
+      assert.equal(txCalls.getCall(4).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-addimage-' + [hotelToCreate.images[1]].join(':'));
       assert.equal(deployUnitTypeStub.callCount, 2);
+      assert.equal(txCalls.getCall(5).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-addunittype-' + unitTypeAddress);
       assert.equal(txCalls.getCall(6).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-addunittype-' + unitTypeAddress);
-      assert.equal(txCalls.getCall(7).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-addunittype-' + unitTypeAddress);
       const unitType0 = hotelToCreate.unitTypes['BASIC_ROOM'];
       const unitType1 = hotelToCreate.unitTypes['FAMILY_CABIN'];
-      assert.equal(txCalls.getCall(8).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunittype-' + toHexResult + ':encoded-edit-ut-' + [unitType0.info.description, unitType0.info.minGuests, unitType0.info.maxGuests, unitType0.info.price].join(':'));
-      assert.equal(txCalls.getCall(9).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunittype-' + toHexResult + ':encoded-edit-ut-' + [unitType1.info.description, unitType1.info.minGuests, unitType1.info.maxGuests, unitType1.info.price].join(':'));
-      assert.equal(txCalls.getCall(10).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunittype-' + toHexResult + ':encoded-addimage-ut-' + [unitType0.images[0]].join(':'));
-      assert.equal(txCalls.getCall(11).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunittype-' + toHexResult + ':encoded-addimage-ut-' + [unitType0.images[1]].join(':'));
-      assert.equal(txCalls.getCall(12).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunittype-' + toHexResult + ':encoded-addimage-ut-' + [unitType1.images[0]].join(':'));
-      assert.equal(txCalls.getCall(13).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunittype-' + toHexResult + ':encoded-addimage-ut-' + [unitType1.images[1]].join(':'));
-      assert.equal(txCalls.getCall(14).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunittype-' + toHexResult + ':encoded-addamenity-ut-' + [unitType0.amenities[0]].join(':'));
-      assert.equal(txCalls.getCall(15).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunittype-' + toHexResult + ':encoded-addamenity-ut-' + [unitType0.amenities[1]].join(':'));
-      assert.equal(txCalls.getCall(16).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunittype-' + toHexResult + ':encoded-addamenity-ut-' + [unitType1.amenities[0]].join(':'));
-      assert.equal(txCalls.getCall(17).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunittype-' + toHexResult + ':encoded-addamenity-ut-' + [unitType1.amenities[1]].join(':'));
+      const currencyHex1 = web3provider.utils.currencyCodeToHex(unitType0.currencyCode);
+      const currencyHex2 = web3provider.utils.currencyCodeToHex(unitType1.currencyCode);
+
+      assert.equal(txCalls.getCall(7).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunittype-' + toHexResult + ':encoded-edit-ut-' + [unitType0.info.description, unitType0.info.minGuests, unitType0.info.maxGuests].join(':'));
+      assert.equal(txCalls.getCall(8).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunittype-' + toHexResult + ':encoded-addimage-ut-' + [unitType0.images[0]].join(':'));
+      assert.equal(txCalls.getCall(9).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunittype-' + toHexResult + ':encoded-addimage-ut-' + [unitType0.images[1]].join(':'));
+      assert.equal(txCalls.getCall(10).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunittype-' + toHexResult + ':encoded-addamenity-ut-' + [unitType0.amenities[0]].join(':'));
+      assert.equal(txCalls.getCall(11).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunittype-' + toHexResult + ':encoded-addamenity-ut-' + [unitType0.amenities[1]].join(':'));
+      assert.equal(txCalls.getCall(12).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunittype-' + toHexResult + ':encoded-setdefaultprice-ut-' + web3provider.utils.priceToUint(unitType0.defaultPrice));
+      assert.equal(txCalls.getCall(13).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunittype-' + toHexResult + ':encoded-setdefaultlifprice-ut-' + web3provider.utils.lif2LifWei(unitType0.defaultLifPrice));
+      assert.equal(txCalls.getCall(14).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunittype-' + toHexResult + ':encoded-setcurrencycode-ut-' + currencyHex1);
+
+      assert.equal(txCalls.getCall(15).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunittype-' + toHexResult + ':encoded-edit-ut-' + [unitType1.info.description, unitType1.info.minGuests, unitType1.info.maxGuests].join(':'));
+      assert.equal(txCalls.getCall(16).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunittype-' + toHexResult + ':encoded-addimage-ut-' + [unitType1.images[0]].join(':'));
+      assert.equal(txCalls.getCall(17).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunittype-' + toHexResult + ':encoded-addimage-ut-' + [unitType1.images[1]].join(':'));
+      assert.equal(txCalls.getCall(18).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunittype-' + toHexResult + ':encoded-addamenity-ut-' + [unitType1.amenities[0]].join(':'));
+      assert.equal(txCalls.getCall(19).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunittype-' + toHexResult + ':encoded-addamenity-ut-' + [unitType1.amenities[1]].join(':'));
+      assert.equal(txCalls.getCall(20).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunittype-' + toHexResult + ':encoded-setdefaultprice-ut-' + web3provider.utils.priceToUint(unitType1.defaultPrice));
+      assert.equal(txCalls.getCall(21).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunittype-' + toHexResult + ':encoded-setdefaultlifprice-ut-' + web3provider.utils.lif2LifWei(unitType1.defaultLifPrice));
+      assert.equal(txCalls.getCall(22).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunittype-' + toHexResult + ':encoded-setcurrencycode-ut-' + currencyHex2);
+      
       assert.equal(deployUnitStub.callCount, 3);
-      assert.equal(txCalls.getCall(18).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-addunit-ut-' + unitAddress);
-      assert.equal(txCalls.getCall(19).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-addunit-ut-' + unitAddress);
-      assert.equal(txCalls.getCall(20).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-addunit-ut-' + unitAddress);
+      assert.equal(txCalls.getCall(23).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-addunit-ut-' + unitAddress);
+      assert.equal(txCalls.getCall(24).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-addunit-ut-' + unitAddress);
+      assert.equal(txCalls.getCall(25).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-addunit-ut-' + unitAddress);
       const sortedUnits = hotelToCreate.units.sort((a,b) => a.unitType < b.unitType);
       let firstUnit = sortedUnits[0];
       let secondUnit = sortedUnits[1];
       let thirdUnit = sortedUnits[2];
-      const currencyHex = web3provider.utils.currencyCodeToHex(firstUnit.currencyCode);
-      assert.equal(txCalls.getCall(21).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunit-ut-' + unitAddress + ':encoded-setcurrencycode-ut-' + currencyHex);
-      assert.equal(txCalls.getCall(22).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunit-ut-' + unitAddress + ':encoded-setdefaultprice-ut-' + firstUnit.defaultPrice * 100);
-      assert.equal(txCalls.getCall(23).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunit-ut-' + unitAddress + ':encoded-setdefaultlifprice-ut-' + firstUnit.defaultLifPrice * web3provider.utils.weiInLif);
-      assert.equal(txCalls.getCall(24).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunit-ut-' + unitAddress + ':encoded-setactive-ut-' + firstUnit.active);
-      assert.equal(txCalls.getCall(25).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunit-ut-' + unitAddress + ':encoded-setcurrencycode-ut-' + currencyHex);
-      assert.equal(txCalls.getCall(26).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunit-ut-' + unitAddress + ':encoded-setdefaultprice-ut-' + secondUnit.defaultPrice * 100);
-      assert.equal(txCalls.getCall(27).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunit-ut-' + unitAddress + ':encoded-setdefaultlifprice-ut-' + secondUnit.defaultLifPrice * web3provider.utils.weiInLif);
-      assert.equal(txCalls.getCall(28).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunit-ut-' + unitAddress + ':encoded-setactive-ut-' + secondUnit.active);
-      assert.equal(txCalls.getCall(29).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunit-ut-' + unitAddress + ':encoded-setcurrencycode-ut-' + currencyHex);
-      assert.equal(txCalls.getCall(30).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunit-ut-' + unitAddress + ':encoded-setdefaultprice-ut-' + thirdUnit.defaultPrice * 100);
-      assert.equal(txCalls.getCall(31).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunit-ut-' + unitAddress + ':encoded-setdefaultlifprice-ut-' + thirdUnit.defaultLifPrice * web3provider.utils.weiInLif);
-      assert.equal(txCalls.getCall(32).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunit-ut-' + unitAddress + ':encoded-setactive-ut-' + thirdUnit.active);
+      
+      assert.equal(txCalls.getCall(26).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunit-ut-' + unitAddress + ':encoded-setactive-u-' + firstUnit.active);
+      assert.equal(txCalls.getCall(27).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunit-ut-' + unitAddress + ':encoded-setactive-u-' + secondUnit.active);
+      assert.equal(txCalls.getCall(28).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-callunit-ut-' + unitAddress + ':encoded-setactive-u-' + thirdUnit.active);
     });
   });
 });

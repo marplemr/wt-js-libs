@@ -2,12 +2,12 @@ const _ = require('lodash');
 const abiDecoder = require('abi-decoder');
 const web3Abi = require('web3-eth-abi');
 
-const WTIndexContract = require('../../build/contracts/WTIndex.json');
-const HotelContract = require('../../build/contracts/Hotel.json');
-const UnitTypeContract = require('../../build/contracts/UnitType.json');
-const UnitContract = require('../../build/contracts/Unit.json');
-const AsyncCallContract = require('../../build/contracts/AsyncCall.json');
-const LifTokenContract = require('../../build/contracts/LifToken.json');
+const WTIndexContract = require('@windingtree/wt-contracts/build/contracts/WTIndex.json');
+const HotelContract = require('@windingtree/wt-contracts/build/contracts/Hotel.json');
+const UnitTypeContract = require('@windingtree/wt-contracts/build/contracts/UnitType.json');
+const UnitContract = require('@windingtree/wt-contracts/build/contracts/Unit.json');
+const AsyncCallContract = require('@windingtree/wt-contracts/build/contracts/AsyncCall.json');
+const LifTokenContract = require('@windingtree/lif-token/build/contracts/LifToken.json');
 
 abiDecoder.addABI(AsyncCallContract.abi);
 abiDecoder.addABI(LifTokenContract.abi);

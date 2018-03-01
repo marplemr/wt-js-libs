@@ -1,5 +1,7 @@
-const assert = require('chai').assert;
+var chai = require('chai');
 var BN = require('bn.js');
+chai.use(require('chai-string'));
+const assert = chai.assert;
 const sinon = require('sinon');
 const _ = require('lodash');
 
@@ -17,6 +19,7 @@ describe('User', function() {
   const tokenAddress = '0xe91036d59eAd8b654eE2F5b354245f6D7eD2487e';
   const unitAddress = '0xdf3b7a20D5A08957AbE8d9366efcC38cfF00aea6';
   const gasMargin = 1.5;
+  const fromDate = new Date('10/10/2020');
   let web3provider;
   let user;
 
@@ -52,7 +55,6 @@ describe('User', function() {
   });
 
   describe('book', function() {
-    const fromDate = new Date('10/10/2020');
     const daysAmount = 5;
     const estimatedGas = 38;
     const guestData = 'guestData';
@@ -93,10 +95,6 @@ describe('User', function() {
     });
 
     it('should make the reservation when manager confirms', async() => {
-      // Pre booking request
-      let isAvailable = await data.unitIsAvailable(hotelAddress, unitAddress, fromDate, daysAmount);
-      assert.isTrue(isAvailable);
-
       await user.book(
         hotelAddress,
         unitAddress,
@@ -117,6 +115,9 @@ describe('User', function() {
     const guestData = 'guestData';
 
     beforeEach(() => {
+      sinon.stub(web3provider.contracts, 'getOverridingMethodEncodedFunctionCallData').callsFake((contract, method, params) => {
+        return 'override-' + [contract, method, params].join(':');
+      });
       sinon.stub(web3provider.contracts, 'getHotelInstance').returns({
         methods: {
           bookWithLif: help.stubContractMethodResult({}, 'bookWithLif-encodedABI'),
@@ -143,6 +144,7 @@ describe('User', function() {
     afterEach(() => {
       web3provider.contracts.getHotelInstance.restore();
       web3provider.contracts.getTokenInstance.restore();
+      web3provider.contracts.getOverridingMethodEncodedFunctionCallData.restore();
       sendTransactionStub.restore();
       web3provider.web3.eth.estimateGas.restore();
       web3provider.web3.eth.net.getId.restore();
@@ -151,8 +153,6 @@ describe('User', function() {
     });
 
     it('should make a booking: days reserved', async () => {
-      let isAvailable = await data.unitIsAvailable(hotelAddress, unitAddress, fromDate, daysAmount);
-      assert.isTrue(isAvailable);
       await user.bookWithLif(
         hotelAddress,
         unitAddress,
@@ -164,7 +164,7 @@ describe('User', function() {
       assert.equal(sendTransactionStub.callCount, 1);
       assert.equalIgnoreCase(sendTransactionStub.firstCall.args[0].from, augusto);
       assert.equalIgnoreCase(sendTransactionStub.firstCall.args[0].to, tokenAddress);
-      assert.equal(sendTransactionStub.firstCall.args[0].data, 'approvalData-encodedABI');
+      assert.match(sendTransactionStub.firstCall.args[0].data, new RegExp('override-' + ['LifToken', 'approve', hotelAddress].join(':')));
     });
 
     it('should apply gas margin to a non-test network', async () => {
@@ -212,7 +212,7 @@ describe('User', function() {
         daysAmount,
         guestData
       ).then(() => {
-        assert.equal(true, false);
+        assert(false);
       }).catch((e) => {
         assert.equal(e, 'Unit is not available for the requested dates');
       });
@@ -228,7 +228,7 @@ describe('User', function() {
         daysAmount,
         guestData
       ).then(() => {
-        assert.equal(true, false);
+        assert(false);
       }).catch((e) => {
         assert.equal(e, 'Token balance was too low to attempt this booking.');
       })

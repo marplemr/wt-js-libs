@@ -44,15 +44,6 @@ function isInvalidOpcodeEx(e) {
   return e.message.search('invalid opcode') >= 0;
 };
 
-function priceToUint(price) {
-  return price.toFixed(2) * 100;
-}
-
-function bnToPrice(uint) {
-  uint = (typeof uint === 'Object') ? uint.toNumber() : uint;
-  return (uint/100).toFixed(2);
-}
-
 function locationToUint(longitude, latitude) {
   return {
     long : Math.round((90 + longitude) * 10e5),
@@ -117,6 +108,15 @@ function currencyCodeToHex(web3, code) {
 
   const hex = web3.utils.toHex(code);
   return web3.utils.padLeft(hex, 16);
+}
+
+function priceToUint(price) {
+  return price.toFixed(2) * 100;
+}
+
+function bnToPrice(uint) {
+  uint = (typeof uint === 'Object') ? uint.toNumber() : uint;
+  return (uint/100).toFixed(2);
 }
 
 function lifWei2Lif(web3, value) {

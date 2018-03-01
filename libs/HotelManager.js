@@ -294,7 +294,7 @@ class HotelManager {
     const {long, lat} = this.web3provider.utils.locationToUint(longitude, latitude);
 
     const data = await hotel.methods
-      .editLocation(lineOne, lineTwo, zipCode, this.web3.utils.toHex(country), timezone, long, lat)
+      .editLocation(lineOne, lineTwo, zipCode, this.web3provider.web3.utils.toHex(country), timezone, long, lat)
       .encodeABI();
 
     return this.web3provider.transactions.execute(data, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);
@@ -663,10 +663,10 @@ class HotelManager {
     } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
 
     const uintPrice = this.web3provider.utils.priceToUint(price);
-    const typeNameHex =  this.web3.utils.toHex(unitType)
+    const typeNameHex =  this.web3provider.web3.utils.toHex(unitType);
     const unitTypeAddress = await hotel.methods.getUnitType(typeNameHex).call();
 
-    const unitTypeInstance = utils.getInstance('HotelUnitType', unitTypeAddress, this.context);
+    const unitTypeInstance = this.getHotelUnitTypeInstance(unitTypeAddress);
     const unitTypeData = unitTypeInstance.methods
       .setDefaultPrice(uintPrice)
       .encodeABI();
@@ -694,10 +694,10 @@ class HotelManager {
     } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
 
     const weiPrice = this.web3provider.utils.lif2LifWei(price);
-    const typeNameHex =  this.web3.utils.toHex(unitType)
+    const typeNameHex =  this.web3provider.web3.utils.toHex(unitType)
     const unitTypeAddress = await hotel.methods.getUnitType(typeNameHex).call();
 
-    const unitTypeInstance = utils.getInstance('HotelUnitType', unitTypeAddress, this.context);
+    const unitTypeInstance = this.getHotelUnitTypeInstance(unitTypeAddress);
 
     const unitTypeData = unitTypeInstance.methods
       .setDefaultLifPrice(weiPrice)
@@ -729,11 +729,11 @@ class HotelManager {
     const {
       hotel,
       index
-    } = await utils.getHotelAndIndex(hotelAddress, this.context);
-    const typeNameHex =  this.web3.utils.toHex(unitType)
+    } = await this.web3provider.data.getHotelAndIndex(hotelAddress);
+    const typeNameHex =  this.web3provider.web3.utils.toHex(unitType)
     const unitTypeAddress = await hotel.methods.getUnitType(typeNameHex).call();
 
-    const unitTypeInstance = utils.getInstance('HotelUnitType', unitTypeAddress, this.context);
+    const unitTypeInstance = this.getHotelUnitTypeInstance(unitTypeAddress);
     const unitTypeData = unitTypeInstance.methods
       .setCurrencyCode(code)
       .encodeABI();
@@ -940,6 +940,7 @@ class HotelManager {
       workingHotel = await this.getHotel(hotelAddress);
       return {hotel: workingHotel, hotelAddress};
     } catch (err) {
+      console.log(err);
       workingHotel = await this.getHotel(hotelAddress);
       return {hotel: workingHotel, hotelAddress, err};
     }

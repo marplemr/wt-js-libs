@@ -21,6 +21,7 @@ describe('BookingData', function() {
   const jakub = '0xA38c43e02a680d21c58e2CcdD7504E55F79889b8';
   const hotelAddress = '0x96eA4BbF71FEa3c9411C1Cefc555E9d7189695fA';
   const unitAddress = '0xdf3b7a20D5A08957AbE8d9366efcC38cfF00aea6';
+  const unitTypeAddress = '0x9de34468b0057B77A9C896e74Cb30ed05425D52A';
   let web3provider;
   let bookingData;
 
@@ -29,55 +30,30 @@ describe('BookingData', function() {
     bookingData = new BookingData({web3provider: web3provider});
   });
 
-  describe('getCost | getLifCost', function() {
-
-    it('getCost: gets the total cost for a booking over a range of days', async () => {
-      const fromDate = new Date('10/10/2020');
-      const daysAmount = 5;
-      const price = 100.00;
-      const expectedCost = price * daysAmount;
-
-      sinon.stub(web3provider.contracts, 'getHotelUnitInstance').returns({
-        methods: {
-          getCost: help.stubContractMethodResult(new BN(web3provider.utils.priceToUint(price * daysAmount))),
-        }
-      });
-
-      const actualCost = await bookingData.getCost(unitAddress, fromDate, daysAmount);
-      assert.equal(expectedCost, actualCost);
-    });
-
-    it('getLifCost gets the total cost for a booking over a range of days', async () => {
-      const fromDate = new Date('10/10/2020');
-      const daysAmount = 5;
-      const price = 20;
-      const expectedCost = price * daysAmount;
-      sinon.stub(web3provider.contracts, 'getHotelUnitInstance').returns({
-        methods: {
-          getLifCost: help.stubContractMethodResult(new BN(web3provider.utils.lif2LifWei(price * daysAmount))),
-        }
-      });
-
-      const actualCost = await bookingData.getLifCost(unitAddress, fromDate, daysAmount);
-      assert.equal(expectedCost, actualCost);
-    })
-  });
-
-  describe('unit availability', () => {
+  describe('Cost and availability', () => {
     const fromDate = new Date('10/10/2020');
     const daysAmount = 5;
     const price = 100.00;
     const lifPrice = 1;
     const specialPrice = 200.00;
     const specialLifPrice = 2;
+    let getCostStub, getLifCostStub;
 
-    beforeEach(() => {
+    beforeEach(async function() {
+      getCostStub = sinon.stub().returns(1300);
+      getLifCostStub = sinon.stub().returns(new BN(web3provider.utils.lif2LifWei(100)));
+      sinon.stub(web3provider.contracts, 'getHotelInstance').returns({
+        methods: {
+            getUnitType: help.stubContractMethodResult(unitTypeAddress),
+            getCost: help.stubContractMethodResult(getCostStub),
+            getLifCost: help.stubContractMethodResult(getLifCostStub),
+          }
+        });
       sinon.stub(web3provider.contracts, 'getHotelUnitInstance').returns({
         methods: {
-          defaultPrice: help.stubContractMethodResult(new BN(web3provider.utils.priceToUint(price))),
-          defaultLifPrice: help.stubContractMethodResult(new BN(web3provider.utils.lif2LifWei(lifPrice))),
           unitSpecialPrice: help.stubContractMethodResult(new BN(web3provider.utils.priceToUint(specialPrice))),
           unitSpecialLifPrice: help.stubContractMethodResult(new BN(web3provider.utils.lif2LifWei(specialLifPrice))),
+          unitType: help.stubContractMethodResult('BASIC_ROOM'),
           active: help.stubContractMethodResult(true),
           getReservation: help.stubContractMethodResult((args) => {
             // behave accordingly to date
@@ -88,36 +64,61 @@ describe('BookingData', function() {
           }),
         }
       });
+      sinon.stub(web3provider.contracts, 'getHotelUnitTypeInstance').returns({
+        methods: {
+          defaultPrice: help.stubContractMethodResult(new BN(web3provider.utils.priceToUint(price))),
+          defaultLifPrice: help.stubContractMethodResult(new BN(web3provider.utils.lif2LifWei(lifPrice))),
+        }
+      });
     });
 
-    it('returns a unit\'s price and availability for a range of dates', async () => {
-
     afterEach(() => {
+      web3provider.contracts.getHotelInstance.restore();
       web3provider.contracts.getHotelUnitInstance.restore();
     });
 
-    it('returns a unit\'s price and availability for a range of dates', async () => {
-      let availability = await bookingData.unitAvailability(hotelAddress, unitAddress, fromDate, daysAmount);
-      for(let date of availability) {
-        if (date.day == web3provider.utils.formatDate(fromDate)) {
-          assert.equal(date.price, specialPrice);
-          assert.equal(date.lifPrice, specialLifPrice);
-        } else {
-          assert.equal(date.price, price);
-          assert.equal(date.lifPrice, lifPrice);
-        }
-      }
-    })
+    describe('getCost | getLifCost', function() {
+      it('getCost: gets the total cost for a booking over a range of days', async () => {
+        const actualCost = await bookingData.getCost(hotelAddress, unitAddress, fromDate, daysAmount);
+        assert.equal(getCostStub.callCount, 1);
+        assert.equal(getCostStub.firstCall.args[0].methodParams[0], unitAddress);
+        assert.equal(getCostStub.firstCall.args[0].methodParams[1], web3provider.utils.formatDate(fromDate));
+        assert.equal(getCostStub.firstCall.args[0].methodParams[2], daysAmount);
+      });
 
-    it('given a single moment date, returns units price and availability for that month', async() => {
-      let fromDateMoment = moment(fromDate);
-      let availability = await bookingData.unitMonthlyAvailability(hotelAddress, unitAddress, fromDateMoment);
-      assert.equal(Object.keys(availability).length, 30);
-      assert.equal(availability[web3provider.utils.formatDate(fromDate)].price, specialPrice);
-    })
+      it('getLifCost gets the total cost for a booking over a range of days', async () => {
+        const actualCost = await bookingData.getLifCost(hotelAddress, unitAddress, fromDate, daysAmount);
+        assert.equal(getLifCostStub.callCount, 1);
+        assert.equal(getLifCostStub.firstCall.args[0].methodParams[0], unitAddress);
+        assert.equal(getLifCostStub.firstCall.args[0].methodParams[1], web3provider.utils.formatDate(fromDate));
+        assert.equal(getLifCostStub.firstCall.args[0].methodParams[2], daysAmount);
+      })
+    });
+
+    describe('unit availability', () => {
+      it('returns a unit\'s price and availability for a range of dates', async () => {
+        let availability = await bookingData.unitAvailability(hotelAddress, unitAddress, fromDate, daysAmount);
+        for(let date of availability) {
+          if (date.day == web3provider.utils.formatDate(fromDate)) {
+            assert.equal(date.price, specialPrice);
+            assert.equal(date.lifPrice, specialLifPrice);
+          } else {
+            assert.equal(date.price, price);
+            assert.equal(date.lifPrice, lifPrice);
+          }
+        }
+      })
+
+      it('given a single moment date, returns units price and availability for that month', async() => {
+        let fromDateMoment = moment(fromDate);
+        let availability = await bookingData.unitMonthlyAvailability(hotelAddress, unitAddress, fromDateMoment);
+        assert.equal(Object.keys(availability).length, 30);
+        assert.equal(availability[web3provider.utils.formatDate(fromDate)].price, specialPrice);
+      })
+    });
   });
 
-  describe('getBookings', function() {
+  describe('Bookings', function() {
     const fromDate = new Date('10/10/2020');
     const daysAmount = 5;
     const price = 1;
@@ -480,5 +481,5 @@ describe('BookingData', function() {
       assert.isArray(requests);
       assert.equal(requests.length, 0);
     });
-  })
+  });
 });

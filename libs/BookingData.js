@@ -45,7 +45,7 @@ class BookingData {
     // TODO validate.addressAndRange({unitAddress, fromDate, daysAmount});
 
     const fromDay = this.web3provider.utils.formatDate(fromDate);
-    const hotel = this.web3provider.contracts.getHotelInstance(hotelAddress);
+    const hotel = this.getHotelInstance(hotelAddress);
     const cost = await hotel.methods.getCost(unitAddress, fromDay, daysAmount).call();
     return this.web3provider.utils.bnToPrice(cost);
   }
@@ -65,8 +65,7 @@ class BookingData {
     // TODO validate.addressAndRange({unitAddress, fromDate, daysAmount});
 
     const fromDay = this.web3provider.utils.formatDate(fromDate);
-    const hotel = thi.getHotelInstance(hotelAddress);
-    const unit = this.getHotelUnitInstance(unitAddress);
+    const hotel = this.getHotelInstance(hotelAddress);
     const wei = await hotel.methods.getLifCost(unitAddress, fromDay, daysAmount).call();
     return this.web3provider.utils.lifWei2Lif(wei);
   }
@@ -79,7 +78,7 @@ class BookingData {
    * @param  {Number}  daysAmount  number of days
    * @return {Boolean}
    */
-  async unitAvailability(hotelAddress, unitAddress, fromDate, daysAmount) {
+  async unitAvailability(hotelAddress, unitAddress, fromDate, daysAmount = 0) {
     // TODO validate.addressAndRange({unitAddress, fromDate, daysAmount});
 
     const unit = this.getHotelUnitInstance(unitAddress);
@@ -104,7 +103,7 @@ class BookingData {
     for (let day of range) {
       const reservationResult = await unit.methods.getReservation(day).call();
       const specialPrice = this.web3provider.utils.bnToPrice(reservationResult[0]);
-      const specialLifPrice = this.web3provider.utils.lifWei2Lif(reservationResult[1], this.context);
+      const specialLifPrice = this.web3provider.utils.lifWei2Lif(reservationResult[1]);
       const bookedBy = reservationResult[2];
 
       availability.push({

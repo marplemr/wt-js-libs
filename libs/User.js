@@ -80,10 +80,11 @@ class User {
   async bookWithLif(hotelAddress, unitAddress, fromDate, daysAmount, guestData, callbacks) {
     validate.bookInfo({hotelAddress, unitAddress, fromDate, daysAmount, guestData});
 
+    const guestDataHex = this.web3provider.web3.utils.toHex(guestData);
+    const fromDay = this.web3provider.utils.formatDate(fromDate);
     const cost = await this.bookings.getLifCost(hotelAddress, unitAddress, fromDay, daysAmount);
     const enough = await this.balanceCheck(cost);
     const available = await this.bookings.unitIsAvailable(hotelAddress, unitAddress, fromDate, daysAmount);
-    const guestDataHex = this.context.web3.utils.toHex(guestData);
 
     if (! enough) {
       return Promise.reject(this.web3provider.errors.insufficientBalance);
@@ -100,7 +101,7 @@ class User {
       daysAmount,
       guestDataHex
     );
-    const weiCost = utils.lif2LifWei(cost, this.context);
+    const weiCost = this.web3provider.utils.lif2LifWei(cost);
     // Workaround for ERC827 same-named call through web3
     const approvalData = this.web3provider.contracts.getOverridingMethodEncodedFunctionCallData('LifToken', 'approve', [hotelAddress, weiCost, bookData]);
     const options = {
