@@ -1,15 +1,14 @@
-const User = require('../libs/User');
-const help = require('./helpers/index');
-
 const assert = require('chai').assert;
 const _ = require('lodash');
-
 const Web3 = require('web3');
 const provider = new Web3.providers.HttpProvider('http://localhost:8545')
 const web3 = new Web3(provider);
-const web3providerFactory = require('../libs/web3provider');
 
-const HotelEvents = require('../libs/HotelEvents.js');
+const help = require('./helpers/index');
+const library = require('../dist/node/wt-js-libs');
+const User = library.User;
+const web3providerFactory = library.web3providerFactory;
+const HotelEvents = library.HotelEvents;
 
 xdescribe('HotelEvents', function() {
   let Manager;
@@ -35,6 +34,7 @@ xdescribe('HotelEvents', function() {
     ownerAccount = wallet["1"].address;
     augusto = wallet["2"].address;
   })
+
   describe('subscribe', function() {
     const fromDate = new Date('10/10/2020');
     const daysAmount = 5;

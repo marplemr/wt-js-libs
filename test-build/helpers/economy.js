@@ -1,6 +1,5 @@
 const Token = require('./token');
 const misc = require('./misc');
-const utils = require('../../libs/utils/index');
 
 /**
  * Test fixture that creates a LifToken, a WTIndex whose owner is `accounts[0]`, and funds four
@@ -19,23 +18,19 @@ const utils = require('../../libs/utils/index');
  *   wallet, // web3.eth.accounts.wallet w/ 4 accounts. (See above)
  * } = await help.createWindingTreeEconomy(accounts)
  */
-async function createWindingTreeEconomy(accounts, web3){
+async function createWindingTreeEconomy(accounts, web3provider) {
   const defaultGas = 400000;
-  const wallet = await web3.eth.accounts.wallet.create(4);
+  const wallet = await web3provider.web3.eth.accounts.wallet.create(4);
   const fundingSource = accounts[0];
 
-  await utils.fundAccount(fundingSource, wallet["0"].address, '50', web3);
-  await utils.fundAccount(fundingSource, wallet["1"].address, '50', web3);
-  await utils.fundAccount(fundingSource, wallet["2"].address, '50', web3);
-  await utils.fundAccount(fundingSource, wallet["3"].address, '50', web3);
+  await web3provider.accounts.fundAccount(fundingSource, wallet["0"].address, '50');
+  await web3provider.accounts.fundAccount(fundingSource, wallet["1"].address, '50');
+  await web3provider.accounts.fundAccount(fundingSource, wallet["2"].address, '50');
+  await web3provider.accounts.fundAccount(fundingSource, wallet["3"].address, '50');
 
-  const index = await utils.deployIndex({
-    owner: wallet["0"].address,
-    gasMargin: 1.5,
-    web3: web3
-  });
+  const index = await web3provider.deploy.deployIndex(wallet["0"].address, 1.5);
 
-  const token = await Token.runTokenGenerationEvent();
+  const token = await Token.runTokenGenerationEvent(web3provider);
 
   const setLifData = await index.methods
     .setLifToken(token.options.address)
@@ -48,23 +43,11 @@ async function createWindingTreeEconomy(accounts, web3){
     data: setLifData
   };
 
-  await web3.eth.sendTransaction(setLifOptions);
+  await web3provider.web3.eth.sendTransaction(setLifOptions);
 
-  const tokenFundingOptions = {
-    token: token,
-    sender: fundingSource,
-    value: '500',
-    web3: web3
-  };
-
-  tokenFundingOptions.receiver = wallet["1"].address;
-  await misc.sendTokens(tokenFundingOptions);
-
-  tokenFundingOptions.receiver = wallet["2"].address;
-  await misc.sendTokens(tokenFundingOptions);
-
-  tokenFundingOptions.receiver = wallet["3"].address;
-  await misc.sendTokens(tokenFundingOptions);
+  await web3provider.accounts.sendTokens(token, fundingSource, wallet["1"].address, '500');
+  await web3provider.accounts.sendTokens(token, fundingSource, wallet["2"].address, '500');
+  await web3provider.accounts.sendTokens(token, fundingSource, wallet["3"].address, '500');
 
   return {
     index: index,

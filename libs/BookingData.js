@@ -1,6 +1,5 @@
 const _ = require('lodash');
 const moment = require('moment');
-const utils = require('./utils/index');
 
 /**
  * Methods that let managers and clients query the blockchain about hotel booking costs, history,
@@ -12,29 +11,40 @@ class BookingData {
 
   /**
    * Instantiates with a web3 object whose provider has been set
-   * @param  {Object} web3
+   * @param  {Object} { web3provider: <web3provider> }
    * @return {BookingData}
    */
-  constructor(web3){
-    this.context = {};
-    this.context.web3 = web3;
+  constructor(options) {
+    this.web3provider = options.web3provider;
+  }
+
+  getHotelUnitInstance(unitAddress) {
+    return this.web3provider.contracts.getHotelUnitInstance(unitAddress);
+  }
+
+  getHotelInstance(hotelAddress) {
+    return this.web3provider.contracts.getHotelInstance(hotelAddress);
+  }
+
+  addressToChecksum(address) {
+    return this.web3provider.web3.utils.toChecksumAddress(address);
   }
 
   /**
    * Gets the national currency cost of a booking for a range of days. Check-in is on the
    * first day, check-out on the last.
    * @param  {Address}          unitAddress  Unit contract to edit
-   * @param  {Date }            fromDate     check-in date
+   * @param  {Date}            fromDate     check-in date
    * @param  {Number}           daysAmount   integer number of days to book.
    * @return {Number}           Floating point cost ex: 100.00
    * @example
       const cost = await lib.getCost('0xab3..cd', new Date('5/31/2020'), 5);
    */
   async getCost(unitAddress, fromDate, daysAmount){
-    const fromDay = utils.formatDate(fromDate);
-    const unit = utils.getInstance('HotelUnit', unitAddress, this.context);
+    const fromDay = this.web3provider.utils.formatDate(fromDate);
+    const unit = this.web3provider.contracts.getHotelUnitInstance(unitAddress);
     const cost = await unit.methods.getCost(fromDay, daysAmount).call();
-    return utils.bnToPrice(cost);
+    return this.web3provider.utils.bnToPrice(cost);
   }
 
   /**
@@ -48,41 +58,41 @@ class BookingData {
       const cost = await lib.getCost('0xab3..cd', new Date('5/31/2020'), 5);
    */
   async getLifCost(unitAddress, fromDate, daysAmount){
-    const fromDay = utils.formatDate(fromDate);
-    const unit = utils.getInstance('HotelUnit', unitAddress, this.context);
+    const fromDay = this.web3provider.utils.formatDate(fromDate);
+    const unit = this.getHotelUnitInstance(unitAddress);
     const wei = await unit.methods.getLifCost(fromDay, daysAmount).call();
 
-    return utils.lifWei2Lif(wei, this.context);
+    return this.web3provider.utils.lifWei2Lif(wei);
   }
 
+  /**
+   * Checks the availability of a unit for a range of days
+   * @param  {Address} unitAddress Unit contract address
+   * @param  {Date}    fromDate    check-in date
+   * @param  {Number}  daysAmount  number of days
+   * @return {Boolean}
+   */
   async unitAvailability(unitAddress, fromDate, daysAmount) {
-    const unit = utils.getInstance('HotelUnit', unitAddress, this.context);
-    // If unit is not active, fail fast
-    const isActive = await unit.methods.active().call();
-    if (!isActive) {
-      return false;
-    }
-
-    const fromDay = utils.formatDate(fromDate);
+    const unit = this.getHotelUnitInstance(unitAddress);
+    const fromDay = this.web3provider.utils.formatDate(fromDate);
     const range = _.range(fromDay, fromDay + daysAmount);
     const defaultPrice = (await unit.methods.defaultPrice().call()) / 100;
-    const defaultLifPrice = utils.lifWei2Lif(await unit.methods.defaultLifPrice().call(), this.context);
+    const defaultLifPrice = this.web3provider.utils.lifWei2Lif(await unit.methods.defaultLifPrice().call());
     let availability = [];
 
     for (let day of range) {
       const reservationResult = await unit.methods.getReservation(day).call();
-      const specialPrice = utils.bnToPrice(reservationResult[0]);
-      const specialLifPrice = utils.lifWei2Lif(reservationResult[1], this.context);
+      const specialPrice = this.web3provider.utils.bnToPrice(reservationResult[0]);
+      const specialLifPrice = this.web3provider.utils.lifWei2Lif(reservationResult[1], this.context);
       const bookedBy = reservationResult[2];
 
       availability.push({
         day: day,
         price: (specialPrice > 0) ? specialPrice : defaultPrice,
         lifPrice: (specialLifPrice > 0) ? specialLifPrice : defaultLifPrice,
-        available: utils.isZeroAddress(bookedBy),
+        available: this.web3provider.utils.isZeroAddress(bookedBy) ? true : false
       });
     }
-
     return availability;
   }
 
@@ -133,7 +143,7 @@ class BookingData {
    *    }
    * ]
    */
-  async getBookings(_addresses, fromBlock=0){
+  async getBookings(_addresses, fromBlock = 0){
     let hotelsToQuery = [];
     let bookings = [];
 
@@ -149,11 +159,11 @@ class BookingData {
     let finished;
     //TX hashes of CallStarted events indexed by corresponding hashes of CallFinished events
     let startedMappedByFinished = [];
-    for (let address of hotelsToQuery){
-      const hotel = utils.getInstance('Hotel', address, this.context);
+    for (let address of hotelsToQuery) {
+      const hotel = this.getHotelInstance(address);
 
       bookEvents = await hotel.getPastEvents('Book', {
-        fromBlock: fromBlock
+        fromBlock: fromBlock,
       });
 
       startedEvents = await hotel.getPastEvents('CallStarted', {
@@ -162,7 +172,7 @@ class BookingData {
 
       finishEvents = await hotel.getPastEvents('CallFinish', {
         fromBlock: fromBlock
-      })
+      });
 
       // Filter out started events with a corresponding Book event
       // and map finish events -> started events
@@ -175,15 +185,15 @@ class BookingData {
         return found !== -1;
       })
 
-      for (let event of bookEvents){
+      for (let event of bookEvents) {
         let guestData;
 
         //If guest data can't be retreived, it means the booking required a
         //confirmation, so the guestData can be found in the CallStarted tx
-        try {
-          guestData = await utils.getGuestData(event.transactionHash, this.context)
-        } catch(e) {
-          guestData = await utils.getGuestData(startedMappedByFinished[event.transactionHash], this.context)
+        if (await hotel.methods.waitConfirmation().call() == true) {
+          guestData = await this.web3provider.data.getGuestData(startedMappedByFinished[event.transactionHash]);
+        } else {
+          guestData = await this.web3provider.data.getGuestData(event.transactionHash);
         }
 
         bookings.push({
@@ -193,7 +203,7 @@ class BookingData {
           id: event.id,
           from: event.returnValues.from,
           unit: event.returnValues.unit,
-          fromDate: utils.parseDate(event.returnValues.fromDay),
+          fromDate: this.web3provider.utils.parseDate(event.returnValues.fromDay),
           daysAmount: event.returnValues.daysAmount
         })
       };
@@ -237,8 +247,8 @@ class BookingData {
     let finishEvents;
     let unfinished;
 
-    for (let address of hotelsToQuery){
-      const hotel = utils.getInstance('Hotel', address, this.context);
+    for (let address of hotelsToQuery) {
+      const hotel = this.getHotelInstance(address);
 
       startedEvents = await hotel.getPastEvents('CallStarted', {
         fromBlock: fromBlock
@@ -256,13 +266,13 @@ class BookingData {
         return found === -1;
       })
 
-      for(let event of unfinished){
-        const guestData = await utils.getGuestData(event.transactionHash, this.context);
+      for(let event of unfinished) {
+        const guestData = await this.web3provider.data.getGuestData(event.transactionHash);
 
         //get calldata and decode it for booking data
         let publicCallData = await hotel.methods.getPublicCallData(event.returnValues.dataHash).call();
         let bookData = {};
-        utils.abiDecoder.decodeMethod(publicCallData).params.forEach((param) => {
+        this.web3provider.contracts.abiDecoder.decodeMethod(publicCallData).params.forEach((param) => {
           bookData[param.name] = param.value;
         });
 
@@ -274,8 +284,8 @@ class BookingData {
           from: event.returnValues.from,
           dataHash: event.returnValues.dataHash,
           hotel: address,
-          unit: this.context.web3.utils.toChecksumAddress(bookData.unitAddress),
-          fromDate: utils.parseDate(bookData.fromDay),
+          unit: this.addressToChecksum(bookData.unitAddress),
+          fromDate: this.web3provider.utils.parseDate(bookData.fromDay),
           daysAmount: bookData.daysAmount
         })
       };
