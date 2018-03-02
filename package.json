@@ -29,6 +29,7 @@
   },
   "dependencies": {
     "@windingtree/lif-token": "^0.1.2-erc827",
+    "@windingtree/wt-contracts": "^0.1.0",
     "abi-decoder": "^1.0.8",
     "currency-codes": "^1.1.2",
     "joi": "^13.1.2",
