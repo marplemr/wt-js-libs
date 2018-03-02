@@ -1,11 +1,9 @@
-const utils = require('./../../libs/utils/index');
 const LifCrowdsale = require('@windingtree/lif-token/build/contracts/LifCrowdsale.json');
 const LifToken = require('@windingtree/lif-token/build/contracts/LifToken.json');
 
 const Web3 = require('web3');
 const provider = new Web3.providers.HttpProvider('http://localhost:8545');
 const web3 = new Web3(provider);
-
 const abi = LifCrowdsale.abi;
 const binary = LifCrowdsale.bytecode;
 

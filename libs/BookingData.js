@@ -80,7 +80,6 @@ class BookingData {
    */
   async unitAvailability(hotelAddress, unitAddress, fromDate, daysAmount = 0) {
     // TODO validate.addressAndRange({unitAddress, fromDate, daysAmount});
-
     const unit = this.getHotelUnitInstance(unitAddress);
     const hotel = this.getHotelInstance(hotelAddress);
     const fromDay = this.web3provider.utils.formatDate(fromDate);

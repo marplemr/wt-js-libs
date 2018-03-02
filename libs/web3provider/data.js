@@ -62,14 +62,22 @@ async function getHotelInfo(web3, utils, contracts, wtHotel) {
       unitTypes[name].amenities = amenities.filter(item => !utils.isZeroUint(item))
                                            .map(item => parseInt(item));
 
+      const code = await instance.methods.currencyCode().call();
+      unitTypes[name].currencyCode = utils.isZeroBytes8(code) ? null : utils.currencyCodes.number(web3.utils.hexToNumber(code)).code;
+
+      let lifWei = await instance.methods.defaultLifPrice().call();
+      lifWei = utils.lifWei2Lif(lifWei);
+      unitTypes[name].defaultLifPrice = utils.isZeroUint(lifWei) ? null : parseInt(lifWei);
+
       const info = await instance.methods.getInfo().call();
 
       unitTypes[name].info = {
         description: utils.isZeroString(info[0]) ? null : info[0],
         minGuests: utils.isZeroUint(info[1]) ? null : parseInt(info[1]),
         maxGuests: utils.isZeroUint(info[2]) ? null : parseInt(info[2]),
-        price: utils.isZeroString(info[3]) ? null : info[3],
+        defaultPrice: utils.isZeroString(info[3]) ? null : utils.bnToPrice(info[3]),
       }
+      unitTypes[name].defaultPrice = unitTypes[name].info.defaultPrice;
 
       // UnitType Images
       const length = await instance.methods.getImagesLength().call();
@@ -105,16 +113,6 @@ async function getHotelInfo(web3, utils, contracts, wtHotel) {
 
       const unitType = await instance.methods.unitType().call();
       units[address].unitType = utils.bytes32ToString(unitType);
-
-      const code = await instance.methods.currencyCode().call();
-      units[address].currencyCode = utils.isZeroBytes8(code) ? null : utils.currencyCodes.number(web3.utils.hexToNumber(code)).code;
-
-      const defaultPrice = await instance.methods.defaultPrice().call();
-      units[address].defaultPrice = utils.isZeroUint(defaultPrice) ? null : utils.bnToPrice(defaultPrice);
-
-      let lifWei = await instance.methods.defaultLifPrice().call();
-      lifWei = utils.lifWei2Lif(lifWei);
-      units[address].defaultLifPrice = utils.isZeroUint(lifWei) ? null : parseInt(lifWei);
     }
   }
 
@@ -139,9 +137,9 @@ async function getHotelInfo(web3, utils, contracts, wtHotel) {
     lineOne: lineOne,
     lineTwo: lineTwo,
     zip: zip,
-    country: country,
+    country: web3.utils.toAscii(country),
     created: parseInt(created),
-    timezone: parseInt(timezone),
+    timezone: timezone,
     latitude: utils.locationFromUint(longitude, latitude).lat,
     longitude: utils.locationFromUint(longitude, latitude).long,
     waitConfirmation: waitConfirmation,
@@ -338,9 +336,9 @@ async function getBookingTransactions(web3, utils, contracts, walletAddress, ind
         txData.timeStamp = tx.timeStamp;
         let method = contracts.abiDecoder.decodeMethod(tx.input);
         if(!method) return;
-        if(method.name == 'approveData') {
-          txData.hotel = method.params.find(param => param.name === 'spender').value;
-          method = contracts.abiDecoder.decodeMethod(method.params.find(call => call.name === 'data').value);
+        if(method.name == 'approve') {
+          txData.hotel = method.params.find(param => param.name === '_spender').value;
+          method = contracts.abiDecoder.decodeMethod(method.params.find(call => call.name === '_data').value);
         }
         //Only called when requesting to book a unit
         if(method.name == 'beginCall') {
@@ -379,7 +377,7 @@ async function getBookingTransactions(web3, utils, contracts, walletAddress, ind
 
 /**
  * Extracts the guest data from an instant payment Booking initiated by
- * a `token.approveData` transaction.
+ * a `token.approve` transaction.
  * @param  {String} hash    transaction hash, available on the `CallStarted` event
  * @return {String}      plain text guest data. If this is JSON it will need to be parsed.
  */
@@ -388,8 +386,8 @@ async function getGuestData(web3, abiDecoder, hash) {
   let tx = await web3.eth.getTransaction(hash);
   let method = abiDecoder.decodeMethod(tx.input);
 
-  if (method.name === 'approveData'){
-    const paramData = method.params.filter(call => call.name === 'data')[0].value;
+  if (method.name === 'approve'){
+    const paramData = method.params.filter(call => call.name === '_data')[0].value;
     method = abiDecoder.decodeMethod(paramData);
   }
 

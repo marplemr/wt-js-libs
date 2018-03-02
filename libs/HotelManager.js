@@ -729,7 +729,7 @@ class HotelManager {
     const {
       hotel,
       index
-    } = await this.web3provider.data.getHotelAndIndex(hotelAddress);
+    } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
     const typeNameHex =  this.web3provider.web3.utils.toHex(unitType)
     const unitTypeAddress = await hotel.methods.getUnitType(typeNameHex).call();
 

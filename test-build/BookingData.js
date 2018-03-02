@@ -68,9 +68,9 @@ describe('BookingData', function() {
       const daysAmount = 5;
       const price = 100.00;
       const expectedCost = price * daysAmount;
-
-      await Manager.setDefaultPrice(hotelAddress, unitAddress, price, sync);
-      const actualCost = await data.getCost(unitAddress, fromDate, daysAmount);
+      // TODO improve
+      await Manager.setDefaultPrice(hotelAddress, 'BASIC_ROOM', price, sync);
+      const actualCost = await data.getCost(hotelAddress, unitAddress, fromDate, daysAmount);
 
       assert.equal(expectedCost, actualCost);
     })
@@ -81,15 +81,14 @@ describe('BookingData', function() {
       const price = 20;
       const expectedCost = price * daysAmount;
 
-      await Manager.setDefaultLifPrice(hotelAddress, unitAddress, price, sync);
-      const actualCost = await data.getLifCost(unitAddress, fromDate, daysAmount);
+      await Manager.setDefaultLifPrice(hotelAddress, 'BASIC_ROOM', price, sync);
+      const actualCost = await data.getLifCost(hotelAddress, unitAddress, fromDate, daysAmount);
 
       assert.equal(expectedCost, actualCost);
     })
   });
 
   describe('unit availability', () => {
-
     const fromDate = new Date('10/10/2020');
     const daysAmount = 5;
     const price = 100.00;
@@ -98,12 +97,12 @@ describe('BookingData', function() {
     const specialLifPrice = 2;
 
     it('returns a unit\'s price and availability for a range of dates', async () => {
-      await Manager.setDefaultPrice(hotelAddress, unitAddress, price);
-      await Manager.setDefaultLifPrice(hotelAddress, unitAddress, lifPrice);
+      await Manager.setDefaultPrice(hotelAddress, 'BASIC_ROOM', price);
+      await Manager.setDefaultLifPrice(hotelAddress, 'BASIC_ROOM', lifPrice);
       await Manager.setUnitSpecialPrice(hotelAddress, unitAddress, specialPrice, fromDate, 1);
       await Manager.setUnitSpecialLifPrice(hotelAddress, unitAddress, specialLifPrice, fromDate, 1);
 
-      let availability = await data.unitAvailability(unitAddress, fromDate, daysAmount);
+      let availability = await data.unitAvailability(hotelAddress, unitAddress, fromDate, daysAmount);
       for(let date of availability) {
         if (date.day == web3provider.utils.formatDate(fromDate)) {
           assert.equal(date.price, specialPrice);
@@ -116,13 +115,14 @@ describe('BookingData', function() {
     })
 
     it('given a single moment date, returns units price and availability for that month', async() => {
-      await Manager.setDefaultPrice(hotelAddress, unitAddress, price);
-      await Manager.setDefaultLifPrice(hotelAddress, unitAddress, lifPrice);
+      // TODO improve BASIC_ROOM passing
+      await Manager.setDefaultPrice(hotelAddress, 'BASIC_ROOM', price);
+      await Manager.setDefaultLifPrice(hotelAddress, 'BASIC_ROOM', lifPrice);
       await Manager.setUnitSpecialPrice(hotelAddress, unitAddress, specialPrice, fromDate, 1);
       await Manager.setUnitSpecialLifPrice(hotelAddress, unitAddress, specialLifPrice, fromDate, 1);
 
       let fromDateMoment = moment(fromDate);
-      let availability = await data.unitMonthlyAvailability(unitAddress, fromDateMoment);
+      let availability = await data.unitMonthlyAvailability(hotelAddress, unitAddress, fromDateMoment);
       assert.equal(Object.keys(availability).length, 30);
       assert.equal(availability[web3provider.utils.formatDate(fromDate)].price, specialPrice);
     })
