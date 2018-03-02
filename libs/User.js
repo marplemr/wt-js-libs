@@ -1,5 +1,5 @@
-const validate = require('./utils/validators');
 const BookingData = require('./BookingData');
+const validate = require('./utils/validators');
 
 /**
  * Methods that allow hotel clients to make bookings.
@@ -78,7 +78,7 @@ class User {
    * @return {Promievent}
    */
   async bookWithLif(hotelAddress, unitAddress, fromDate, daysAmount, guestData, callbacks) {
-    validate.bookInfo({hotelAddress, unitAddress, fromDate, daysAmount, guestData});
+    await validate.bookInfo({hotelAddress, unitAddress, fromDate, daysAmount, guestData});
 
     const guestDataHex = this.web3provider.web3.utils.toHex(guestData);
     const fromDay = this.web3provider.utils.formatDate(fromDate);
@@ -133,7 +133,7 @@ class User {
    * @return {Promievent}
    */
   async book(hotelAddress, unitAddress, fromDate, daysAmount, guestData, callbacks){
-    validate.bookInfo({hotelAddress, unitAddress, fromDate, daysAmount, guestData});
+    await validate.bookInfo({hotelAddress, unitAddress, fromDate, daysAmount, guestData});
     const fromDay = this.web3provider.utils.formatDate(fromDate);
     const guestDataHex = this.web3provider.web3.utils.toHex(guestData);
 
@@ -169,7 +169,7 @@ class User {
    * @return {Boolean}
    */
   async balanceCheck(cost) {
-    validate.cost({cost});
+    await validate.cost({cost});
 
     let weiCost = this.web3provider.utils.lif2LifWei(cost);
     weiCost = new this.web3provider.web3.utils.BN(weiCost);

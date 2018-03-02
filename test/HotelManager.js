@@ -477,7 +477,7 @@ describe('HotelManager', function() {
         await hotelManager.setCurrencyCode(hotelAddress, unitAddress, 'EUR');
         assert(false);
       } catch(e) {
-        assert.match(e.toString(), /Invalid currency code/);
+        assert.match(e.toString(), new RegExp('"code" must be a number'));
       }
     });
   });
@@ -490,7 +490,7 @@ describe('HotelManager', function() {
       lineTwo: 'line two',
       zip: 'C1414',
       country: 'Argentina',
-      timezone: 3,
+      timezone: 'South America/Buenos Aires',
       latitude: 38.002281,
       longitude: 57.557541,
       waitConfirmation: true,
@@ -527,17 +527,17 @@ describe('HotelManager', function() {
         {
           active: true,
           unitType: 'BASIC_ROOM',
-          _addr: 'a',
+          _addr: '0x9ec823DB4c3B774e82DE9d8B94185Cb3d78277c7',
         },
         {
           active: true,
           unitType: 'FAMILY_CABIN',
-          _addr: 'b',
+          _addr: '0x9ec823DB4c3B774e82DE9d8B94185Cb3d78277c8',
         },
         {
           active: false,
           unitType: 'BASIC_ROOM',
-          _addr: 'c',
+          _addr: '0x9ec823DB4c3B774e82DE9d8B94185Cb3d78277c9',
         }
       ]
     };
@@ -550,7 +550,7 @@ describe('HotelManager', function() {
       });
       getHotelInfoStub.onCall(1).returns({
         units: _.keyBy(hotelToCreate.units, '_addr'),
-        unitAddresses: ['a', 'b', 'c'],
+        unitAddresses: ['0x9ec823DB4c3B774e82DE9d8B94185Cb3d78277c7', '0x9ec823DB4c3B774e82DE9d8B94185Cb3d78277c8', '0x9ec823DB4c3B774e82DE9d8B94185Cb3d78277c9'],
       });
     });
 

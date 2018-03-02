@@ -55,7 +55,7 @@ class HotelManager {
    *  (we should have a doc link to JSON output here)
    */
   async getHotel(hotelAddress) {
-    validate.hotelAddress({hotelAddress});
+    await validate.hotelAddress({hotelAddress});
 
     const hotel = this.getHotelInstance(hotelAddress);
     this.hotels[hotelAddress] = await this.web3provider.data.getHotelInfo(hotel);
@@ -102,7 +102,7 @@ class HotelManager {
    *   } = await lib.getReservation('0xab3..cd', new Date('5/31/2020'));
    */
   async getReservation(unitAddress, day) {
-    validate.addressAndDay({unitAddress, day});
+    await validate.addressAndDay({unitAddress, day});
 
     if (day instanceof Date)
       day = this.web3provider.utils.formatDate(day);
@@ -159,7 +159,7 @@ class HotelManager {
    * @return {Promievent}
    */
   async createHotel(name, description, callbacks) {
-    validate.nameAndDescription({name, description});
+    await validate.nameAndDescription({name, description});
 
     const estimate = await this.getIndexInstance().methods
       .registerHotel(name, description)
@@ -193,7 +193,7 @@ class HotelManager {
    * @return {Promievent}
    */
   async removeHotel(hotelAddress, callbacks) {
-    validate.hotelAddress({hotelAddress});
+    await validate.hotelAddress({hotelAddress});
 
     const {
       hotel,
@@ -234,7 +234,7 @@ class HotelManager {
    * @return {Promievent}
    */
   async setRequireConfirmation(hotelAddress, value, callbacks) {
-    validate.hotelAddressAndValue({hotelAddress, value});
+    await validate.hotelAddressAndValue({hotelAddress, value});
     const {
       hotel,
       index
@@ -256,8 +256,8 @@ class HotelManager {
    * @return {Promievent}
    */
   async changeHotelInfo(hotelAddress, name, description, callbacks) {
-    validate.hotelAddress({hotelAddress});
-    validate.nameAndDescription({name, description});
+    await validate.hotelAddress({hotelAddress});
+    await validate.nameAndDescription({name, description});
 
     const {
       hotel,
@@ -285,8 +285,8 @@ class HotelManager {
  * @return {Promievent}
  */
   async changeHotelLocation(hotelAddress, lineOne, lineTwo, zipCode, country, timezone, longitude, latitude, callbacks){
-    validate.physicalAddress({hotelAddress, lineOne, lineTwo, zipCode, country});
-    validate.hotelCoordinatesAndTimezone({hotelAddress, timezone, latitude, longitude});
+    await validate.physicalAddress({hotelAddress, lineOne, lineTwo, zipCode, country});
+    await validate.hotelCoordinatesAndTimezone({hotelAddress, timezone, latitude, longitude});
     const {
       hotel,
       index
@@ -309,7 +309,7 @@ class HotelManager {
    * @return {Promievent}
    */
   async addImageHotel(hotelAddress, url, callbacks) {
-    validate.hotelAddressAndUrl({hotelAddress, url});
+    await validate.hotelAddressAndUrl({hotelAddress, url});
 
     const {
       hotel,
@@ -331,7 +331,7 @@ class HotelManager {
    * @return {Promievent}
    */
   async removeImageHotel(hotelAddress, imageIndex, callbacks) {
-    validate.hotelAddressAndImageIndex({hotelAddress, imageIndex});
+    await validate.hotelAddressAndImageIndex({hotelAddress, imageIndex});
 
     const {
       hotel,
@@ -354,7 +354,7 @@ class HotelManager {
    * @return {Promievent}
    */
   async confirmBooking(hotelAddress, reservationId, callbacks) {
-    validate.hotelAddressAndreservationId({hotelAddress, reservationId});
+    await validate.hotelAddressAndreservationId({hotelAddress, reservationId});
 
     const {
       hotel,
@@ -376,7 +376,7 @@ class HotelManager {
    * @return {Promievent}
    */
   async addUnitType(hotelAddress, unitType, callbacks) {
-    validate.hotelAddressAndUnitType({hotelAddress, unitType});
+    await validate.hotelAddressAndUnitType({hotelAddress, unitType});
 
     const {
       hotel,
@@ -400,7 +400,7 @@ class HotelManager {
    * @return {Promievent}
    */
   async removeUnitType(hotelAddress, unitType, callbacks) {
-    validate.hotelAddressAndUnitType({hotelAddress, unitType});
+    await validate.hotelAddressAndUnitType({hotelAddress, unitType});
 
     const {
       hotel,
@@ -428,7 +428,7 @@ class HotelManager {
    * @return {Promievent}
    */
   async editUnitType(hotelAddress, unitType, description, minGuests, maxGuests, callbacks){
-    validate.unitTypeInfo({hotelAddress, unitType, description, minGuests, maxGuests});
+    await validate.unitTypeInfo({hotelAddress, unitType, description, minGuests, maxGuests});
     const {
       hotel,
       index
@@ -458,7 +458,7 @@ class HotelManager {
    * @return {Promievent}
    */
   async addAmenity(hotelAddress, unitType, amenity, callbacks) {
-    validate.unitTypeAmenity({hotelAddress, unitType, amenity});
+    await validate.unitTypeAmenity({hotelAddress, unitType, amenity});
 
     const {
       hotel,
@@ -489,7 +489,7 @@ class HotelManager {
    * @return {Promievent}
    */
   async removeAmenity(hotelAddress, unitType, amenity, callbacks) {
-    validate.unitTypeAmenity({hotelAddress, unitType, amenity});
+    await validate.unitTypeAmenity({hotelAddress, unitType, amenity});
 
     const {
       hotel,
@@ -520,7 +520,7 @@ class HotelManager {
    * @return {Promievent}
    */
   async addImageUnitType(hotelAddress, unitType, url, callbacks) {
-    validate.addImageUnitType({hotelAddress, unitType, url});
+    await validate.addImageUnitType({hotelAddress, unitType, url});
 
     const {
       hotel,
@@ -551,7 +551,7 @@ class HotelManager {
    * @return {Promievent}
    */
   async removeImageUnitType(hotelAddress, unitType, imageIndex, callbacks) {
-    validate.removeImageUnitType({hotelAddress, unitType, imageIndex});
+    await validate.removeImageUnitType({hotelAddress, unitType, imageIndex});
 
     const {
       hotel,
@@ -581,7 +581,7 @@ class HotelManager {
    * @return {Promievent}
    */
   async addUnit(hotelAddress, unitType, callbacks) {
-    validate.hotelAddressAndUnitType({hotelAddress, unitType});
+    await validate.hotelAddressAndUnitType({hotelAddress, unitType});
 
     const {
       hotel,
@@ -605,7 +605,7 @@ class HotelManager {
    * @return {Promievent}
    */
   async removeUnit(hotelAddress, unitAddress, callbacks) {
-    validate.hotelAddressAndUnitAddress({hotelAddress, unitAddress});
+    await validate.hotelAddressAndUnitAddress({hotelAddress, unitAddress});
 
     const {
       hotel,
@@ -628,7 +628,7 @@ class HotelManager {
    * @return {Promievent}
    */
   async setUnitActive(hotelAddress, unitAddress, active, callbacks) {
-    validate.unitActive({hotelAddress, unitAddress, active});
+    await validate.unitActive({hotelAddress, unitAddress, active});
 
     const {
       hotel,
@@ -657,7 +657,7 @@ class HotelManager {
    * @return {Promievent}
    */
   async setDefaultPrice(hotelAddress, unitType, price, callbacks){
-    validate.unitTypePrice({hotelAddress, unitType, price});
+    await validate.unitTypePrice({hotelAddress, unitType, price});
     const {
       hotel,
       index
@@ -688,7 +688,7 @@ class HotelManager {
    * @return {Promievent}
   */
   async setDefaultLifPrice(hotelAddress, unitType, price, callbacks){
-    validate.unitTypeLifPrice({hotelAddress, unitType, price});
+    await validate.unitTypeLifPrice({hotelAddress, unitType, price});
     const {
       hotel,
       index
@@ -720,7 +720,7 @@ class HotelManager {
    * @return {Promievent}
    */
   async setCurrencyCode(hotelAddress, unitType, code, callbacks){
-    validate.currencyCode({hotelAddress, unitType, code});
+    await validate.currencyCode({hotelAddress, unitType, code});
 
     if(! this.web3provider.utils.currencyCodes.number(code)) {
       throw new Error('Invalid currency code');
@@ -763,7 +763,7 @@ class HotelManager {
    * @return {Promievent}
    */
   async setUnitSpecialPrice(hotelAddress, unitAddress, price, fromDate, daysAmount, callbacks) {
-    validate.unitSpecialPrice({hotelAddress, unitAddress, price, fromDate, daysAmount});
+    await validate.unitSpecialPrice({hotelAddress, unitAddress, price, fromDate, daysAmount});
 
     const {
       hotel,
@@ -798,7 +798,7 @@ class HotelManager {
    * @return {Promievent}
    */
   async setUnitSpecialLifPrice(hotelAddress, unitAddress, price, fromDate, daysAmount, callbacks) {
-    validate.unitSpecialLifPrice({hotelAddress, unitAddress, price, fromDate, daysAmount});
+    await validate.unitSpecialLifPrice({hotelAddress, unitAddress, price, fromDate, daysAmount});
 
     const {
       hotel,

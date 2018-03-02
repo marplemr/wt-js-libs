@@ -103,8 +103,9 @@ async function jsArrayFromSolidityArray(getAtIndex, length, zeroComparator) {
 }
 
 function currencyCodeToHex(web3, code) {
-  if (typeof code !== 'number')
+  if (typeof code !== 'number') {
     throw new Error();
+  }
 
   const hex = web3.utils.toHex(code);
   return web3.utils.padLeft(hex, 16);

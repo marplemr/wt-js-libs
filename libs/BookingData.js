@@ -1,6 +1,7 @@
 const _ = require('lodash');
 const moment = require('moment');
 const validate = require('./utils/validators');
+
 /**
  * Methods that let managers and clients query the blockchain about hotel booking costs, history,
  * and status.
@@ -42,7 +43,7 @@ class BookingData {
       const cost = await lib.getCost('0xad5..cd', '0xab3..cd', new Date('5/31/2020'), 5);
    */
   async getCost(hotelAddress, unitAddress, fromDate, daysAmount = 0){
-    validate.addressAndRange({hotelAddress, unitAddress, fromDate, daysAmount});
+    await validate.addressAndRange({hotelAddress, unitAddress, fromDate, daysAmount});
 
     const fromDay = this.web3provider.utils.formatDate(fromDate);
     const hotel = this.getHotelInstance(hotelAddress);
@@ -62,7 +63,7 @@ class BookingData {
       const cost = await lib.getCost('0xad5..cd', '0xab3..cd', new Date('5/31/2020'), 5);
    */
   async getLifCost(hotelAddress, unitAddress, fromDate, daysAmount = 0){
-    validate.addressAndRange({hotelAddress, unitAddress, fromDate, daysAmount});
+    await validate.addressAndRange({hotelAddress, unitAddress, fromDate, daysAmount});
 
     const fromDay = this.web3provider.utils.formatDate(fromDate);
     const hotel = this.getHotelInstance(hotelAddress);
@@ -79,7 +80,7 @@ class BookingData {
    * @return {Boolean}
    */
   async unitAvailability(hotelAddress, unitAddress, fromDate, daysAmount = 0) {
-    validate.addressAndRange({hotelAddress, unitAddress, fromDate, daysAmount});
+    await validate.addressAndRange({hotelAddress, unitAddress, fromDate, daysAmount});
     const unit = this.getHotelUnitInstance(unitAddress);
     const hotel = this.getHotelInstance(hotelAddress);
     const fromDay = this.web3provider.utils.formatDate(fromDate);
@@ -123,7 +124,7 @@ class BookingData {
    * @return {Boolean}
    */
   async unitIsAvailable(hotelAddress, unitAddress, fromDate, daysAmount) {
-    validate.addressAndRange({hotelAddress, unitAddress, fromDate, daysAmount});
+    await validate.addressAndRange({hotelAddress, unitAddress, fromDate, daysAmount});
     const availability = await this.unitAvailability(hotelAddress, unitAddress, fromDate, daysAmount);
     return _.every(availability, (dayAvailability) => {
       return dayAvailability.available;
@@ -137,7 +138,7 @@ class BookingData {
    * @return {Object}  Mapping of number of days since epoch to unit's price and availability for that day
    */
   async unitMonthlyAvailability(hotelAddress, unitAddress, date) {
-    validate.addressAndDate({hotelAddress, unitAddress, date});
+    await validate.addressAndDate({hotelAddress, unitAddress, date});
     let fromDate = moment().year(date.year()).month(date.month()).date(1);
     let toDate = moment(fromDate).endOf('month');
     let daysAmount = toDate.diff(fromDate, 'days');
@@ -165,7 +166,7 @@ class BookingData {
    * ]
    */
   async getBookings(_addresses, fromBlock = 0){
-    validate.addressesAndBlock({_addresses, fromBlock});
+    await validate.addressesAndBlock({_addresses, fromBlock});
     let hotelsToQuery = [];
     let bookings = [];
 
@@ -256,7 +257,7 @@ class BookingData {
    *   ]
    */
   async getBookingRequests(_addresses, fromBlock=0){
-    validate.addressesAndBlock({_addresses, fromBlock})
+    await validate.addressesAndBlock({_addresses, fromBlock})
 
     let hotelsToQuery = [];
     let requests = [];
