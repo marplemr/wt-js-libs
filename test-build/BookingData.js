@@ -1,7 +1,6 @@
 var chai = require('chai');
 chai.use(require('chai-string'));
 const assert = chai.assert;
-const _ = require('lodash');
 const moment = require('moment');
 const Web3 = require('web3');
 
@@ -11,10 +10,10 @@ const User = library.User;
 const BookingData = library.BookingData;
 const web3providerFactory = library.web3providerFactory;
 
-const provider = new Web3.providers.HttpProvider('http://localhost:8545')
+const provider = new Web3.providers.HttpProvider('http://localhost:8545');
 const web3 = new Web3(provider);
 
-describe('BookingData', function() {
+describe('BookingData', function () {
   let Manager;
   let token;
   let index;
@@ -22,31 +21,34 @@ describe('BookingData', function() {
   let ownerAccount;
   let augusto;
   let jakub;
+  let wallet;
+  let userOptions;
+  let user, data;
   let hotelAddress;
   let unitAddress;
   let web3provider;
   let typeName;
 
-  before(async function() {
+  before(async function () {
     web3provider = web3providerFactory.getInstance(web3);
     accounts = await web3.eth.getAccounts();
     ({
       index,
       token,
-      wallet
+      wallet,
     } = await help.createWindingTreeEconomy(accounts, web3provider));
 
-    ownerAccount = wallet["1"].address;
-    augusto = wallet["2"].address;
-    jakub = wallet["3"].address;
-  })
+    ownerAccount = wallet['1'].address;
+    augusto = wallet['2'].address;
+    jakub = wallet['3'].address;
+  });
 
-  beforeEach( async function() {
+  beforeEach(async function () {
     ({
       Manager,
       hotelAddress,
       unitAddress,
-      typeName
+      typeName,
     } = await help.generateCompleteHotel(index.options.address, ownerAccount, 1.5, web3provider));
 
     userOptions = {
@@ -54,15 +56,13 @@ describe('BookingData', function() {
       gasMargin: 1.5,
       tokenAddress: token.options.address,
       web3provider: web3provider,
-    }
+    };
 
     user = new User(userOptions);
-    data = new BookingData({web3provider: web3provider});
-    hotel = web3provider.contracts.getHotelInstance(hotelAddress);
+    data = new BookingData({ web3provider: web3provider });
   });
 
-  describe('getCost | getLifCost', function(){
-
+  describe('getCost | getLifCost', function () {
     it('getCost: gets the total cost for a booking over a range of days', async () => {
       const fromDate = new Date('10/10/2020');
       const daysAmount = 5;
@@ -72,7 +72,7 @@ describe('BookingData', function() {
       const actualCost = await data.getCost(hotelAddress, unitAddress, fromDate, daysAmount);
 
       assert.equal(expectedCost, actualCost);
-    })
+    });
 
     it('getLifCost gets the total cost for a booking over a range of days', async () => {
       const fromDate = new Date('10/10/2020');
@@ -84,7 +84,7 @@ describe('BookingData', function() {
       const actualCost = await data.getLifCost(hotelAddress, unitAddress, fromDate, daysAmount);
 
       assert.equal(expectedCost, actualCost);
-    })
+    });
   });
 
   describe('unit availability', () => {
@@ -102,8 +102,8 @@ describe('BookingData', function() {
       await Manager.setUnitSpecialLifPrice(hotelAddress, unitAddress, specialLifPrice, fromDate, 1);
 
       let availability = await data.unitAvailability(hotelAddress, unitAddress, fromDate, daysAmount);
-      for(let date of availability) {
-        if (date.day == web3provider.utils.formatDate(fromDate)) {
+      for (let date of availability) {
+        if (date.day === web3provider.utils.formatDate(fromDate)) {
           assert.equal(date.price, specialPrice);
           assert.equal(date.lifPrice, specialLifPrice);
         } else {
@@ -111,9 +111,9 @@ describe('BookingData', function() {
           assert.equal(date.lifPrice, lifPrice);
         }
       }
-    })
+    });
 
-    it('given a single moment date, returns units price and availability for that month', async() => {
+    it('given a single moment date, returns units price and availability for that month', async () => {
       await Manager.setDefaultPrice(hotelAddress, typeName, price);
       await Manager.setDefaultLifPrice(hotelAddress, typeName, lifPrice);
       await Manager.setUnitSpecialPrice(hotelAddress, unitAddress, specialPrice, fromDate, 1);
@@ -123,17 +123,16 @@ describe('BookingData', function() {
       let availability = await data.unitMonthlyAvailability(hotelAddress, unitAddress, fromDateMoment);
       assert.equal(Object.keys(availability).length, 30);
       assert.equal(availability[web3provider.utils.formatDate(fromDate)].price, specialPrice);
-    })
-  })
+    });
+  });
 
-  describe('getBookings', function() {
+  describe('getBookings', function () {
     const fromDate = new Date('10/10/2020');
     const daysAmount = 5;
-    const price = 1;
     const guestData = 'guestData';
 
-    it('gets a booking for a hotel', async() => {
-      const aa = await user.bookWithLif(
+    it('gets a booking for a hotel', async () => {
+      await user.bookWithLif(
         hotelAddress,
         unitAddress,
         fromDate,
@@ -156,7 +155,7 @@ describe('BookingData', function() {
       assert.equal(booking.daysAmount, daysAmount);
     });
 
-    it('gets bookings for two hotels', async() => {
+    it('gets bookings for two hotels', async () => {
       const hotelTwo = await help.generateCompleteHotel(
         index.options.address,
         ownerAccount,
@@ -166,14 +165,12 @@ describe('BookingData', function() {
       const hotelAddressTwo = hotelTwo.hotelAddress;
       const unitAddressTwo = hotelTwo.unitAddress;
 
-      jakubOptions = {
+      const jakubUser = new User({
         account: jakub,
         gasMargin: 1.5,
         tokenAddress: token.options.address,
-        web3provider: web3provider
-      }
-
-      const jakubUser = new User(jakubOptions);
+        web3provider: web3provider,
+      });
 
       await user.bookWithLif(
         hotelAddress,
@@ -200,7 +197,7 @@ describe('BookingData', function() {
       assert.isDefined(jakubBooking);
     });
 
-    it('gets bookings for a hotel starting from a specific block number', async() => {
+    it('gets bookings for a hotel starting from a specific block number', async () => {
       await user.bookWithLif(
         hotelAddress,
         unitAddress,
@@ -213,7 +210,7 @@ describe('BookingData', function() {
 
       assert.equal(bookings.length, 1);
 
-      blockNumber = await web3.eth.getBlockNumber();
+      let blockNumber = await web3.eth.getBlockNumber();
       blockNumber += 1;
 
       await user.bookWithLif(
@@ -232,13 +229,13 @@ describe('BookingData', function() {
       assert.notDeepEqual(firstBooking, secondBooking);
     });
 
-    it('returns an empty array if there are no bookings', async() => {
+    it('returns an empty array if there are no bookings', async () => {
       const bookings = await data.getBookings(hotelAddress);
       assert.isArray(bookings);
       assert.equal(bookings.length, 0);
     });
 
-    it('gets a booking for a hotel that requires confirmation', async() => {
+    it('gets a booking for a hotel that requires confirmation', async () => {
       await Manager.setRequireConfirmation(hotelAddress, true);
 
       await user.book(
@@ -271,15 +268,14 @@ describe('BookingData', function() {
     });
   });
 
-  describe('getBookingRequests', function(){
+  describe('getBookingRequests', function () {
     const fromDate = new Date('10/10/2020');
     const daysAmount = 5;
-    const price = 1;
     const guestData = 'guestData';
 
-    beforeEach(async () => await Manager.setRequireConfirmation(hotelAddress, true));
+    beforeEach(async () => Manager.setRequireConfirmation(hotelAddress, true));
 
-    it('gets pending booking requests for a hotel', async() => {
+    it('gets pending booking requests for a hotel', async () => {
       await user.book(
         hotelAddress,
         unitAddress,
@@ -305,8 +301,7 @@ describe('BookingData', function() {
       assert.equal(request.daysAmount, daysAmount);
     });
 
-    it('gets booking requests for two hotels', async() => {
-
+    it('gets booking requests for two hotels', async () => {
       const hotelTwo = await help.generateCompleteHotel(
         index.options.address,
         ownerAccount,
@@ -319,14 +314,12 @@ describe('BookingData', function() {
 
       await managerTwo.setRequireConfirmation(hotelAddressTwo, true);
 
-      jakubOptions = {
+      const jakubUser = new User({
         account: jakub,
         gasMargin: 1.5,
         tokenAddress: token.options.address,
-        web3provider: web3provider
-      }
-
-      const jakubUser = new User(jakubOptions);
+        web3provider: web3provider,
+      });
 
       await user.book(
         hotelAddress,
@@ -363,7 +356,7 @@ describe('BookingData', function() {
       assert.equal(jakubBooking.daysAmount, daysAmount);
     });
 
-    it('gets booking requests for a hotel starting from a specific block number', async() => {
+    it('gets booking requests for a hotel starting from a specific block number', async () => {
       await user.bookWithLif(
         hotelAddress,
         unitAddress,
@@ -376,7 +369,7 @@ describe('BookingData', function() {
 
       assert.equal(requests.length, 1);
 
-      blockNumber = await web3.eth.getBlockNumber();
+      let blockNumber = await web3.eth.getBlockNumber();
       blockNumber += 1;
 
       await user.bookWithLif(
@@ -395,7 +388,7 @@ describe('BookingData', function() {
       assert.notDeepEqual(firstRequest, secondRequest);
     });
 
-    it('filters out completed booking requests', async() => {
+    it('filters out completed booking requests', async () => {
       await user.bookWithLif(
         hotelAddress,
         unitAddress,
@@ -426,10 +419,10 @@ describe('BookingData', function() {
       assert.notDeepEqual(firstRequest, secondRequest);
     });
 
-    it('returns an empty array if there are no bookings', async() => {
+    it('returns an empty array if there are no bookings', async () => {
       const requests = await data.getBookingRequests(hotelAddress);
       assert.isArray(requests);
       assert.equal(requests.length, 0);
     });
-  })
+  });
 });

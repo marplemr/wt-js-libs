@@ -1,6 +1,5 @@
-const _ = require('lodash');
-const HotelManager = require('./HotelManager');
 const EventEmitter = require('events');
+const validate = require('./utils/validators');
 
 /**
  * Methods that let managers and clients subscribe to blockchain events emitted by booking
@@ -9,13 +8,12 @@ const EventEmitter = require('events');
  *   const events = new HotelEvents({web3: web3})
  */
 class HotelEvents extends EventEmitter {
-
   /**
    * HotelEvents constructor
    * @param  {Object} options{web3provider: <web3provider>}
    * @return {HotelEvents}
    */
-  constructor(options) {
+  constructor (options) {
     super();
 
     /**
@@ -36,8 +34,13 @@ class HotelEvents extends EventEmitter {
    * @param  {Object} err   web3 error object
    * @param  {Object} event web3 event object
    */
-  async _emitEvent(err, event){
-    if(!event) return;
+  async _emitEvent (err, event) {
+    if (err) {
+      throw new Error(err);
+    }
+    if (!event) {
+      return;
+    }
 
     const guestData = await this.web3provider.data.getGuestData(event.transactionHash);
 
@@ -50,20 +53,20 @@ class HotelEvents extends EventEmitter {
     };
 
     const eventArgsMap = {
-      "Book": {
+      'Book': {
         from: event.returnValues.from,
         unit: event.returnValues.unit,
         fromDate: this.web3provider.utils.parseDate(event.returnValues.fromDay),
-        daysAmount: event.returnValues.daysAmount
+        daysAmount: event.returnValues.daysAmount,
       },
-      "CallStarted": {
+      'CallStarted': {
         from: event.returnValues.from,
         dataHash: event.returnValues.dataHash,
       },
-      "CallFinish": {
+      'CallFinish': {
         from: event.returnValues.from,
         dataHash: event.returnValues.dataHash,
-      }
+      },
     };
 
     const eventPacket = Object.assign(defaults, eventArgsMap[event.name]);
@@ -75,8 +78,8 @@ class HotelEvents extends EventEmitter {
    * contracts
    * @param  {Address|Address[]} _addresses Hotel contracts to listen to
    */
-  subscribe(_addresses){
-    utils.validate.addresses({_addresses});
+  async subscribe (_addresses) {
+    await validate.addresses({ _addresses });
 
     let hotelsToMonitor = [];
 
@@ -85,12 +88,11 @@ class HotelEvents extends EventEmitter {
       : hotelsToMonitor.push(_addresses);
 
     // Prevent duplicate subscriptions
-    hotelsToMonitor = hotelsToMonitor.filter( address => {
+    hotelsToMonitor = hotelsToMonitor.filter(address => {
       return this.subscriptions.findIndex(item => item === address) === -1;
-    })
+    });
 
-    let events;
-    for (let address of hotelsToMonitor){
+    for (let address of hotelsToMonitor) {
       const hotel = this.web3provider.contracts.getContractInstance('Hotel', address);
 
       hotel.events.Book({}, this._emitEvent.bind(this));

@@ -5,9 +5,9 @@ const User = require('./User.js');
 const web3providerFactory = require('./web3provider/index.js');
 
 module.exports = {
-    BookingData: BookingData,
-    HotelEvents: HotelEvents,
-    HotelManager: HotelManager,
-    User: User,
-    web3providerFactory: web3providerFactory,
+  BookingData: BookingData,
+  HotelEvents: HotelEvents,
+  HotelManager: HotelManager,
+  User: User,
+  web3providerFactory: web3providerFactory,
 };

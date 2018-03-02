@@ -6,11 +6,11 @@ const _ = require('lodash');
  * @param  {Instance} WTIndexInstance
  * @param  {Address} owner  hotelOwner
  * @param  {Number} index   position of hotel in the WTIndex registry
- * @param  {Number} gasMargin   
+ * @param  {Number} gasMargin
  * @param  {Object} callbacks   object with callback functions
  * @return {Promievent} or options object
  */
-async function execute(web3, utils, data, WTIndexInstance, owner, index, gasMargin, callbacks) {
+async function execute (web3, utils, data, WTIndexInstance, owner, index, gasMargin, callbacks) {
   const callData = await WTIndexInstance.methods
     .callHotel(index, data)
     .encodeABI();
@@ -19,24 +19,24 @@ async function execute(web3, utils, data, WTIndexInstance, owner, index, gasMarg
     from: owner,
     to: WTIndexInstance.options.address,
     data: callData,
-    nonce: await web3.eth.getTransactionCount(owner, 'pending')
+    nonce: await web3.eth.getTransactionCount(owner, 'pending'),
   };
 
   const estimate = await web3.eth.estimateGas(options);
   options.gas = await utils.addGasMargin(estimate, gasMargin);
 
-  if(callbacks) {
+  if (callbacks) {
     return web3.eth.sendTransaction(options)
       .once('transactionHash', callbacks.transactionHash)
       .once('receipt', callbacks.receipt)
       .on('error', callbacks.error);
   }
 
-  return await web3.eth.sendTransaction(options);
+  return web3.eth.sendTransaction(options);
 }
 
 module.exports = function (web3, utils) {
   return {
     execute: _.partial(execute, web3, utils),
-  }
-}
+  };
+};

@@ -3,17 +3,16 @@ var BN = require('bn.js');
 chai.use(require('chai-string'));
 const assert = chai.assert;
 const sinon = require('sinon');
-const _ = require('lodash');
 
 const Web3 = require('web3');
-const provider = new Web3.providers.HttpProvider('http://localhost:8545')
+const provider = new Web3.providers.HttpProvider('http://localhost:8545');
 const web3 = new Web3(provider);
 const web3providerFactory = require('../libs/web3provider');
 
 const User = require('../libs/User');
 const help = require('./helpers/index');
 
-describe('User', function() {
+describe('User', function () {
   const augusto = '0x8a33BA3429680B31383Fc46f4Ff22f7ac838511F';
   const hotelAddress = '0x96eA4BbF71FEa3c9411C1Cefc555E9d7189695fA';
   const tokenAddress = '0xe91036d59eAd8b654eE2F5b354245f6D7eD2487e';
@@ -23,18 +22,18 @@ describe('User', function() {
   let web3provider;
   let user;
 
-  beforeEach( async function() {
+  beforeEach(async function () {
     web3provider = web3providerFactory.getInstance(web3);
   });
 
-  describe('balanceCheck', function() {
+  describe('balanceCheck', function () {
     beforeEach(() => {
       sinon.stub(web3provider.contracts, 'getTokenInstance').returns({
         methods: {
-          balanceOf: help.stubContractMethodResult(new BN(web3provider.utils.lif2LifWei(500)))
-        }
+          balanceOf: help.stubContractMethodResult(new BN(web3provider.utils.lif2LifWei(500))),
+        },
       });
-      user = new User({web3provider: web3provider, account: augusto, tokenAddress: tokenAddress, gasMargin: gasMargin});
+      user = new User({ web3provider: web3provider, account: augusto, tokenAddress: tokenAddress, gasMargin: gasMargin });
     });
 
     afterEach(() => {
@@ -45,16 +44,16 @@ describe('User', function() {
       const cost = 50;
       const canPay = await user.balanceCheck(cost);
       assert.isTrue(canPay);
-    })
+    });
 
-    it('should return false if balance is lower than cost', async() => {
+    it('should return false if balance is lower than cost', async () => {
       const cost = 5000;
       const canPay = await user.balanceCheck(cost);
       assert.isFalse(canPay);
-    })
+    });
   });
 
-  describe('book', function() {
+  describe('book', function () {
     const daysAmount = 5;
     const estimatedGas = 38;
     const guestData = 'guestData';
@@ -65,12 +64,12 @@ describe('User', function() {
         methods: {
           book: help.stubContractMethodResult({}, 'book-encodedABI'),
           beginCall: help.stubContractMethodResult({}, 'beginCall-encodedABI'),
-        }
+        },
       });
       sendTransactionStub = sinon.stub(web3provider.web3.eth, 'sendTransaction').returns({});
       sinon.stub(web3provider.web3.eth, 'estimateGas').returns(estimatedGas);
       sinon.stub(web3provider.web3.eth.net, 'getId').returns('not-a-test');
-      user = new User({web3provider: web3provider, account: augusto, tokenAddress: tokenAddress, gasMargin: gasMargin});
+      user = new User({ web3provider: web3provider, account: augusto, tokenAddress: tokenAddress, gasMargin: gasMargin });
     });
 
     afterEach(() => {
@@ -94,7 +93,7 @@ describe('User', function() {
       assert.equal(sendTransactionStub.firstCall.args[0].data, 'beginCall-encodedABI');
     });
 
-    it('should make the reservation when manager confirms', async() => {
+    it('should make the reservation when manager confirms', async () => {
       await user.book(
         hotelAddress,
         unitAddress,
@@ -110,9 +109,9 @@ describe('User', function() {
   describe('bookWithLif', function () {
     const fromDate = new Date('10/10/2020');
     const daysAmount = 5;
-    const price = 1;
     const estimatedGas = 38;
     const guestData = 'guestData';
+    let sendTransactionStub;
 
     beforeEach(() => {
       sinon.stub(web3provider.contracts, 'getOverridingMethodEncodedFunctionCallData').callsFake((contract, method, params) => {
@@ -122,7 +121,7 @@ describe('User', function() {
         methods: {
           bookWithLif: help.stubContractMethodResult({}, 'bookWithLif-encodedABI'),
           beginCall: help.stubContractMethodResult({}, 'beginCall-encodedABI'),
-        }
+        },
       });
       sendTransactionStub = sinon.stub(web3provider.web3.eth, 'sendTransaction').returns({});
       sinon.stub(web3provider.web3.eth, 'estimateGas').returns(estimatedGas);
@@ -134,9 +133,9 @@ describe('User', function() {
         methods: {
           balanceOf: help.stubContractMethodResult(new BN(web3provider.utils.lif2LifWei(500))),
           approveData: help.stubContractMethodResult(true, 'approvalData-encodedABI'),
-        }
+        },
       });
-      user = new User({web3provider: web3provider, account: augusto, tokenAddress: tokenAddress, gasMargin: gasMargin});
+      user = new User({ web3provider: web3provider, account: augusto, tokenAddress: tokenAddress, gasMargin: gasMargin });
       sinon.stub(user.bookings, 'getLifCost').returns(120);
       sinon.stub(user.bookings, 'unitIsAvailable').returns(true);
     });
@@ -188,10 +187,10 @@ describe('User', function() {
         unitAddress,
         firstDate,
         daysAmount,
-        guestData
+        guestData,
       ];
 
-      await user.bookWithLif(...args)
+      await user.bookWithLif(...args);
       args[2] = secondDate;
 
       try {
@@ -231,7 +230,7 @@ describe('User', function() {
         assert(false);
       }).catch((e) => {
         assert.equal(e, 'Token balance was too low to attempt this booking.');
-      })
+      });
     });
   });
 });

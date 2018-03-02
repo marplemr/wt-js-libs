@@ -11,74 +11,73 @@ const zeroBytes32 = '0x000000000000000000000000000000000000000000000000000000000
 const weiInLif = 1000000000000000000;
 
 // Returns the date from a single integer in format DD/MM/YYYY
-function parseDate(date) {
+function parseDate (date) {
   return moment([1970, 0, 1]).add(date, 'days').toDate();
 };
 
 // Returns the date formatted in days since 1970 0 1
-function formatDate(date) {
-  return Math.round(new Date(date).getTime()/86400000);
+function formatDate (date) {
+  return Math.round(new Date(date).getTime() / 86400000);
 };
 
-function isZeroBytes8(val) {
+function isZeroBytes8 (val) {
   return val === zeroBytes8;
 }
 
-function isZeroBytes32(val) {
+function isZeroBytes32 (val) {
   return val === zeroBytes32;
 };
 
-function isZeroAddress(val) {
+function isZeroAddress (val) {
   return val === zeroAddress;
 };
 
-function isZeroString(val) {
-  return (val.length) ? false : true;
+function isZeroString (val) {
+  return !(val.length);
 };
 
-function isZeroUint(val) {
+function isZeroUint (val) {
   return parseInt(val) === 0;
 };
 
-function isInvalidOpcodeEx(e) {
+function isInvalidOpcodeEx (e) {
   return e.message.search('invalid opcode') >= 0;
 };
 
-function locationToUint(longitude, latitude) {
+function locationToUint (longitude, latitude) {
   return {
-    long : Math.round((90 + longitude) * 10e5),
+    long: Math.round((90 + longitude) * 10e5),
     lat: Math.round((180 + latitude) * 10e5),
-  }
+  };
 };
 
-function locationFromUint(longitude, latitude) {
+function locationFromUint (longitude, latitude) {
   latitude = parseInt(latitude);
   longitude = parseInt(longitude);
   return {
     lat: parseFloat((latitude - (180 * 10e5)) / 10e5).toFixed(6),
-    long: parseFloat((longitude - (90 * 10e5)) / 10e5).toFixed(6)
-  }
+    long: parseFloat((longitude - (90 * 10e5)) / 10e5).toFixed(6),
+  };
 };
 
-function bytes32ToString(hex) {
-  var str = "";
+function bytes32ToString (hex) {
+  var str = '';
   var i = 0, l = hex.length;
   if (hex.substring(0, 2) === '0x') {
-      i = 2;
+    i = 2;
   }
-  for (; i < l; i+=2) {
-      var code = parseInt(hex.substr(i, 2), 16);
-      if (code === 0)
-          break;
-      str += String.fromCharCode(code);
+  for (; i < l; i += 2) {
+    var code = parseInt(hex.substr(i, 2), 16);
+    if (code === 0) { break; }
+    str += String.fromCharCode(code);
   }
 
   return utf8.decode(str);
 };
 
-function splitCamelCaseToString(s) {
-  return s.split(/(?=[A-Z])/).map(function(p) {
-      return p.charAt(0).toUpperCase() + p.slice(1);
+function splitCamelCaseToString (s) {
+  return s.split(/(?=[A-Z])/).map(function (p) {
+    return p.charAt(0).toUpperCase() + p.slice(1);
   }).join(' ');
 };
 
@@ -89,12 +88,12 @@ function splitCamelCaseToString(s) {
  * @param {Function} zeroComparator e.g isZeroAddress
  * @return {Promise} Array
  */
-async function jsArrayFromSolidityArray(getAtIndex, length, zeroComparator) {
+async function jsArrayFromSolidityArray (getAtIndex, length, zeroComparator) {
   const arr = [];
 
-  for (let i = 0; i < length; i++){
+  for (let i = 0; i < length; i++) {
     let item = await getAtIndex(i).call();
-    arr.push(item)
+    arr.push(item);
   };
 
   return (zeroComparator !== undefined)
@@ -102,7 +101,7 @@ async function jsArrayFromSolidityArray(getAtIndex, length, zeroComparator) {
     : arr;
 }
 
-function currencyCodeToHex(web3, code) {
+function currencyCodeToHex (web3, code) {
   if (typeof code !== 'number') {
     throw new Error();
   }
@@ -111,24 +110,24 @@ function currencyCodeToHex(web3, code) {
   return web3.utils.padLeft(hex, 16);
 }
 
-function priceToUint(price) {
+function priceToUint (price) {
   return price.toFixed(2) * 100;
 }
 
-function bnToPrice(uint) {
-  uint = (typeof uint === 'Object') ? uint.toNumber() : uint;
-  return (uint/100).toFixed(2);
+function bnToPrice (uint) {
+  uint = (typeof uint === 'object') ? uint.toNumber() : uint;
+  return (uint / 100).toFixed(2);
 }
 
-function lifWei2Lif(web3, value) {
+function lifWei2Lif (web3, value) {
   return web3.utils.fromWei(value, 'ether');
 };
 
-function lif2LifWei(web3, value) {
+function lif2LifWei (web3, value) {
   return web3.utils.toWei('' + value, 'ether');
 };
 
-async function addGasMargin(web3, gas, gasMargin) {
+async function addGasMargin (web3, gas, gasMargin) {
   const id = await web3.eth.net.getId();
   return (id === testnetId)
     ? defaultGas
@@ -161,5 +160,5 @@ module.exports = function (web3) {
     addGasMargin: _.partial(addGasMargin, web3),
     jsArrayFromSolidityArray: jsArrayFromSolidityArray,
     splitCamelCaseToString: splitCamelCaseToString,
-  }
-}
+  };
+};

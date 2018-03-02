@@ -9,25 +9,24 @@ const validate = require('./utils/validators');
  *   const data = new BookingData(web3)
  */
 class BookingData {
-
   /**
    * Instantiates with a web3 object whose provider has been set
    * @param  {Object} { web3provider: <web3provider> }
    * @return {BookingData}
    */
-  constructor(options) {
+  constructor (options) {
     this.web3provider = options.web3provider;
   }
 
-  getHotelUnitInstance(unitAddress) {
+  getHotelUnitInstance (unitAddress) {
     return this.web3provider.contracts.getHotelUnitInstance(unitAddress);
   }
 
-  getHotelInstance(hotelAddress) {
+  getHotelInstance (hotelAddress) {
     return this.web3provider.contracts.getHotelInstance(hotelAddress);
   }
 
-  addressToChecksum(address) {
+  addressToChecksum (address) {
     return this.web3provider.web3.utils.toChecksumAddress(address);
   }
 
@@ -42,8 +41,8 @@ class BookingData {
    * @example
       const cost = await lib.getCost('0xad5..cd', '0xab3..cd', new Date('5/31/2020'), 5);
    */
-  async getCost(hotelAddress, unitAddress, fromDate, daysAmount = 0){
-    await validate.addressAndRange({hotelAddress, unitAddress, fromDate, daysAmount});
+  async getCost (hotelAddress, unitAddress, fromDate, daysAmount = 0) {
+    await validate.addressAndRange({ hotelAddress, unitAddress, fromDate, daysAmount });
 
     const fromDay = this.web3provider.utils.formatDate(fromDate);
     const hotel = this.getHotelInstance(hotelAddress);
@@ -62,8 +61,8 @@ class BookingData {
    * @example
       const cost = await lib.getCost('0xad5..cd', '0xab3..cd', new Date('5/31/2020'), 5);
    */
-  async getLifCost(hotelAddress, unitAddress, fromDate, daysAmount = 0){
-    await validate.addressAndRange({hotelAddress, unitAddress, fromDate, daysAmount});
+  async getLifCost (hotelAddress, unitAddress, fromDate, daysAmount = 0) {
+    await validate.addressAndRange({ hotelAddress, unitAddress, fromDate, daysAmount });
 
     const fromDay = this.web3provider.utils.formatDate(fromDate);
     const hotel = this.getHotelInstance(hotelAddress);
@@ -73,14 +72,14 @@ class BookingData {
 
   /**
    * Checks the availability of a unit for a range of days
-   * @param  {Address} hotelAddress 
+   * @param  {Address} hotelAddress
    * @param  {Address} unitAddress Unit contract address
    * @param  {Date}    fromDate    check-in date
    * @param  {Number}  daysAmount  number of days
    * @return {Boolean}
    */
-  async unitAvailability(hotelAddress, unitAddress, fromDate, daysAmount = 0) {
-    await validate.addressAndRange({hotelAddress, unitAddress, fromDate, daysAmount});
+  async unitAvailability (hotelAddress, unitAddress, fromDate, daysAmount = 0) {
+    await validate.addressAndRange({ hotelAddress, unitAddress, fromDate, daysAmount });
     const unit = this.getHotelUnitInstance(unitAddress);
     const hotel = this.getHotelInstance(hotelAddress);
     const fromDay = this.web3provider.utils.formatDate(fromDate);
@@ -110,7 +109,7 @@ class BookingData {
         day: day,
         price: (specialPrice > 0) ? specialPrice : defaultPrice,
         lifPrice: (specialLifPrice > 0) ? specialLifPrice : defaultLifPrice,
-        available: this.web3provider.utils.isZeroAddress(bookedBy) ? true : false
+        available: !!this.web3provider.utils.isZeroAddress(bookedBy),
       });
     }
     return availability;
@@ -118,14 +117,14 @@ class BookingData {
 
   /**
    * Checks the availability of a unit for a range of days
-   * @param  {Address} hotelAddress 
+   * @param  {Address} hotelAddress
    * @param  {Address} unitAddress Unit contract address
    * @param  {Date}    fromDate    check-in date
    * @param  {Number}  daysAmount  number of days
    * @return {Boolean}
    */
-  async unitIsAvailable(hotelAddress, unitAddress, fromDate, daysAmount) {
-    await validate.addressAndRange({hotelAddress, unitAddress, fromDate, daysAmount});
+  async unitIsAvailable (hotelAddress, unitAddress, fromDate, daysAmount) {
+    await validate.addressAndRange({ hotelAddress, unitAddress, fromDate, daysAmount });
     const availability = await this.unitAvailability(hotelAddress, unitAddress, fromDate, daysAmount);
     return _.every(availability, (dayAvailability) => {
       return dayAvailability.available;
@@ -134,13 +133,13 @@ class BookingData {
 
   /**
    * Returns a unit's availability for a single month
-   * @param  {Address} hotelAddress 
+   * @param  {Address} hotelAddress
    * @param  {Address} unitAddress Unit contract address
    * @param  {Moment}  date        Moment object
    * @return {Object}  Mapping of number of days since epoch to unit's price and availability for that day
    */
-  async unitMonthlyAvailability(hotelAddress, unitAddress, date) {
-    await validate.addressAndDate({hotelAddress, unitAddress, date});
+  async unitMonthlyAvailability (hotelAddress, unitAddress, date) {
+    await validate.addressAndDate({ hotelAddress, unitAddress, date });
     let fromDate = moment().year(date.year()).month(date.month()).date(1);
     let toDate = moment(fromDate).endOf('month');
     let daysAmount = toDate.diff(fromDate, 'days');
@@ -167,8 +166,8 @@ class BookingData {
    *    }
    * ]
    */
-  async getBookings(_addresses, fromBlock = 0){
-    await validate.addressesAndBlock({_addresses, fromBlock});
+  async getBookings (_addresses, fromBlock = 0) {
+    await validate.addressesAndBlock({ _addresses, fromBlock });
     let hotelsToQuery = [];
     let bookings = [];
 
@@ -181,8 +180,7 @@ class BookingData {
     let startedEvents;
     let finishEvents;
     let bookEvents;
-    let finished;
-    //TX hashes of CallStarted events indexed by corresponding hashes of CallFinished events
+    // TX hashes of CallStarted events indexed by corresponding hashes of CallFinished events
     let startedMappedByFinished = [];
     for (let address of hotelsToQuery) {
       const hotel = this.getHotelInstance(address);
@@ -192,30 +190,30 @@ class BookingData {
       });
 
       startedEvents = await hotel.getPastEvents('CallStarted', {
-        fromBlock: fromBlock
+        fromBlock: fromBlock,
       });
 
       finishEvents = await hotel.getPastEvents('CallFinish', {
-        fromBlock: fromBlock
+        fromBlock: fromBlock,
       });
 
       // Filter out started events with a corresponding Book event
       // and map finish events -> started events
-      finished = startedEvents.filter(event => {
+      startedEvents.filter(event => {
         let found = finishEvents
           .findIndex(item => item.returnValues.dataHash === event.returnValues.dataHash);
-        if(found !== -1) {
+        if (found !== -1) {
           startedMappedByFinished[finishEvents[found].transactionHash] = event.transactionHash;
         }
         return found !== -1;
-      })
+      });
 
       for (let event of bookEvents) {
         let guestData;
 
-        //If guest data can't be retreived, it means the booking required a
-        //confirmation, so the guestData can be found in the CallStarted tx
-        if (await hotel.methods.waitConfirmation().call() == true) {
+        // If guest data can't be retreived, it means the booking required a
+        // confirmation, so the guestData can be found in the CallStarted tx
+        if (await hotel.methods.waitConfirmation().call() === true) {
           guestData = await this.web3provider.data.getGuestData(startedMappedByFinished[event.transactionHash]);
         } else {
           guestData = await this.web3provider.data.getGuestData(event.transactionHash);
@@ -229,8 +227,8 @@ class BookingData {
           from: event.returnValues.from,
           unit: event.returnValues.unit,
           fromDate: this.web3provider.utils.parseDate(event.returnValues.fromDay),
-          daysAmount: event.returnValues.daysAmount
-        })
+          daysAmount: event.returnValues.daysAmount,
+        });
       };
     }
     return bookings;
@@ -258,8 +256,8 @@ class BookingData {
    *    }
    *   ]
    */
-  async getBookingRequests(_addresses, fromBlock=0){
-    await validate.addressesAndBlock({_addresses, fromBlock})
+  async getBookingRequests (_addresses, fromBlock = 0) {
+    await validate.addressesAndBlock({ _addresses, fromBlock });
 
     let hotelsToQuery = [];
     let requests = [];
@@ -278,12 +276,12 @@ class BookingData {
       const hotel = this.getHotelInstance(address);
 
       startedEvents = await hotel.getPastEvents('CallStarted', {
-        fromBlock: fromBlock
+        fromBlock: fromBlock,
       });
 
       finishEvents = await hotel.getPastEvents('CallFinish', {
-        fromBlock: fromBlock
-      })
+        fromBlock: fromBlock,
+      });
 
       // Filter out started events without a corresponding finishing event
       unfinished = startedEvents.filter(event => {
@@ -291,12 +289,12 @@ class BookingData {
           .findIndex(item => item.returnValues.dataHash === event.returnValues.dataHash);
 
         return found === -1;
-      })
+      });
 
-      for(let event of unfinished) {
+      for (let event of unfinished) {
         const guestData = await this.web3provider.data.getGuestData(event.transactionHash);
 
-        //get calldata and decode it for booking data
+        // get calldata and decode it for booking data
         let publicCallData = await hotel.methods.getPublicCallData(event.returnValues.dataHash).call();
         let bookData = {};
         this.web3provider.contracts.abiDecoder.decodeMethod(publicCallData).params.forEach((param) => {
@@ -313,8 +311,8 @@ class BookingData {
           hotel: address,
           unit: this.addressToChecksum(bookData.unitAddress),
           fromDate: this.web3provider.utils.parseDate(bookData.fromDay),
-          daysAmount: bookData.daysAmount
-        })
+          daysAmount: bookData.daysAmount,
+        });
       };
     }
 

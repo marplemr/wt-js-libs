@@ -10,14 +10,13 @@ const validate = require('./utils/validators');
  *   });
  */
 class HotelManager {
-
   /**
    * Instantiates a HotelManager with a web3 object, an owner account address, and the address of
    * the Index contract that has registered hotel assets.
    * @param  {Object} options {web3provider: <web3provider>, owner: <Address>, gasMargin: <number>, indexAddress: <Address>, hotels: <Object>}
    * @return {HotelManager}
    */
-  constructor(options) {
+  constructor (options) {
     this.web3provider = options.web3provider;
     this.indexAddress = options.indexAddress;
     this.hotels = options.hotels || {};
@@ -26,25 +25,24 @@ class HotelManager {
     this.gasMargin = options.gasMargin || 1;
   }
 
-  getIndexInstance() {
-    if (! this.WTIndex) {
+  getIndexInstance () {
+    if (!this.WTIndex) {
       this.WTIndex = this.web3provider.contracts.getIndexInstance(this.indexAddress);
     }
     return this.WTIndex;
   }
 
-  getHotelInstance(hotelAddress) {
+  getHotelInstance (hotelAddress) {
     return this.web3provider.contracts.getHotelInstance(hotelAddress);
   }
 
-  getHotelUnitInstance(unitAddress) {
+  getHotelUnitInstance (unitAddress) {
     return this.web3provider.contracts.getHotelUnitInstance(unitAddress);
   }
 
-  getHotelUnitTypeInstance(unitTypeAddress) {
+  getHotelUnitTypeInstance (unitTypeAddress) {
     return this.web3provider.contracts.getHotelUnitTypeInstance(unitTypeAddress);
   }
-
 
   /**
    * Gets non-bookings data for a Hotel contract (e.g info about its location, unit types
@@ -54,8 +52,8 @@ class HotelManager {
    * @example
    *  (we should have a doc link to JSON output here)
    */
-  async getHotel(hotelAddress) {
-    await validate.hotelAddress({hotelAddress});
+  async getHotel (hotelAddress) {
+    await validate.hotelAddress({ hotelAddress });
 
     const hotel = this.getHotelInstance(hotelAddress);
     this.hotels[hotelAddress] = await this.web3provider.data.getHotelInfo(hotel);
@@ -69,12 +67,12 @@ class HotelManager {
    * @example
    * (we should have a doc link to JSON output here)
    */
-  async getHotels() {
+  async getHotels () {
     this.hotelsAddrs = await this.getIndexInstance().methods
       .getHotelsByManager(this.owner)
       .call();
 
-    this.hotelsAddrs = this.hotelsAddrs.filter( addr => !this.web3provider.utils.isZeroAddress(addr));
+    this.hotelsAddrs = this.hotelsAddrs.filter(addr => !this.web3provider.utils.isZeroAddress(addr));
 
     if (!this.hotelsAddrs.length) {
       return null;
@@ -101,11 +99,10 @@ class HotelManager {
    *     bookedBy         // Address: e.g. '0x39a...2b'
    *   } = await lib.getReservation('0xab3..cd', new Date('5/31/2020'));
    */
-  async getReservation(unitAddress, day) {
-    await validate.addressAndDay({unitAddress, day});
+  async getReservation (unitAddress, day) {
+    await validate.addressAndDay({ unitAddress, day });
 
-    if (day instanceof Date)
-      day = this.web3provider.utils.formatDate(day);
+    if (day instanceof Date) { day = this.web3provider.utils.formatDate(day); }
 
     const unit = this.getHotelUnitInstance(unitAddress);
     const result = await unit.methods.getReservation(day).call();
@@ -117,8 +114,8 @@ class HotelManager {
     return {
       specialPrice: specialPrice,
       specialLifPrice: specialLifPrice,
-      bookedBy: bookedBy
-    }
+      bookedBy: bookedBy,
+    };
   }
 
   /**
@@ -127,7 +124,7 @@ class HotelManager {
    * @example
    *   (we should have a doc link to JSON output here)
    */
-  getCachedHotel(hotelAddress) {
+  getCachedHotel (hotelAddress) {
     return this.hotels[hotelAddress];
   }
 
@@ -137,7 +134,7 @@ class HotelManager {
    * @example
    *   (we should have a doc link to JSON output here)
    */
-  getCachedHotels() {
+  getCachedHotels () {
     return this.hotels;
   }
 
@@ -147,7 +144,7 @@ class HotelManager {
    * @example
    *  const [Hotel1, Hotel2] = lib.getHotelsAddrs();
    */
-  getCachedHotelsAddrs() {
+  getCachedHotelsAddrs () {
     return this.hotelsAddrs;
   }
 
@@ -158,8 +155,8 @@ class HotelManager {
    * @param  {Boolean} callbacks    object with callback functions
    * @return {Promievent}
    */
-  async createHotel(name, description, callbacks) {
-    await validate.nameAndDescription({name, description});
+  async createHotel (name, description, callbacks) {
+    await validate.nameAndDescription({ name, description });
 
     const estimate = await this.getIndexInstance().methods
       .registerHotel(name, description)
@@ -174,7 +171,7 @@ class HotelManager {
       gas: await this.web3provider.utils.addGasMargin(estimate, this.gasMargin),
       nonce: await this.web3provider.web3.eth.getTransactionCount(this.owner, 'pending'),
       data: data,
-    }
+    };
 
     if (callbacks) {
       return this.web3provider.web3.eth.sendTransaction(options)
@@ -183,7 +180,7 @@ class HotelManager {
         .on('error', callbacks.error);
     }
 
-    return await this.web3provider.web3.eth.sendTransaction(options);
+    return this.web3provider.web3.eth.sendTransaction(options);
   }
 
   /**
@@ -192,12 +189,11 @@ class HotelManager {
    * @param  {Boolean} callbacks    object with callback functions
    * @return {Promievent}
    */
-  async removeHotel(hotelAddress, callbacks) {
-    await validate.hotelAddress({hotelAddress});
+  async removeHotel (hotelAddress, callbacks) {
+    await validate.hotelAddress({ hotelAddress });
 
     const {
-      hotel,
-      index
+      index,
     } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
 
     const data = await this.WTIndex.methods
@@ -208,7 +204,7 @@ class HotelManager {
       from: this.owner,
       to: this.getIndexInstance().options.address,
       data: data,
-      nonce: await this.web3provider.web3.eth.getTransactionCount(this.owner, 'pending')
+      nonce: await this.web3provider.web3.eth.getTransactionCount(this.owner, 'pending'),
     };
     // TODO for some reason estimateGas does not work well in this case
     // const estimate = await this.web3.eth.estimateGas(options);
@@ -221,7 +217,7 @@ class HotelManager {
         .on('error', callbacks.error);
     }
 
-    return await this.web3provider.web3.eth.sendTransaction(options);
+    return this.web3provider.web3.eth.sendTransaction(options);
   }
 
   /**
@@ -233,11 +229,11 @@ class HotelManager {
    * @param  {Boolean} callbacks    object with callback functions
    * @return {Promievent}
    */
-  async setRequireConfirmation(hotelAddress, value, callbacks) {
-    await validate.hotelAddressAndValue({hotelAddress, value});
+  async setRequireConfirmation (hotelAddress, value, callbacks) {
+    await validate.hotelAddressAndValue({ hotelAddress, value });
     const {
       hotel,
-      index
+      index,
     } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
 
     const data = await hotel.methods
@@ -255,13 +251,13 @@ class HotelManager {
    * @param  {Boolean} callbacks    object with callback functions
    * @return {Promievent}
    */
-  async changeHotelInfo(hotelAddress, name, description, callbacks) {
-    await validate.hotelAddress({hotelAddress});
-    await validate.nameAndDescription({name, description});
+  async changeHotelInfo (hotelAddress, name, description, callbacks) {
+    await validate.hotelAddress({ hotelAddress });
+    await validate.nameAndDescription({ name, description });
 
     const {
       hotel,
-      index
+      index,
     } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
 
     const data = await hotel.methods
@@ -271,7 +267,7 @@ class HotelManager {
     return this.web3provider.transactions.execute(data, this.getIndexInstance(), this.owner, index, this.gasMargin, callbacks);
   }
 
-/**
+  /**
  * Edits a hotel's location and timezone.
  * @param  {Address} hotelAddress contract address
  * @param  {String} lineOne       physical address data
@@ -284,15 +280,15 @@ class HotelManager {
  * @param  {Boolean} callbacks    object with callback functions
  * @return {Promievent}
  */
-  async changeHotelLocation(hotelAddress, lineOne, lineTwo, zipCode, country, timezone, longitude, latitude, callbacks){
-    await validate.physicalAddress({hotelAddress, lineOne, lineTwo, zipCode, country});
-    await validate.hotelCoordinatesAndTimezone({hotelAddress, timezone, latitude, longitude});
+  async changeHotelLocation (hotelAddress, lineOne, lineTwo, zipCode, country, timezone, longitude, latitude, callbacks) {
+    await validate.physicalAddress({ hotelAddress, lineOne, lineTwo, zipCode, country });
+    await validate.hotelCoordinatesAndTimezone({ hotelAddress, timezone, latitude, longitude });
     const {
       hotel,
-      index
+      index,
     } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
 
-    const {long, lat} = this.web3provider.utils.locationToUint(longitude, latitude);
+    const { long, lat } = this.web3provider.utils.locationToUint(longitude, latitude);
 
     const data = await hotel.methods
       .editLocation(lineOne, lineTwo, zipCode, this.web3provider.web3.utils.toHex(country), timezone, long, lat)
@@ -308,12 +304,12 @@ class HotelManager {
    * @param  {Boolean} callbacks    object with callback functions
    * @return {Promievent}
    */
-  async addImageHotel(hotelAddress, url, callbacks) {
-    await validate.hotelAddressAndUrl({hotelAddress, url});
+  async addImageHotel (hotelAddress, url, callbacks) {
+    await validate.hotelAddressAndUrl({ hotelAddress, url });
 
     const {
       hotel,
-      index
+      index,
     } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
 
     const data = await hotel.methods
@@ -330,12 +326,12 @@ class HotelManager {
    * @param  {Boolean} callbacks    object with callback functions
    * @return {Promievent}
    */
-  async removeImageHotel(hotelAddress, imageIndex, callbacks) {
-    await validate.hotelAddressAndImageIndex({hotelAddress, imageIndex});
+  async removeImageHotel (hotelAddress, imageIndex, callbacks) {
+    await validate.hotelAddressAndImageIndex({ hotelAddress, imageIndex });
 
     const {
       hotel,
-      index
+      index,
     } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
 
     const data = await hotel.methods
@@ -353,12 +349,12 @@ class HotelManager {
    * @param  {Boolean} callbacks    object with callback functions
    * @return {Promievent}
    */
-  async confirmBooking(hotelAddress, reservationId, callbacks) {
-    await validate.hotelAddressAndreservationId({hotelAddress, reservationId});
+  async confirmBooking (hotelAddress, reservationId, callbacks) {
+    await validate.hotelAddressAndreservationId({ hotelAddress, reservationId });
 
     const {
       hotel,
-      index
+      index,
     } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
 
     const data = await hotel.methods
@@ -375,12 +371,12 @@ class HotelManager {
    * @param  {Boolean} callbacks    object with callback functions
    * @return {Promievent}
    */
-  async addUnitType(hotelAddress, unitType, callbacks) {
-    await validate.hotelAddressAndUnitType({hotelAddress, unitType});
+  async addUnitType (hotelAddress, unitType, callbacks) {
+    await validate.hotelAddressAndUnitType({ hotelAddress, unitType });
 
     const {
       hotel,
-      index
+      index,
     } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
 
     const unitTypeInstance = await this.web3provider.deploy.deployUnitType(unitType, hotelAddress, this.owner, this.gasMargin);
@@ -399,12 +395,12 @@ class HotelManager {
    * @param  {Boolean} callbacks    object with callback functions
    * @return {Promievent}
    */
-  async removeUnitType(hotelAddress, unitType, callbacks) {
-    await validate.hotelAddressAndUnitType({hotelAddress, unitType});
+  async removeUnitType (hotelAddress, unitType, callbacks) {
+    await validate.hotelAddressAndUnitType({ hotelAddress, unitType });
 
     const {
       hotel,
-      index
+      index,
     } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
 
     const typeIndex = await this.web3provider.data.getUnitTypeIndex(hotel, unitType);
@@ -427,11 +423,11 @@ class HotelManager {
    * @param  {Boolean} callbacks    object with callback functions
    * @return {Promievent}
    */
-  async editUnitType(hotelAddress, unitType, description, minGuests, maxGuests, callbacks){
-    await validate.unitTypeInfo({hotelAddress, unitType, description, minGuests, maxGuests});
+  async editUnitType (hotelAddress, unitType, description, minGuests, maxGuests, callbacks) {
+    await validate.unitTypeInfo({ hotelAddress, unitType, description, minGuests, maxGuests });
     const {
       hotel,
-      index
+      index,
     } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
 
     const typeHex = this.web3provider.web3.utils.toHex(unitType);
@@ -457,12 +453,12 @@ class HotelManager {
    * @param  {Boolean} callbacks    object with callback functions
    * @return {Promievent}
    */
-  async addAmenity(hotelAddress, unitType, amenity, callbacks) {
-    await validate.unitTypeAmenity({hotelAddress, unitType, amenity});
+  async addAmenity (hotelAddress, unitType, amenity, callbacks) {
+    await validate.unitTypeAmenity({ hotelAddress, unitType, amenity });
 
     const {
       hotel,
-      index
+      index,
     } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
 
     const typeHex = this.web3provider.web3.utils.toHex(unitType);
@@ -488,12 +484,12 @@ class HotelManager {
    * @param  {Boolean} callbacks    object with callback functions
    * @return {Promievent}
    */
-  async removeAmenity(hotelAddress, unitType, amenity, callbacks) {
-    await validate.unitTypeAmenity({hotelAddress, unitType, amenity});
+  async removeAmenity (hotelAddress, unitType, amenity, callbacks) {
+    await validate.unitTypeAmenity({ hotelAddress, unitType, amenity });
 
     const {
       hotel,
-      index
+      index,
     } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
 
     const typeHex = this.web3provider.web3.utils.toHex(unitType);
@@ -519,12 +515,12 @@ class HotelManager {
    * @param  {Boolean} callbacks    object with callback functions
    * @return {Promievent}
    */
-  async addImageUnitType(hotelAddress, unitType, url, callbacks) {
-    await validate.addImageUnitType({hotelAddress, unitType, url});
+  async addImageUnitType (hotelAddress, unitType, url, callbacks) {
+    await validate.addImageUnitType({ hotelAddress, unitType, url });
 
     const {
       hotel,
-      index
+      index,
     } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
 
     const typeHex = this.web3provider.web3.utils.toHex(unitType);
@@ -550,12 +546,12 @@ class HotelManager {
    * @param  {Boolean} callbacks    object with callback functions
    * @return {Promievent}
    */
-  async removeImageUnitType(hotelAddress, unitType, imageIndex, callbacks) {
-    await validate.removeImageUnitType({hotelAddress, unitType, imageIndex});
+  async removeImageUnitType (hotelAddress, unitType, imageIndex, callbacks) {
+    await validate.removeImageUnitType({ hotelAddress, unitType, imageIndex });
 
     const {
       hotel,
-      index
+      index,
     } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
 
     const typeHex = this.web3provider.web3.utils.toHex(unitType);
@@ -580,15 +576,15 @@ class HotelManager {
    * @param  {Boolean} callbacks    object with callback functions
    * @return {Promievent}
    */
-  async addUnit(hotelAddress, unitType, callbacks) {
-    await validate.hotelAddressAndUnitType({hotelAddress, unitType});
+  async addUnit (hotelAddress, unitType, callbacks) {
+    await validate.hotelAddressAndUnitType({ hotelAddress, unitType });
 
     const {
       hotel,
-      index
+      index,
     } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
 
-    const instance = await this.web3provider.deploy.deployUnit(unitType, hotelAddress, this.owner, this.gasMargin)
+    const instance = await this.web3provider.deploy.deployUnit(unitType, hotelAddress, this.owner, this.gasMargin);
 
     const data = hotel.methods
       .addUnit(instance.options.address)
@@ -604,12 +600,12 @@ class HotelManager {
    * @param  {Boolean} callbacks    object with callback functions
    * @return {Promievent}
    */
-  async removeUnit(hotelAddress, unitAddress, callbacks) {
-    await validate.hotelAddressAndUnitAddress({hotelAddress, unitAddress});
+  async removeUnit (hotelAddress, unitAddress, callbacks) {
+    await validate.hotelAddressAndUnitAddress({ hotelAddress, unitAddress });
 
     const {
       hotel,
-      index
+      index,
     } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
 
     const data = hotel.methods
@@ -627,12 +623,12 @@ class HotelManager {
    * @param  {Boolean} callbacks    object with callback functions
    * @return {Promievent}
    */
-  async setUnitActive(hotelAddress, unitAddress, active, callbacks) {
-    await validate.unitActive({hotelAddress, unitAddress, active});
+  async setUnitActive (hotelAddress, unitAddress, active, callbacks) {
+    await validate.unitActive({ hotelAddress, unitAddress, active });
 
     const {
       hotel,
-      index
+      index,
     } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
 
     const unit = this.getHotelUnitInstance(unitAddress);
@@ -656,15 +652,15 @@ class HotelManager {
    * @param  {Boolean} callbacks    object with callback functions
    * @return {Promievent}
    */
-  async setDefaultPrice(hotelAddress, unitType, price, callbacks){
-    await validate.unitTypePrice({hotelAddress, unitType, price});
+  async setDefaultPrice (hotelAddress, unitType, price, callbacks) {
+    await validate.unitTypePrice({ hotelAddress, unitType, price });
     const {
       hotel,
-      index
+      index,
     } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
 
     const uintPrice = this.web3provider.utils.priceToUint(price);
-    const typeNameHex =  this.web3provider.web3.utils.toHex(unitType);
+    const typeNameHex = this.web3provider.web3.utils.toHex(unitType);
     const unitTypeAddress = await hotel.methods.getUnitType(typeNameHex).call();
 
     const unitTypeInstance = this.getHotelUnitTypeInstance(unitTypeAddress);
@@ -687,15 +683,15 @@ class HotelManager {
    * @param  {Boolean} callbacks    object with callback functions
    * @return {Promievent}
   */
-  async setDefaultLifPrice(hotelAddress, unitType, price, callbacks){
-    await validate.unitTypeLifPrice({hotelAddress, unitType, price});
+  async setDefaultLifPrice (hotelAddress, unitType, price, callbacks) {
+    await validate.unitTypeLifPrice({ hotelAddress, unitType, price });
     const {
       hotel,
-      index
+      index,
     } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
 
     const weiPrice = this.web3provider.utils.lif2LifWei(price);
-    const typeNameHex =  this.web3provider.web3.utils.toHex(unitType)
+    const typeNameHex = this.web3provider.web3.utils.toHex(unitType);
     const unitTypeAddress = await hotel.methods.getUnitType(typeNameHex).call();
 
     const unitTypeInstance = this.getHotelUnitTypeInstance(unitTypeAddress);
@@ -719,19 +715,19 @@ class HotelManager {
    * @param  {Boolean} callbacks    object with callback functions
    * @return {Promievent}
    */
-  async setCurrencyCode(hotelAddress, unitType, code, callbacks){
-    await validate.currencyCode({hotelAddress, unitType, code});
+  async setCurrencyCode (hotelAddress, unitType, code, callbacks) {
+    await validate.currencyCode({ hotelAddress, unitType, code });
 
-    if(! this.web3provider.utils.currencyCodes.number(code)) {
+    if (!this.web3provider.utils.currencyCodes.number(code)) {
       throw new Error('Invalid currency code');
     }
     code = this.web3provider.utils.currencyCodeToHex(code);
 
     const {
       hotel,
-      index
+      index,
     } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
-    const typeNameHex =  this.web3provider.web3.utils.toHex(unitType)
+    const typeNameHex = this.web3provider.web3.utils.toHex(unitType);
     const unitTypeAddress = await hotel.methods.getUnitType(typeNameHex).call();
 
     const unitTypeInstance = this.getHotelUnitTypeInstance(unitTypeAddress);
@@ -762,12 +758,12 @@ class HotelManager {
    * @param  {Boolean} callbacks    object with callback functions
    * @return {Promievent}
    */
-  async setUnitSpecialPrice(hotelAddress, unitAddress, price, fromDate, daysAmount, callbacks) {
-    await validate.unitSpecialPrice({hotelAddress, unitAddress, price, fromDate, daysAmount});
+  async setUnitSpecialPrice (hotelAddress, unitAddress, price, fromDate, daysAmount, callbacks) {
+    await validate.unitSpecialPrice({ hotelAddress, unitAddress, price, fromDate, daysAmount });
 
     const {
       hotel,
-      index
+      index,
     } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
 
     const fromDay = this.web3provider.utils.formatDate(fromDate);
@@ -797,12 +793,12 @@ class HotelManager {
    * @param  {Boolean} callbacks    object with callback functions
    * @return {Promievent}
    */
-  async setUnitSpecialLifPrice(hotelAddress, unitAddress, price, fromDate, daysAmount, callbacks) {
-    await validate.unitSpecialLifPrice({hotelAddress, unitAddress, price, fromDate, daysAmount});
+  async setUnitSpecialLifPrice (hotelAddress, unitAddress, price, fromDate, daysAmount, callbacks) {
+    await validate.unitSpecialLifPrice({ hotelAddress, unitAddress, price, fromDate, daysAmount });
 
     const {
       hotel,
-      index
+      index,
     } = await this.web3provider.data.getHotelAndIndex(hotelAddress, this.getIndexInstance().options.address, this.owner);
 
     const lifPrice = this.web3provider.utils.lif2LifWei(price);
@@ -884,7 +880,7 @@ class HotelManager {
    *     ]
    *   }
    */
-  async createFullHotel(hotelToCreate) {
+  async createFullHotel (hotelToCreate) {
     let workingHotel = {};
     let hotelAddress;
     try {
@@ -897,28 +893,28 @@ class HotelManager {
       await this.setRequireConfirmation(hotelAddress, hotelToCreate.waitConfirmation);
       await this.changeHotelLocation(hotelAddress, hotelToCreate.lineOne, hotelToCreate.lineTwo, hotelToCreate.zip, hotelToCreate.country, hotelToCreate.timezone, hotelToCreate.longitude, hotelToCreate.latitude);
 
-      for(let imageUrl of hotelToCreate.images) {
-        await this.addImageHotel(hotelAddress, imageUrl)
+      for (let imageUrl of hotelToCreate.images) {
+        await this.addImageHotel(hotelAddress, imageUrl);
       }
 
-      const unitTypes = Object.keys(hotelToCreate.unitTypes)
-      for(let unitType of unitTypes){
+      const unitTypes = Object.keys(hotelToCreate.unitTypes);
+      for (let unitType of unitTypes) {
         await this.addUnitType(hotelAddress, unitType);
       }
 
-      for(let unitType of unitTypes){
+      for (let unitType of unitTypes) {
         await this.editUnitType(hotelAddress,
-                                unitType,
-                                hotelToCreate.unitTypes[unitType].info.description,
-                                hotelToCreate.unitTypes[unitType].info.minGuests,
-                                hotelToCreate.unitTypes[unitType].info.maxGuests)
+          unitType,
+          hotelToCreate.unitTypes[unitType].info.description,
+          hotelToCreate.unitTypes[unitType].info.minGuests,
+          hotelToCreate.unitTypes[unitType].info.maxGuests);
         
-        for(let imageUrl of hotelToCreate.unitTypes[unitType].images){
-          await this.addImageUnitType(hotelAddress, unitType, imageUrl)
+        for (let imageUrl of hotelToCreate.unitTypes[unitType].images) {
+          await this.addImageUnitType(hotelAddress, unitType, imageUrl);
         }
 
-        for(let amenity of hotelToCreate.unitTypes[unitType].amenities){
-          await this.addAmenity(hotelAddress, unitType, amenity)
+        for (let amenity of hotelToCreate.unitTypes[unitType].amenities) {
+          await this.addAmenity(hotelAddress, unitType, amenity);
         }
 
         await this.setDefaultPrice(hotelAddress, unitType, hotelToCreate.unitTypes[unitType].defaultPrice);
@@ -926,24 +922,24 @@ class HotelManager {
         await this.setCurrencyCode(hotelAddress, unitType, hotelToCreate.unitTypes[unitType].currencyCode);
       }
 
-      for(let unit of hotelToCreate.units){
-        await this.addUnit(hotelAddress, unit.unitType)
+      for (let unit of hotelToCreate.units) {
+        await this.addUnit(hotelAddress, unit.unitType);
       }
 
       workingHotel = await this.getHotel(hotelAddress);
       const addressesByType = workingHotel.unitAddresses ? workingHotel.unitAddresses.sort(
-        (a,b) => workingHotel.units[a].unitType < workingHotel.units[b].unitType) : [];
+        (a, b) => workingHotel.units[a].unitType < workingHotel.units[b].unitType) : [];
       const sortedUnits = hotelToCreate.units.sort(
-        (a,b) => a.unitType < b.unitType);
+        (a, b) => a.unitType < b.unitType);
       for (let i = 0; i < sortedUnits.length; i++) {
-        await this.setUnitActive(hotelAddress,addressesByType[i], sortedUnits[i].active )
+        await this.setUnitActive(hotelAddress, addressesByType[i], sortedUnits[i].active);
       }
       workingHotel = await this.getHotel(hotelAddress);
-      return {hotel: workingHotel, hotelAddress};
+      return { hotel: workingHotel, hotelAddress };
     } catch (err) {
       console.log(err);
       workingHotel = await this.getHotel(hotelAddress);
-      return {hotel: workingHotel, hotelAddress, err};
+      return { hotel: workingHotel, hotelAddress, err };
     }
   }
 };

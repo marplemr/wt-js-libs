@@ -21,7 +21,7 @@ const abis = {
   Hotel: HotelContract.abi,
   LifToken: LifTokenContract.abi,
   HotelUnit: UnitContract.abi,
-  HotelUnitType: UnitTypeContract.abi
+  HotelUnitType: UnitTypeContract.abi,
 };
 
 const binaries = {
@@ -29,8 +29,8 @@ const binaries = {
   Hotel: HotelContract.bytecode,
   LifToken: LifTokenContract.bytecode,
   HotelUnit: UnitContract.bytecode,
-  HotelUnitType: UnitTypeContract.bytecode
-}
+  HotelUnitType: UnitTypeContract.bytecode,
+};
 
 const _getContractInstance = function (web3, name, address) {
   const abi = abis[name];
@@ -44,31 +44,31 @@ let getContractInstance;
 
 const getHotelUnitInstance = function (address) {
   return getContractInstance('HotelUnit', address);
-}
+};
 
 const getHotelInstance = function (address) {
   return getContractInstance('Hotel', address);
-}
+};
 
 const getTokenInstance = function (address) {
   return getContractInstance('LifToken', address);
-}
+};
 
 const getIndexInstance = function (address) {
   return getContractInstance('WTIndex', address);
-}
+};
 
 const getHotelUnitTypeInstance = function (address) {
   return getContractInstance('HotelUnitType', address);
-}
+};
 
-function getOverridingMethodEncodedFunctionCallData(contractName, methodName, parameters) {
-  if (! abis[contractName]) {
-    throw new Error("Invalid contract " + contractName);
+function getOverridingMethodEncodedFunctionCallData (contractName, methodName, parameters) {
+  if (!abis[contractName]) {
+    throw new Error('Invalid contract ' + contractName);
   }
   const methodAbi = abis[contractName].filter((n) => n.name === methodName && n.inputs.length === parameters.length).pop();
-  if (! methodAbi) {
-    throw Error("Method not found on " + contractName + ", maybe you are using an invalid signature?");
+  if (!methodAbi) {
+    throw Error('Method not found on ' + contractName + ', maybe you are using an invalid signature?');
   }
   return web3Abi.encodeFunctionCall(methodAbi, parameters);
 }
@@ -86,5 +86,5 @@ module.exports = function (web3) {
     getIndexInstance: getIndexInstance,
     getHotelUnitTypeInstance: getHotelUnitTypeInstance,
     getOverridingMethodEncodedFunctionCallData: getOverridingMethodEncodedFunctionCallData,
-  }
+  };
 };

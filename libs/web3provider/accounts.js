@@ -3,15 +3,15 @@ const _ = require('lodash');
 /**
  * Funds an account
  * @param  {Address} from
- * @param  {Address} to   
+ * @param  {Address} to
  * @param  {Number} amount  Lif 'ether'
  * @return {Promise}        Transaction
  */
-async function fundAccount(web3, from, to, amount) {
+async function fundAccount (web3, from, to, amount) {
   return web3.eth.sendTransaction({
     from: from,
     to: to,
-    value: web3.utils.toWei(amount, 'ether')
+    value: web3.utils.toWei(amount, 'ether'),
   });
 };
 
@@ -23,17 +23,17 @@ async function fundAccount(web3, from, to, amount) {
  * @param  {Number}   value     Lif 'ether'
  * @return {Promise}
  */
-async function sendTokens(web3, utils, tokenInstance, sender, recipient, value) {
+async function sendTokens (web3, utils, tokenInstance, sender, recipient, value) {
   const amount = utils.lif2LifWei(value);
 
-  return await tokenInstance.methods
-        .transfer(recipient, amount)
-        .send({from: sender});
+  return tokenInstance.methods
+    .transfer(recipient, amount)
+    .send({ from: sender });
 }
 
 module.exports = function (web3, utils) {
   return {
-      fundAccount: _.partial(fundAccount, web3),
-      sendTokens: _.partial(sendTokens, web3, utils),
-  }
+    fundAccount: _.partial(fundAccount, web3),
+    sendTokens: _.partial(sendTokens, web3, utils),
+  };
 };

@@ -17,6 +17,5 @@ module.exports = {
   generateCompleteHotel: hotel.generateCompleteHotel,
 
   // -- Economy --
-  createWindingTreeEconomy: economy.createWindingTreeEconomy
-}
-
+  createWindingTreeEconomy: economy.createWindingTreeEconomy,
+};

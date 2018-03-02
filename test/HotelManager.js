@@ -4,14 +4,14 @@ const sinon = require('sinon');
 const Web3PromiEvent = require('web3-core-promievent');
 
 const Web3 = require('web3');
-const provider = new Web3.providers.HttpProvider('http://localhost:8545')
+const provider = new Web3.providers.HttpProvider('http://localhost:8545');
 const web3 = new Web3(provider);
 const web3providerFactory = require('../libs/web3provider');
 
 const HotelManager = require('../libs/HotelManager.js');
 const help = require('./helpers/index');
 
-describe('HotelManager', function() {
+describe('HotelManager', function () {
   const hotelName = 'WTHotel';
   const hotelDescription = 'Winding Tree Hotel';
   const gasMargin = 1.5;
@@ -30,57 +30,58 @@ describe('HotelManager', function() {
   let web3provider;
   let sendTransactionStub, deployUnitTypeStub, deployUnitStub;
 
-  beforeEach(async function() {
+  beforeEach(async function () {
     web3provider = web3providerFactory.getInstance(web3);
     sinon.stub(web3provider.contracts, 'getIndexInstance').returns({
       options: {
         address: indexAddress,
       },
       methods: {
-        callHotel: help.stubContractMethodResult({}, (args) => {return 'encoded-call-hotel-' + Object.values(args.methodParams).join(':')}, 37),
-        registerHotel: help.stubContractMethodResult({}, (args) => {return 'encoded-register-hotel-' + args.methodParams[0]}, 37),
-        deleteHotel: help.stubContractMethodResult({}, (args) => {return 'encoded-remove-hotel-' + args.methodParams[0]}, 37),
-        getHotelsByManager: help.stubContractMethodResult([hotelAddress], (args) => {return 'encoded-hotelsbymanager-' + args.methodParams[0]}, 37),
-      }
+        callHotel: help.stubContractMethodResult({}, (args) => { return 'encoded-call-hotel-' + Object.values(args.methodParams).join(':'); }, 37),
+        registerHotel: help.stubContractMethodResult({}, (args) => { return 'encoded-register-hotel-' + args.methodParams[0]; }, 37),
+        deleteHotel: help.stubContractMethodResult({}, (args) => { return 'encoded-remove-hotel-' + args.methodParams[0]; }, 37),
+        getHotelsByManager: help.stubContractMethodResult([hotelAddress], (args) => { return 'encoded-hotelsbymanager-' + args.methodParams[0]; }, 37),
+      },
     });
-    sinon.stub(web3provider.data, 'getHotelAndIndex').returns({hotel: {
+    sinon.stub(web3provider.data, 'getHotelAndIndex').returns({ hotel: {
       methods: {
-        changeConfirmation: help.stubContractMethodResult({}, (args) => {return 'encoded-changeconfirmation-' + args.methodParams[0]}, 37),
-        editInfo: help.stubContractMethodResult({}, (args) => {return 'encoded-editinfo-' + Object.values(args.methodParams).join(':')}, 37),
-        editAddress: help.stubContractMethodResult({}, (args) => {return 'encoded-editaddress-' + Object.values(args.methodParams).join(':')}, 37),
-        editLocation: help.stubContractMethodResult({}, (args) => {return 'encoded-editlocation-' + Object.values(args.methodParams).join(':')}, 37),
-        addImage: help.stubContractMethodResult({}, (args) => {return 'encoded-addimage-' + Object.values(args.methodParams).join(':')}, 37),
-        removeImage: help.stubContractMethodResult({}, (args) => {return 'encoded-removeimage-' + Object.values(args.methodParams).join(':')}, 37),
-        addUnitType: help.stubContractMethodResult({}, (args) => {return 'encoded-addunittype-' + Object.values(args.methodParams).join(':')}, 37),
-        deleteUnitType: help.stubContractMethodResult({}, (args) => {return 'encoded-removeunittype-' + Object.values(args.methodParams).join(':')}, 37),
+        changeConfirmation: help.stubContractMethodResult({}, (args) => { return 'encoded-changeconfirmation-' + args.methodParams[0]; }, 37),
+        editInfo: help.stubContractMethodResult({}, (args) => { return 'encoded-editinfo-' + Object.values(args.methodParams).join(':'); }, 37),
+        editAddress: help.stubContractMethodResult({}, (args) => { return 'encoded-editaddress-' + Object.values(args.methodParams).join(':'); }, 37),
+        editLocation: help.stubContractMethodResult({}, (args) => { return 'encoded-editlocation-' + Object.values(args.methodParams).join(':'); }, 37),
+        addImage: help.stubContractMethodResult({}, (args) => { return 'encoded-addimage-' + Object.values(args.methodParams).join(':'); }, 37),
+        removeImage: help.stubContractMethodResult({}, (args) => { return 'encoded-removeimage-' + Object.values(args.methodParams).join(':'); }, 37),
+        addUnitType: help.stubContractMethodResult({}, (args) => { return 'encoded-addunittype-' + Object.values(args.methodParams).join(':'); }, 37),
+        deleteUnitType: help.stubContractMethodResult({}, (args) => { return 'encoded-removeunittype-' + Object.values(args.methodParams).join(':'); }, 37),
         getUnitType: help.stubContractMethodResult(unitTypeAddress, {}, 37),
-        callUnitType: help.stubContractMethodResult({}, (args) => {return 'encoded-callunittype-' + Object.values(args.methodParams).join(':')}, 37),
-        callUnit: help.stubContractMethodResult({}, (args) => {return 'encoded-callunit-ut-' + Object.values(args.methodParams).join(':')}, 37),
-        addUnit: help.stubContractMethodResult({}, (args) => {return 'encoded-addunit-ut-' + Object.values(args.methodParams).join(':')}, 37),
-        deleteUnit: help.stubContractMethodResult({}, (args) => {return 'encoded-removeunit-ut-' + Object.values(args.methodParams).join(':')}, 37),
-      }
-    }, index: existingHotelIndex});
+        callUnitType: help.stubContractMethodResult({}, (args) => { return 'encoded-callunittype-' + Object.values(args.methodParams).join(':'); }, 37),
+        callUnit: help.stubContractMethodResult({}, (args) => { return 'encoded-callunit-ut-' + Object.values(args.methodParams).join(':'); }, 37),
+        addUnit: help.stubContractMethodResult({}, (args) => { return 'encoded-addunit-ut-' + Object.values(args.methodParams).join(':'); }, 37),
+        deleteUnit: help.stubContractMethodResult({}, (args) => { return 'encoded-removeunit-ut-' + Object.values(args.methodParams).join(':'); }, 37),
+      },
+    },
+    index: existingHotelIndex });
     sinon.stub(web3provider.contracts, 'getHotelUnitTypeInstance').returns({
       methods: {
-        edit: help.stubContractMethodResult({}, (args) => {return 'encoded-edit-ut-' + Object.values(args.methodParams).join(':')}, 37),
-        addAmenity: help.stubContractMethodResult({}, (args) => {return 'encoded-addamenity-ut-' + Object.values(args.methodParams).join(':')}, 37),
-        removeAmenity: help.stubContractMethodResult({}, (args) => {return 'encoded-removeamenity-ut-' + Object.values(args.methodParams).join(':')}, 37),
-        addImage: help.stubContractMethodResult({}, (args) => {return 'encoded-addimage-ut-' + Object.values(args.methodParams).join(':')}, 37),
-        removeImage: help.stubContractMethodResult({}, (args) => {return 'encoded-removeimage-ut-' + Object.values(args.methodParams).join(':')}, 37),
-        setDefaultPrice: help.stubContractMethodResult({}, (args) => {return 'encoded-setdefaultprice-ut-' + Object.values(args.methodParams).join(':')}, 37),
-        setDefaultLifPrice: help.stubContractMethodResult({}, (args) => {return 'encoded-setdefaultlifprice-ut-' + Object.values(args.methodParams).join(':')}, 37),
-        setCurrencyCode: help.stubContractMethodResult({}, (args) => {return 'encoded-setcurrencycode-ut-' + Object.values(args.methodParams).join(':')}, 37),
-      }
+        edit: help.stubContractMethodResult({}, (args) => { return 'encoded-edit-ut-' + Object.values(args.methodParams).join(':'); }, 37),
+        addAmenity: help.stubContractMethodResult({}, (args) => { return 'encoded-addamenity-ut-' + Object.values(args.methodParams).join(':'); }, 37),
+        removeAmenity: help.stubContractMethodResult({}, (args) => { return 'encoded-removeamenity-ut-' + Object.values(args.methodParams).join(':'); }, 37),
+        addImage: help.stubContractMethodResult({}, (args) => { return 'encoded-addimage-ut-' + Object.values(args.methodParams).join(':'); }, 37),
+        removeImage: help.stubContractMethodResult({}, (args) => { return 'encoded-removeimage-ut-' + Object.values(args.methodParams).join(':'); }, 37),
+        setDefaultPrice: help.stubContractMethodResult({}, (args) => { return 'encoded-setdefaultprice-ut-' + Object.values(args.methodParams).join(':'); }, 37),
+        setDefaultLifPrice: help.stubContractMethodResult({}, (args) => { return 'encoded-setdefaultlifprice-ut-' + Object.values(args.methodParams).join(':'); }, 37),
+        setCurrencyCode: help.stubContractMethodResult({}, (args) => { return 'encoded-setcurrencycode-ut-' + Object.values(args.methodParams).join(':'); }, 37),
+      },
     });
     sinon.stub(web3provider.contracts, 'getHotelUnitInstance').returns({
       options: {
         address: unitAddress,
       },
       methods: {
-        setActive: help.stubContractMethodResult({}, (args) => {return 'encoded-setactive-u-' + Object.values(args.methodParams).join(':')}, 37),
-        setSpecialPrice: help.stubContractMethodResult({}, (args) => {return 'encoded-setspecialprice-u-' + Object.values(args.methodParams).join(':')}, 37),
-        setSpecialLifPrice: help.stubContractMethodResult({}, (args) => {return 'encoded-setspeciallifprice-u-' + Object.values(args.methodParams).join(':')}, 37),
-      }
+        setActive: help.stubContractMethodResult({}, (args) => { return 'encoded-setactive-u-' + Object.values(args.methodParams).join(':'); }, 37),
+        setSpecialPrice: help.stubContractMethodResult({}, (args) => { return 'encoded-setspecialprice-u-' + Object.values(args.methodParams).join(':'); }, 37),
+        setSpecialLifPrice: help.stubContractMethodResult({}, (args) => { return 'encoded-setspeciallifprice-u-' + Object.values(args.methodParams).join(':'); }, 37),
+      },
     });
     sendTransactionStub = sinon.stub(web3provider.web3.eth, 'sendTransaction').callsFake(() => {
       let promiEvent = new Web3PromiEvent();
@@ -111,7 +112,7 @@ describe('HotelManager', function() {
       indexAddress: indexAddress,
       owner: ownerAccount,
       gasMargin: gasMargin,
-      web3provider: web3provider
+      web3provider: web3provider,
     });
   });
 
@@ -130,8 +131,8 @@ describe('HotelManager', function() {
     sendTransactionStub.restore();
   });
 
-  describe('Index', function() {
-    it('createHotel: should create a transaction with a new hotel', async function() {
+  describe('Index', function () {
+    it('createHotel: should create a transaction with a new hotel', async function () {
       await hotelManager.createHotel(hotelName, hotelDescription);
       assert.equal(sendTransactionStub.callCount, 1);
       assert.equal(sendTransactionStub.firstCall.args[0].data, 'encoded-register-hotel-' + hotelName);
@@ -148,21 +149,21 @@ describe('HotelManager', function() {
           done();
         },
         error: (error) => {
+          if (error) {} // helps eslint
           assert(false);
-        }
-      }
-      let txPromise = hotelManager.createHotel(hotelName, hotelDescription, callbacks).then(() => {
+        },
+      };
+      hotelManager.createHotel(hotelName, hotelDescription, callbacks).then(() => {
         assert.equal(sendTransactionStub.callCount, 1);
         assert.equal(sendTransactionStub.firstCall.args[0].data, 'encoded-register-hotel-' + hotelName);
         assert.equal(sendTransactionStub.firstCall.args[0].to, indexAddress);
         assert.equal(sendTransactionStub.firstCall.args[0].nonce, 31);
       }).catch((e) => {
         assert(false);
-      })
+      });
     });
 
-
-    it('removeHotel: should create a transaction that will remove a hotel', async function() {
+    it('removeHotel: should create a transaction that will remove a hotel', async function () {
       await hotelManager.removeHotel(hotelAddress);
       assert.equal(sendTransactionStub.callCount, 1);
       assert.equal(sendTransactionStub.firstCall.args[0].data, 'encoded-remove-hotel-' + existingHotelIndex);
@@ -170,12 +171,11 @@ describe('HotelManager', function() {
       assert.equal(sendTransactionStub.firstCall.args[0].nonce, 31);
     });
 
-    it('should make multiple hotels', async function() {
+    it('should make multiple hotels', async function () {
       const nameA = 'a';
       const nameB = 'b';
       const descA = 'desc a';
       const descB = 'desc b';
-      const typeName = "BASIC_ROOM";
 
       // Create Hotels
       await hotelManager.createHotel(nameA, descA);
@@ -190,8 +190,8 @@ describe('HotelManager', function() {
     });
   });
 
-  describe('Hotel', function() {
-    it('should create a transaction that changes requireConfirmation flag', async function() {
+  describe('Hotel', function () {
+    it('should create a transaction that changes requireConfirmation flag', async function () {
       await hotelManager.setRequireConfirmation(hotelAddress, true);
       assert.equal(sendTransactionStub.callCount, 1);
       assert.equal(sendTransactionStub.firstCall.args[0].from, ownerAccount);
@@ -199,7 +199,7 @@ describe('HotelManager', function() {
       assert.equal(sendTransactionStub.firstCall.args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':' + 'encoded-changeconfirmation-true');
     });
 
-    it('should create a transaction that changes the hotel info', async function() {
+    it('should create a transaction that changes the hotel info', async function () {
       const newName = 'Awesome WTHotel';
       const newDescription = 'Awesome Winding Tree Hotel';
       await hotelManager.changeHotelInfo(hotelAddress, newName, newDescription);
@@ -209,7 +209,7 @@ describe('HotelManager', function() {
       assert.equal(sendTransactionStub.firstCall.args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':' + 'encoded-editinfo-' + newName + ':' + newDescription);
     });
 
-    it('changeHotelLocation: edits the hotel address', async function(){
+    it('changeHotelLocation: edits the hotel address', async function () {
       const lineOne = 'Common street 123';
       const lineTwo = '';
       const zip = '6655';
@@ -222,14 +222,14 @@ describe('HotelManager', function() {
       assert.equal(sendTransactionStub.callCount, 1);
       assert.equal(sendTransactionStub.firstCall.args[0].from, ownerAccount);
       assert.equal(sendTransactionStub.firstCall.args[0].to, indexAddress);
-      const {long, lat} = web3provider.utils.locationToUint(longitude, latitude);;
+      const { long, lat } = web3provider.utils.locationToUint(longitude, latitude); ;
       assert.equal(sendTransactionStub.firstCall.args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':' + 'encoded-editlocation-' +
         [lineOne, lineTwo, zip, toHexResult, timezone, long, lat].join(':')
       );
     });
 
-    it('should create a transaction that adds an image to the hotel', async function() {
-      const url = "image.jpeg";
+    it('should create a transaction that adds an image to the hotel', async function () {
+      const url = 'image.jpeg';
 
       await hotelManager.addImageHotel(hotelAddress, url);
       assert.equal(sendTransactionStub.callCount, 1);
@@ -238,17 +238,17 @@ describe('HotelManager', function() {
       assert.equal(sendTransactionStub.firstCall.args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':' + 'encoded-addimage-' + url);
     });
 
-    it('removeImageHotel: removes an image from the hotel', async function() {
+    it('removeImageHotel: removes an image from the hotel', async function () {
       const imageIndex = 0;
       await hotelManager.removeImageHotel(hotelAddress, imageIndex);
       assert.equal(sendTransactionStub.callCount, 1);
       assert.equal(sendTransactionStub.firstCall.args[0].from, ownerAccount);
       assert.equal(sendTransactionStub.firstCall.args[0].to, indexAddress);
       assert.equal(sendTransactionStub.firstCall.args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':' + 'encoded-removeimage-' + imageIndex);
-    })
+    });
   });
 
-  describe('UnitTypes', function() {
+  describe('UnitTypes', function () {
     const typeName = 'BASIC_ROOM';
 
     it('should generate a transaction that adds a UnitType into a hotel', async () => {
@@ -260,7 +260,7 @@ describe('HotelManager', function() {
       assert.equal(sendTransactionStub.firstCall.args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':' + 'encoded-addunittype-' + unitTypeAddress);
     });
 
-    it('should generate a transaction that removes a UnitType from a hotel', async() => {
+    it('should generate a transaction that removes a UnitType from a hotel', async () => {
       await hotelManager.removeUnitType(hotelAddress, typeName);
       assert.equal(sendTransactionStub.callCount, 1);
       assert.equal(sendTransactionStub.firstCall.args[0].from, ownerAccount);
@@ -268,17 +268,17 @@ describe('HotelManager', function() {
       assert.equal(sendTransactionStub.firstCall.args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':' + 'encoded-removeunittype-' + [toHexResult, unitIndex].join(':'));
     });
 
-    it('addUnitType: initializes info correctly', async() => {
+    it('addUnitType: initializes info correctly', async () => {
       await hotelManager.addUnitType(hotelAddress, typeName);
       assert.equal(deployUnitTypeStub.callCount, 1);
       assert.equal(sendTransactionStub.callCount, 1);
       assert.equal(sendTransactionStub.firstCall.args[0].from, ownerAccount);
       assert.equal(sendTransactionStub.firstCall.args[0].to, indexAddress);
-      assert.equal(sendTransactionStub.firstCall.args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':'
-        + 'encoded-addunittype-' + [unitTypeAddress].join(':'));
+      assert.equal(sendTransactionStub.firstCall.args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':' +
+        'encoded-addunittype-' + [unitTypeAddress].join(':'));
     });
 
-    it('should generate a transaction that updates a UnitType', async() => {
+    it('should generate a transaction that updates a UnitType', async () => {
       const description = 'Adobe';
       const minGuests = 1;
       const maxGuests = 2;
@@ -320,8 +320,8 @@ describe('HotelManager', function() {
         ':encoded-removeamenity-ut-' + [amenity].join(':'));
     });
 
-    it('should generate a transaction to add an image to UnitType', async function() {
-      const url = "image.jpeg";
+    it('should generate a transaction to add an image to UnitType', async function () {
+      const url = 'image.jpeg';
       await hotelManager.addImageUnitType(hotelAddress, typeName, url);
       assert.equal(sendTransactionStub.callCount, 1);
       assert.equal(sendTransactionStub.firstCall.args[0].from, ownerAccount);
@@ -331,7 +331,7 @@ describe('HotelManager', function() {
         ':encoded-addimage-ut-' + [url].join(':'));
     });
 
-    it('should generate a transaction to remove an image from UnitType', async function() {
+    it('should generate a transaction to remove an image from UnitType', async function () {
       const imageIndex = 3;
       await hotelManager.removeImageUnitType(hotelAddress, typeName, imageIndex);
       assert.equal(sendTransactionStub.callCount, 1);
@@ -341,13 +341,10 @@ describe('HotelManager', function() {
         ':encoded-callunittype-' + [toHexResult].join(':') +
         ':encoded-removeimage-ut-' + [imageIndex].join(':'));
     });
-
   });
 
   describe('Units', () => {
     const typeName = 'BASIC_ROOM';
-    const toHexResult = '0x4568';
-    const unitIndex = 4;
     
     it('should generate a transaction to add a unit', async () => {
       await hotelManager.addUnit(hotelAddress, typeName);
@@ -375,10 +372,10 @@ describe('HotelManager', function() {
       assert.equal(sendTransactionStub.firstCall.args[0].data, 'encoded-call-hotel-' + existingHotelIndex +
         ':encoded-callunit-ut-' + [unitAddress].join(':') +
         ':encoded-setactive-u-' + [false].join(':'));
-    })
+    });
 
     it('setUnitSpecialPrice: sets the units price across a range of dates', async () => {
-      const price =  100.00;
+      const price = 100.00;
       const fromDate = new Date('10/10/2020');
       const daysAmount = 5;
       const fromDay = web3provider.utils.formatDate(fromDate);
@@ -399,7 +396,7 @@ describe('HotelManager', function() {
     });
 
     it('setUnitSpecialLifPrice: sets the units price across a range of dates', async () => {
-      const price =  3;
+      const price = 3;
       const fromDate = new Date('10/10/2020');
       const daysAmount = 5;
       const fromDay = web3provider.utils.formatDate(fromDate);
@@ -421,32 +418,31 @@ describe('HotelManager', function() {
   });
 
   describe('UnitType', () => {
-
-    it('setDefaultPrice: set / get the default price', async() => {
-      const price = 100.00
+    it('setDefaultPrice: set / get the default price', async () => {
+      const price = 100.00;
       await hotelManager.setDefaultPrice(hotelAddress, unitAddress, price);
       assert.equal(sendTransactionStub.callCount, 1);
       assert.equal(sendTransactionStub.firstCall.args[0].from, ownerAccount);
       assert.equal(sendTransactionStub.firstCall.args[0].to, indexAddress);
       assert.equal(sendTransactionStub.firstCall.args[0].data, 'encoded-call-hotel-' + existingHotelIndex +
-        ':encoded-callunittype-' + [toHexResult].join(':') + 
+        ':encoded-callunittype-' + [toHexResult].join(':') +
         ':encoded-setdefaultprice-ut-' + [web3provider.utils.priceToUint(price)].join(':')
-        );
-    })
+      );
+    });
 
-    it('setDefaultLifPrice: set / get the default Lif price', async() => {
-      const lifPrice = 20
+    it('setDefaultLifPrice: set / get the default Lif price', async () => {
+      const lifPrice = 20;
       await hotelManager.setDefaultLifPrice(hotelAddress, unitAddress, lifPrice);
       assert.equal(sendTransactionStub.callCount, 1);
       assert.equal(sendTransactionStub.firstCall.args[0].from, ownerAccount);
       assert.equal(sendTransactionStub.firstCall.args[0].to, indexAddress);
       assert.equal(sendTransactionStub.firstCall.args[0].data, 'encoded-call-hotel-' + existingHotelIndex +
-        ':encoded-callunittype-' + [toHexResult].join(':') + 
+        ':encoded-callunittype-' + [toHexResult].join(':') +
         ':encoded-setdefaultlifprice-ut-' + [web3provider.utils.lif2LifWei(lifPrice)].join(':')
-        );
-    })
+      );
+    });
 
-    it('setCurrencyCode: sets the setCurrencyCode', async() => {
+    it('setCurrencyCode: sets the setCurrencyCode', async () => {
       const currencyCode = 948;
       const currencyHex = web3provider.utils.currencyCodeToHex(currencyCode);
       await hotelManager.setCurrencyCode(hotelAddress, unitAddress, currencyCode);
@@ -458,25 +454,25 @@ describe('HotelManager', function() {
         ':encoded-setcurrencycode-ut-' + [currencyHex].join(':'));
     });
 
-    it('should throw on invalid currencyCode', async() => {
+    it('should throw on invalid currencyCode', async () => {
       try {
         await hotelManager.setCurrencyCode(hotelAddress, unitAddress, 256);
         assert(false);
-      } catch(e) {
+      } catch (e) {
         assert.match(e.toString(), /Invalid currency code/);
       }
 
       try {
         await hotelManager.setCurrencyCode(hotelAddress, unitAddress, -5);
         assert(false);
-      } catch(e) {
+      } catch (e) {
         assert.match(e.toString(), /Invalid currency code/);
       }
 
       try {
         await hotelManager.setCurrencyCode(hotelAddress, unitAddress, 'EUR');
         assert(false);
-      } catch(e) {
+      } catch (e) {
         assert.match(e.toString(), new RegExp('"code" must be a number'));
       }
     });
@@ -495,19 +491,19 @@ describe('HotelManager', function() {
       longitude: 57.557541,
       waitConfirmation: true,
       images: ['image.url0', 'image.url1'],
-      unitTypes:{
-        BASIC_ROOM:{
+      unitTypes: {
+        BASIC_ROOM: {
           amenities: [22, 11],
           info: {
             description: 'Best unit type ever',
             minGuests: 1,
             maxGuests: 8,
-            price: '10'
+            price: '10',
           },
           currencyCode: 948,
           defaultPrice: 78.00,
           defaultLifPrice: 2,
-          images: ['image.url2', 'image.url3']
+          images: ['image.url2', 'image.url3'],
         },
         FAMILY_CABIN: {
           amenities: [22, 33],
@@ -515,13 +511,13 @@ describe('HotelManager', function() {
             description: 'Best family cabin type ever',
             minGuests: 2,
             maxGuests: 7,
-            price: '11'
+            price: '11',
           },
           currencyCode: 951,
           defaultPrice: 79.00,
           defaultLifPrice: 3,
-          images: ['image.url22', 'image.url33']
-        }
+          images: ['image.url22', 'image.url33'],
+        },
       },
       units: [
         {
@@ -538,8 +534,8 @@ describe('HotelManager', function() {
           active: false,
           unitType: 'BASIC_ROOM',
           _addr: '0x9ec823DB4c3B774e82DE9d8B94185Cb3d78277c9',
-        }
-      ]
+        },
+      ],
     };
     let getHotelInfoStub;
     beforeEach(() => {
@@ -558,22 +554,22 @@ describe('HotelManager', function() {
       web3provider.data.getHotelInfo.restore();
     });
 
-    it('Should create a complete hotel', async() =>{
-      const {hotel} = await hotelManager.createFullHotel(hotelToCreate);
+    it('Should create a complete hotel', async () => {
+      await hotelManager.createFullHotel(hotelToCreate);
 
       assert.equal(web3provider.web3.eth.sendTransaction.callCount, 29);
       const txCalls = web3provider.web3.eth.sendTransaction;
       assert.equal(txCalls.getCall(0).args[0].data, 'encoded-register-hotel-' + hotelToCreate.name);
       assert.equal(txCalls.getCall(1).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-changeconfirmation-' + hotelToCreate.waitConfirmation);
-      let {long, lat} = web3provider.utils.locationToUint(hotelToCreate.longitude, hotelToCreate.latitude);
+      let { long, lat } = web3provider.utils.locationToUint(hotelToCreate.longitude, hotelToCreate.latitude);
       assert.equal(txCalls.getCall(2).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-editlocation-' + [hotelToCreate.lineOne, hotelToCreate.lineTwo, hotelToCreate.zip, toHexResult, hotelToCreate.timezone, long, lat].join(':'));
       assert.equal(txCalls.getCall(3).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-addimage-' + [hotelToCreate.images[0]].join(':'));
       assert.equal(txCalls.getCall(4).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-addimage-' + [hotelToCreate.images[1]].join(':'));
       assert.equal(deployUnitTypeStub.callCount, 2);
       assert.equal(txCalls.getCall(5).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-addunittype-' + unitTypeAddress);
       assert.equal(txCalls.getCall(6).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-addunittype-' + unitTypeAddress);
-      const unitType0 = hotelToCreate.unitTypes['BASIC_ROOM'];
-      const unitType1 = hotelToCreate.unitTypes['FAMILY_CABIN'];
+      const unitType0 = hotelToCreate.unitTypes.BASIC_ROOM;
+      const unitType1 = hotelToCreate.unitTypes.FAMILY_CABIN;
       const currencyHex1 = web3provider.utils.currencyCodeToHex(unitType0.currencyCode);
       const currencyHex2 = web3provider.utils.currencyCodeToHex(unitType1.currencyCode);
 
@@ -599,7 +595,7 @@ describe('HotelManager', function() {
       assert.equal(txCalls.getCall(23).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-addunit-ut-' + unitAddress);
       assert.equal(txCalls.getCall(24).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-addunit-ut-' + unitAddress);
       assert.equal(txCalls.getCall(25).args[0].data, 'encoded-call-hotel-' + existingHotelIndex + ':encoded-addunit-ut-' + unitAddress);
-      const sortedUnits = hotelToCreate.units.sort((a,b) => a.unitType < b.unitType);
+      const sortedUnits = hotelToCreate.units.sort((a, b) => a.unitType < b.unitType);
       let firstUnit = sortedUnits[0];
       let secondUnit = sortedUnits[1];
       let thirdUnit = sortedUnits[2];

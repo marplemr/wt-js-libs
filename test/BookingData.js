@@ -8,15 +8,14 @@ const _ = require('lodash');
 const moment = require('moment');
 
 const Web3 = require('web3');
-const provider = new Web3.providers.HttpProvider('http://localhost:8545')
+const provider = new Web3.providers.HttpProvider('http://localhost:8545');
 const web3 = new Web3(provider);
 const web3providerFactory = require('../libs/web3provider');
 
-const User = require('../libs/User');
 const BookingData = require('../libs/BookingData');
 const help = require('./helpers/index');
 
-describe('BookingData', function() {
+describe('BookingData', function () {
   const augusto = '0x8a33BA3429680B31383Fc46f4Ff22f7ac838511F';
   const jakub = '0xA38c43e02a680d21c58e2CcdD7504E55F79889b8';
   const hotelAddress = '0x96eA4BbF71FEa3c9411C1Cefc555E9d7189695fA';
@@ -25,9 +24,9 @@ describe('BookingData', function() {
   let web3provider;
   let bookingData;
 
-  beforeEach(async function() {
+  beforeEach(async function () {
     web3provider = web3providerFactory.getInstance(web3);
-    bookingData = new BookingData({web3provider: web3provider});
+    bookingData = new BookingData({ web3provider: web3provider });
   });
 
   describe('Cost and availability', () => {
@@ -39,16 +38,16 @@ describe('BookingData', function() {
     const specialLifPrice = 2;
     let getCostStub, getLifCostStub;
 
-    beforeEach(async function() {
+    beforeEach(async function () {
       getCostStub = sinon.stub().returns(1300);
       getLifCostStub = sinon.stub().returns(new BN(web3provider.utils.lif2LifWei(100)));
       sinon.stub(web3provider.contracts, 'getHotelInstance').returns({
         methods: {
-            getUnitType: help.stubContractMethodResult(unitTypeAddress),
-            getCost: help.stubContractMethodResult(getCostStub),
-            getLifCost: help.stubContractMethodResult(getLifCostStub),
-          }
-        });
+          getUnitType: help.stubContractMethodResult(unitTypeAddress),
+          getCost: help.stubContractMethodResult(getCostStub),
+          getLifCost: help.stubContractMethodResult(getLifCostStub),
+        },
+      });
       sinon.stub(web3provider.contracts, 'getHotelUnitInstance').returns({
         methods: {
           unitSpecialPrice: help.stubContractMethodResult(new BN(web3provider.utils.priceToUint(specialPrice))),
@@ -57,18 +56,18 @@ describe('BookingData', function() {
           active: help.stubContractMethodResult(true),
           getReservation: help.stubContractMethodResult((args) => {
             // behave accordingly to date
-            if (web3provider.utils.formatDate(fromDate) == args.methodParams[0]) {
+            if (web3provider.utils.formatDate(fromDate) === args.methodParams[0]) {
               return [new BN(web3provider.utils.priceToUint(specialPrice)), new BN(web3provider.utils.lif2LifWei(specialLifPrice)), jakub];
             }
             return [new BN(web3provider.utils.priceToUint(0)), new BN(web3provider.utils.lif2LifWei(0)), jakub];
           }),
-        }
+        },
       });
       sinon.stub(web3provider.contracts, 'getHotelUnitTypeInstance').returns({
         methods: {
           defaultPrice: help.stubContractMethodResult(new BN(web3provider.utils.priceToUint(price))),
           defaultLifPrice: help.stubContractMethodResult(new BN(web3provider.utils.lif2LifWei(lifPrice))),
-        }
+        },
       });
     });
 
@@ -77,9 +76,9 @@ describe('BookingData', function() {
       web3provider.contracts.getHotelUnitInstance.restore();
     });
 
-    describe('getCost | getLifCost', function() {
+    describe('getCost | getLifCost', function () {
       it('getCost: gets the total cost for a booking over a range of days', async () => {
-        const actualCost = await bookingData.getCost(hotelAddress, unitAddress, fromDate, daysAmount);
+        await bookingData.getCost(hotelAddress, unitAddress, fromDate, daysAmount);
         assert.equal(getCostStub.callCount, 1);
         assert.equal(getCostStub.firstCall.args[0].methodParams[0], unitAddress);
         assert.equal(getCostStub.firstCall.args[0].methodParams[1], web3provider.utils.formatDate(fromDate));
@@ -87,19 +86,19 @@ describe('BookingData', function() {
       });
 
       it('getLifCost gets the total cost for a booking over a range of days', async () => {
-        const actualCost = await bookingData.getLifCost(hotelAddress, unitAddress, fromDate, daysAmount);
+        await bookingData.getLifCost(hotelAddress, unitAddress, fromDate, daysAmount);
         assert.equal(getLifCostStub.callCount, 1);
         assert.equal(getLifCostStub.firstCall.args[0].methodParams[0], unitAddress);
         assert.equal(getLifCostStub.firstCall.args[0].methodParams[1], web3provider.utils.formatDate(fromDate));
         assert.equal(getLifCostStub.firstCall.args[0].methodParams[2], daysAmount);
-      })
+      });
     });
 
     describe('unit availability', () => {
       it('returns a unit\'s price and availability for a range of dates', async () => {
         let availability = await bookingData.unitAvailability(hotelAddress, unitAddress, fromDate, daysAmount);
-        for(let date of availability) {
-          if (date.day == web3provider.utils.formatDate(fromDate)) {
+        for (let date of availability) {
+          if (date.day === web3provider.utils.formatDate(fromDate)) {
             assert.equal(date.price, specialPrice);
             assert.equal(date.lifPrice, specialLifPrice);
           } else {
@@ -107,21 +106,20 @@ describe('BookingData', function() {
             assert.equal(date.lifPrice, lifPrice);
           }
         }
-      })
+      });
 
-      it('given a single moment date, returns units price and availability for that month', async() => {
+      it('given a single moment date, returns units price and availability for that month', async () => {
         let fromDateMoment = moment(fromDate);
         let availability = await bookingData.unitMonthlyAvailability(hotelAddress, unitAddress, fromDateMoment);
         assert.equal(Object.keys(availability).length, 30);
         assert.equal(availability[web3provider.utils.formatDate(fromDate)].price, specialPrice);
-      })
+      });
     });
   });
 
-  describe('Bookings', function() {
+  describe('Bookings', function () {
     const fromDate = new Date('10/10/2020');
     const daysAmount = 5;
-    const price = 1;
     const guestData = 'guestData';
     const hotelTwoAddress = '0x61a19c2cf1c761f4a4f5e1cfb129177d4afe893b';
     const unitTwoAddress = '0x7080e2142dbecb98818c29b1e20bbdb3fd82575c';
@@ -130,7 +128,7 @@ describe('BookingData', function() {
     beforeEach(() => {
       getPastEventsSpy1 = sinon.spy((type, options) => {
         let data = [];
-        if (type == 'Book') {
+        if (type === 'Book') {
           data.push({
             transactionHash: 'hash',
             blockNumber: 12,
@@ -140,16 +138,16 @@ describe('BookingData', function() {
               unit: unitAddress,
               fromDay: web3provider.utils.formatDate(fromDate),
               daysAmount: daysAmount,
-            }
+            },
           });
-        } else if (type == 'CallStarted') {
+        } else if (type === 'CallStarted') {
           data.push({
             returnValues: {
               dataHash: 'startedfinishedhash',
             },
             transactionHash: 'startedhash',
           });
-        } else if (type == 'CallFinish') {
+        } else if (type === 'CallFinish') {
           data.push({
             returnValues: {
               dataHash: 'startedfinishedhash',
@@ -161,7 +159,7 @@ describe('BookingData', function() {
       });
       getPastEventsSpy2 = sinon.spy((type, options) => {
         let data = [];
-        if (type == 'Book') {
+        if (type === 'Book') {
           data.push({
             transactionHash: 'hash2',
             blockNumber: 13,
@@ -171,7 +169,7 @@ describe('BookingData', function() {
               unit: unitTwoAddress,
               fromDay: web3provider.utils.formatDate(fromDate),
               daysAmount: daysAmount,
-            }
+            },
           });
         }
         return data;
@@ -181,13 +179,13 @@ describe('BookingData', function() {
         getPastEvents: getPastEventsSpy1,
         methods: {
           waitConfirmation: help.stubContractMethodResult(false),
-        }
+        },
       });
       getHotelInstanceStub.withArgs(hotelTwoAddress).returns({
         getPastEvents: getPastEventsSpy2,
         methods: {
           waitConfirmation: help.stubContractMethodResult(false),
-        }
+        },
       });
       sinon.stub(web3provider.data, 'getGuestData').returns(guestData);
     });
@@ -197,7 +195,7 @@ describe('BookingData', function() {
       web3provider.data.getGuestData.restore();
     });
 
-    it('gets a booking for a hotel', async() => {
+    it('gets a booking for a hotel', async () => {
       const bookings = await bookingData.getBookings(hotelAddress);
       const booking = bookings[0];
       assert.equal(bookings.length, 1);
@@ -213,7 +211,7 @@ describe('BookingData', function() {
       assert.equal(booking.daysAmount, daysAmount);
     });
 
-    it('gets bookings for two hotels', async() => {
+    it('gets bookings for two hotels', async () => {
       const bookings = await bookingData.getBookings([hotelAddress, hotelTwoAddress]);
       assert.equal(bookings.length, 2);
       const augustoBooking = bookings.filter(item => item.from === augusto)[0];
@@ -223,8 +221,8 @@ describe('BookingData', function() {
       assert.isDefined(jakubBooking);
     });
 
-    it('gets bookings for a hotel starting from a specific block number', async() => {
-      let bookings = await bookingData.getBookings(hotelAddress, '1234');
+    it('gets bookings for a hotel starting from a specific block number', async () => {
+      await bookingData.getBookings(hotelAddress, '1234');
       assert.equal(getPastEventsSpy1.callCount, 3);
       assert.equal(getPastEventsSpy1.firstCall.args[0], 'Book');
       assert.isDefined(getPastEventsSpy1.firstCall.args[1]);
@@ -232,7 +230,7 @@ describe('BookingData', function() {
       assert.equal(getPastEventsSpy1.firstCall.args[1].fromBlock, '1234');
     });
 
-    it('returns an empty array if there are no bookings', async() => {
+    it('returns an empty array if there are no bookings', async () => {
       web3provider.contracts.getHotelInstance.restore();
       sinon.stub(web3provider.contracts, 'getHotelInstance').returns({
         getPastEvents: () => [],
@@ -242,14 +240,14 @@ describe('BookingData', function() {
       assert.equal(bookings.length, 0);
     });
 
-    it('gets a booking for a hotel that requires confirmation', async() => {
+    it('gets a booking for a hotel that requires confirmation', async () => {
       getHotelInstanceStub.restore();
       getHotelInstanceStub = sinon.stub(web3provider.contracts, 'getHotelInstance');
       getHotelInstanceStub.withArgs(hotelAddress).returns({
         getPastEvents: getPastEventsSpy1,
         methods: {
           waitConfirmation: help.stubContractMethodResult(true),
-        }
+        },
       });
       const bookings = await bookingData.getBookings(hotelAddress);
       const booking = bookings[0];
@@ -267,10 +265,9 @@ describe('BookingData', function() {
     });
   });
 
-  describe('getBookingRequests', function(){
+  describe('getBookingRequests', function () {
     const fromDate = new Date('10/10/2020');
     const daysAmount = 5;
-    const price = 1;
     const guestData = 'guestData';
     const hotelTwoAddress = '0x61a19c2cf1c761f4a4f5e1cfb129177d4afe893b';
     const unitTwoAddress = '0x7080e2142dbecb98818c29b1e20bbdb3fd82575c';
@@ -279,7 +276,7 @@ describe('BookingData', function() {
     beforeEach(() => {
       getPastEventsSpy1 = sinon.spy((type, options) => {
         let data = [];
-        if (type == 'CallStarted') {
+        if (type === 'CallStarted') {
           data.push({
             returnValues: {
               dataHash: 'startedfinishedhash',
@@ -289,7 +286,7 @@ describe('BookingData', function() {
             blockNumber: 13,
             id: '1234',
           });
-        } else if (type == 'CallFinish') {
+        } else if (type === 'CallFinish') {
           data.push({
             returnValues: {
               dataHash: 'anotherstartedfinishedhash',
@@ -304,7 +301,7 @@ describe('BookingData', function() {
       });
       getPastEventsSpy2 = sinon.spy((type, options) => {
         let data = [];
-        if (type == 'CallStarted') {
+        if (type === 'CallStarted') {
           data.push({
             returnValues: {
               dataHash: 'startedfinishedhash2',
@@ -314,7 +311,7 @@ describe('BookingData', function() {
             blockNumber: 13,
             id: '1236',
           });
-        } else if (type == 'CallFinish') {
+        } else if (type === 'CallFinish') {
           data.push({
             returnValues: {
               dataHash: 'anotherstartedfinishedhash2',
@@ -337,7 +334,7 @@ describe('BookingData', function() {
             fromDay: web3provider.utils.formatDate(fromDate),
             daysAmount: daysAmount,
           }),
-        }
+        },
       });
       getHotelInstanceStub.withArgs(hotelTwoAddress).returns({
         getPastEvents: getPastEventsSpy2,
@@ -348,12 +345,12 @@ describe('BookingData', function() {
             fromDay: web3provider.utils.formatDate(fromDate),
             daysAmount: daysAmount,
           }),
-        }
+        },
       });
       sinon.stub(web3provider.data, 'getGuestData').returns(guestData);
       sinon.stub(web3provider.contracts.abiDecoder, 'decodeMethod').callsFake((arg0) => {
         return {
-          params: _.map(arg0, (v, k) => {return {name: k, value: v}}),
+          params: _.map(arg0, (v, k) => { return { name: k, value: v }; }),
         };
       });
     });
@@ -364,7 +361,7 @@ describe('BookingData', function() {
       web3provider.contracts.abiDecoder.decodeMethod.restore();
     });
 
-    it('gets pending booking requests for a hotel', async() => {
+    it('gets pending booking requests for a hotel', async () => {
       const requests = await bookingData.getBookingRequests(hotelAddress);
       const request = requests[0];
 
@@ -383,7 +380,7 @@ describe('BookingData', function() {
       assert.equal(request.daysAmount, daysAmount);
     });
 
-    it('gets booking requests for two hotels', async() => {
+    it('gets booking requests for two hotels', async () => {
       const requests = await bookingData.getBookingRequests([hotelAddress, hotelTwoAddress]);
       assert.equal(requests.length, 2);
       const augustoBooking = requests.filter(item => item.from === augusto)[0];
@@ -403,7 +400,7 @@ describe('BookingData', function() {
       assert.equal(jakubBooking.daysAmount, daysAmount);
     });
 
-    it('gets booking requests for a hotel starting from a specific block number', async() => {
+    it('gets booking requests for a hotel starting from a specific block number', async () => {
       await bookingData.getBookingRequests(hotelAddress, 123456);
       assert.equal(getPastEventsSpy1.callCount, 2);
       assert.equal(getPastEventsSpy1.firstCall.args[0], 'CallStarted');
@@ -411,13 +408,13 @@ describe('BookingData', function() {
       assert.equal(getPastEventsSpy1.firstCall.args[1].fromBlock, 123456);
     });
 
-    it('filters out completed booking requests', async() => {
+    it('filters out completed booking requests', async () => {
       getHotelInstanceStub.restore();
       getHotelInstanceStub = sinon.stub(web3provider.contracts, 'getHotelInstance');
       getHotelInstanceStub.withArgs(hotelAddress).returns({
         getPastEvents: (type, options) => {
           let data = [];
-          if (type == 'CallStarted') {
+          if (type === 'CallStarted') {
             data.push({
               returnValues: {
                 dataHash: 'startedfinishedhash',
@@ -436,7 +433,7 @@ describe('BookingData', function() {
               blockNumber: 13,
               id: '1234',
             });
-          } else if (type == 'CallFinish') {
+          } else if (type === 'CallFinish') {
             data.push({
               returnValues: {
                 dataHash: 'anotherstartedfinishedhash',
@@ -465,13 +462,13 @@ describe('BookingData', function() {
             fromDay: web3provider.utils.formatDate(fromDate),
             daysAmount: daysAmount,
           }),
-        }
+        },
       });
-      requests = await bookingData.getBookingRequests(hotelAddress);
+      const requests = await bookingData.getBookingRequests(hotelAddress);
       assert.equal(requests.length, 1);
     });
 
-    it('returns an empty array if there are no bookings', async() => {
+    it('returns an empty array if there are no bookings', async () => {
       getHotelInstanceStub.restore();
       getHotelInstanceStub = sinon.stub(web3provider.contracts, 'getHotelInstance');
       getHotelInstanceStub.withArgs(hotelAddress).returns({
