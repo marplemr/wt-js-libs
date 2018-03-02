@@ -53,6 +53,7 @@
     "chai": "^4.1.2",
     "chai-string": "^1.4.0",
     "esdoc": "^1.0.3",
+    "esdoc-ecmascript-proposal-plugin": "^1.0.0",
     "esdoc-node": "^1.0.2",
     "esdoc-standard-plugin": "^1.0.0",
     "ethereumjs-testrpc": "3.9.2",
