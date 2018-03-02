@@ -1,7 +1,6 @@
 const assert = require('chai').assert;
-const _ = require('lodash');
 const Web3 = require('web3');
-const provider = new Web3.providers.HttpProvider('http://localhost:8545')
+const provider = new Web3.providers.HttpProvider('http://localhost:8545');
 const web3 = new Web3(provider);
 
 const help = require('./helpers/index');
@@ -10,35 +9,35 @@ const User = library.User;
 const BookingData = library.BookingData;
 const web3providerFactory = library.web3providerFactory;
 
-describe('User', function(){
+describe('User', function () {
   let Manager;
   let token;
   let index;
   let accounts;
   let ownerAccount;
   let augusto;
-  let jakub;
+  let wallet;
+  let userOptions;
+  let user;
   let hotelAddress;
   let unitAddress;
   let web3provider;
+  let typeName;
 
-  const sync = true;
-
-  before(async function(){
+  before(async function () {
     web3provider = web3providerFactory.getInstance(web3);
     accounts = await web3provider.web3.eth.getAccounts();
     ({
       index,
       token,
-      wallet
+      wallet,
     } = await help.createWindingTreeEconomy(accounts, web3provider));
 
-    ownerAccount = wallet["1"].address;
-    augusto = wallet["2"].address;
-    jakub = wallet["3"].address;
-  })
+    ownerAccount = wallet['1'].address;
+    augusto = wallet['2'].address;
+  });
 
-  describe('balanceCheck', function(){
+  describe('balanceCheck', function () {
     let user;
 
     beforeEach(async () => {
@@ -46,48 +45,47 @@ describe('User', function(){
         account: augusto,
         tokenAddress: token.options.address,
         web3provider: web3provider,
-      }
+      };
       user = new User(userOptions);
-    })
+    });
 
     it('should return true if balance is greater than cost', async () => {
       const cost = 50;
       const canPay = await user.balanceCheck(cost);
       assert.isTrue(canPay);
-    })
+    });
 
-    it('should return false if balance is lower than cost', async() => {
+    it('should return false if balance is lower than cost', async () => {
       const cost = 5000;
       const canPay = await user.balanceCheck(cost);
       assert.isFalse(canPay);
-    })
-  })
+    });
+  });
 
-  describe('book', function() {
+  describe('book', function () {
     const fromDate = new Date('10/10/2020');
     const daysAmount = 5;
-    let guestData;
-    
+    let guestData, data, hotel;
 
-    beforeEach(async function() {
+    beforeEach(async function () {
       guestData = web3provider.web3.utils.toHex('guestData');
       ({
         Manager,
         hotelAddress,
-        unitAddress
+        unitAddress,
+        typeName,
       } = await help.generateCompleteHotel(index.options.address, ownerAccount, 1.5, web3provider));
-
       userOptions = {
         account: augusto,
         gasMargin: 1.5,
         web3provider: web3provider,
-      }
+      };
 
       user = new User(userOptions);
-      data = new BookingData({web3provider: web3provider});
-      hotel = web3provider.contracts.getContractInstance('Hotel', hotelAddress);
+      data = new BookingData({ web3provider: web3provider });
+      hotel = web3provider.contracts.getHotelInstance(hotelAddress);
 
-      await Manager.setRequireConfirmation(hotelAddress, true, sync);
+      await Manager.setRequireConfirmation(hotelAddress, true);
     });
 
     it('should initiate a booking: CallStarted event fired / Book event not fired', async () => {
@@ -99,7 +97,7 @@ describe('User', function(){
         guestData
       );
 
-      const events = await hotel.getPastEvents('allEvents', {fromBlock: 0});
+      const events = await hotel.getPastEvents('allEvents', { fromBlock: 0 });
       const CallStarted = events[0];
 
       assert.equal(events.length, 1);
@@ -108,7 +106,7 @@ describe('User', function(){
       assert.isString(CallStarted.returnValues.dataHash);
     });
 
-    it('should fire Book & CallFinished events when manager confirms', async() => {
+    it('should fire Book & CallFinished events when manager confirms', async () => {
       await user.book(
         hotelAddress,
         unitAddress,
@@ -120,9 +118,9 @@ describe('User', function(){
       const callStartedEvents = await hotel.getPastEvents('CallStarted');
       const dataHash = callStartedEvents[0].returnValues.dataHash;
 
-      await Manager.confirmBooking(hotelAddress, dataHash, sync);
+      await Manager.confirmBooking(hotelAddress, dataHash);
 
-      const events = await hotel.getPastEvents('allEvents', {fromBlock: 0});
+      const events = await hotel.getPastEvents('allEvents', { fromBlock: 0 });
       const bookEvents = events.filter(item => item.event === 'Book');
       const callFinishEvents = events.filter(item => item.event === 'CallFinish');
 
@@ -130,9 +128,9 @@ describe('User', function(){
       assert.equal(callFinishEvents.length, 1);
     });
 
-    it('should make the reservation when manager confirms', async() => {
+    it('should make the reservation when manager confirms', async () => {
       // Pre booking request
-      let isAvailable = await data.unitIsAvailable(unitAddress, fromDate, daysAmount);
+      let isAvailable = await data.unitIsAvailable(hotelAddress, unitAddress, fromDate, daysAmount);
       assert.isTrue(isAvailable);
 
       await user.book(
@@ -144,45 +142,46 @@ describe('User', function(){
       );
 
       // Post booking request / pre-confirmation
-      isAvailable = await data.unitIsAvailable(unitAddress, fromDate, daysAmount);
+      isAvailable = await data.unitIsAvailable(hotelAddress, unitAddress, fromDate, daysAmount);
       assert.isTrue(isAvailable);
 
       const callStartedEvents = await hotel.getPastEvents('CallStarted');
       const dataHash = callStartedEvents[0].returnValues.dataHash;
-      await Manager.confirmBooking(hotelAddress, dataHash, sync);
+      await Manager.confirmBooking(hotelAddress, dataHash);
 
       // Post confirmation
-      isAvailable = await data.unitIsAvailable(unitAddress, fromDate, daysAmount);
+      isAvailable = await data.unitIsAvailable(hotelAddress, unitAddress, fromDate, daysAmount);
       assert.isFalse(isAvailable);
-    })
+    });
   });
 
   describe('bookWithLif: success cases', function () {
     const fromDate = new Date('10/10/2020');
     const daysAmount = 5;
     const price = 1;
-    let guestData;
+    let guestData, data, hotel;
 
-    beforeEach(async function() {
+    beforeEach(async function () {
       guestData = web3provider.web3.utils.toHex('guestData');
       ({
         Manager,
         hotelAddress,
-        unitAddress
+        unitAddress,
+        typeName,
       } = await help.generateCompleteHotel(index.options.address, ownerAccount, 1.5, web3provider));
 
       userOptions = {
         account: augusto,
         gasMargin: 1.5,
         tokenAddress: token.options.address,
-        web3provider: web3provider
-      }
+        web3provider: web3provider,
+      };
 
       user = new User(userOptions);
-      data = new BookingData({web3provider: web3provider});
-      hotel = web3provider.contracts.getContractInstance('Hotel', hotelAddress);
+      data = new BookingData({ web3provider: web3provider });
+      hotel = web3provider.contracts.getHotelInstance(hotelAddress);
 
-      await Manager.setDefaultLifPrice(hotelAddress, unitAddress, price, sync);
+      await Manager.setDefaultLifPrice(hotelAddress, typeName, price);
     });
 
     it('should make a booking: event fired', async () => {
@@ -203,7 +202,7 @@ describe('User', function(){
     });
 
     it('should make a booking: days reserved', async () => {
-      let isAvailable = await data.unitIsAvailable(unitAddress, fromDate, daysAmount);
+      let isAvailable = await data.unitIsAvailable(hotelAddress, unitAddress, fromDate, daysAmount);
       assert.isTrue(isAvailable);
 
       await user.bookWithLif(
@@ -214,7 +213,7 @@ describe('User', function(){
         guestData
       );
 
-      isAvailable = await data.unitIsAvailable(unitAddress, fromDate, daysAmount);
+      isAvailable = await data.unitIsAvailable(hotelAddress, unitAddress, fromDate, daysAmount);
       assert.isFalse(isAvailable);
     });
 
@@ -223,7 +222,7 @@ describe('User', function(){
       let hotelInitialBalance = await token.methods.balanceOf(hotelAddress).call();
       let lifWeiCost = web3provider.utils.lif2LifWei(price * daysAmount);
 
-      augustoInitialBalance =  new web3provider.web3.utils.BN(augustoInitialBalance);
+      augustoInitialBalance = new web3provider.web3.utils.BN(augustoInitialBalance);
       hotelInitialBalance = new web3provider.web3.utils.BN(hotelInitialBalance);
       lifWeiCost = new web3provider.web3.utils.BN(lifWeiCost);
 
@@ -257,10 +256,10 @@ describe('User', function(){
         unitAddress,
         firstDate,
         daysAmount,
-        guestData
+        guestData,
       ];
 
-      await user.bookWithLif(...args)
+      await user.bookWithLif(...args);
       args[2] = secondDate;
 
       try {
@@ -280,11 +279,11 @@ describe('User', function(){
         unitAddress,
         firstDate,
         daysAmount,
-        guestData
+        guestData,
       ];
 
-      await user.bookWithLif(...args)
-      await Manager.setUnitActive(hotelAddress, unitAddress, false, sync);
+      await user.bookWithLif(...args);
+      await Manager.setUnitActive(hotelAddress, unitAddress, false);
       args[2] = secondDate;
 
       try {
@@ -299,14 +298,14 @@ describe('User', function(){
       // Augusto's total balance is set to 500 in the before();
       // Total price for this booking will be 2500;
       const newPrice = 500;
-      await Manager.setDefaultLifPrice(hotelAddress, unitAddress, newPrice, sync);
+      await Manager.setDefaultLifPrice(hotelAddress, typeName, newPrice);
 
       const args = [
         hotelAddress,
         unitAddress,
         fromDate,
         daysAmount,
-        guestData
+        guestData,
       ];
 
       try {

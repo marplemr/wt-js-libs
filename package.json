@@ -1,22 +1,22 @@
 {
-  "name": "wt-js-libs",
+  "name": "@windingtree/wt-js-libs",
   "version": "0.1.0",
   "description": "Javascript libraries to interact with the Winding Tree contracts",
-  "main": "truffle.js",
+  "main": "dist/node/wt-js-libs.js",
   "directories": {
     "test": "test"
   },
   "scripts": {
+    "lint": "eslint src test test-build",
     "test": "mocha --timeout 20000",
     "test-build": "npm run clean && npm run build && ./scripts/test-build.sh",
-    "postinstall": "scripts/install.sh",
-    "recompile": "rimraf build && ./node_modules/.bin/truffle migrate --reset",
     "docs-build": "./node_modules/.bin/esdoc",
     "docs-view": "open ./docs/index.html",
     "clean": "rimraf dist",
-    "build": "webpack",
-    "update-submodules": "git submodule update --recursive && npm run postinstall",
-    "pull-submodules": "git submodule foreach git pull origin master && npm run postinstall"
+    "build": "webpack"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "keywords": [
     "winding-tree",
@@ -25,12 +25,14 @@
     "smart-contracts"
   ],
   "author": "Winding Tree Developers <dev@windingtree.com>",
-  "license": "MIT",
+  "license": "Apache 2.0",
   "browser": {
     "fs": false,
     "child_process": false
   },
   "dependencies": {
+    "@windingtree/lif-token": "^0.1.2-erc827",
+    "@windingtree/wt-contracts": "^0.1.0",
     "abi-decoder": "^1.0.8",
     "currency-codes": "^1.1.2",
     "joi": "^13.1.2",
@@ -40,6 +42,7 @@
     "moment": "^2.18.1",
     "superagent": "^3.8.2",
     "web3": "^1.0.0-beta.23",
+    "web3-eth-abi": "^1.0.0-beta.30",
     "zeppelin-solidity": "^1.2.0"
   },
   "devDependencies": {
@@ -53,6 +56,7 @@
     "chai": "^4.1.2",
     "chai-string": "^1.4.0",
     "esdoc": "^1.0.3",
+    "esdoc-ecmascript-proposal-plugin": "^1.0.0",
     "esdoc-node": "^1.0.2",
     "esdoc-standard-plugin": "^1.0.0",
     "ethereumjs-testrpc": "3.9.2",
@@ -61,6 +65,15 @@
     "truffle": "4.0.0",
     "web3-core-promievent": "^1.0.0-beta.30",
     "webpack": "^2.4.1",
-    "webpack-bundle-size-analyzer": "^2.7.0"
+    "webpack-bundle-size-analyzer": "^2.7.0",
+    "eslint": "^4.16.0",
+    "eslint-config-standard": "^10.2.1",
+    "eslint-plugin-import": "^2.8.0",
+    "eslint-plugin-node": "^5.2.1",
+    "eslint-plugin-promise": "^3.6.0",
+    "eslint-plugin-standard": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=8.9.4"
   }
 }

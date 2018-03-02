@@ -1,19 +1,22 @@
-const assert = require('chai').assert;
-const _ = require('lodash');
-const Web3 = require('web3');
-const provider = new Web3.providers.HttpProvider('http://localhost:8545')
-const web3 = new Web3(provider);
-
 const help = require('./helpers/index');
+
+const assert = require('chai').assert;
+
+const Web3 = require('web3');
+const provider = new Web3.providers.HttpProvider('http://localhost:8545');
+const web3 = new Web3(provider);
 const library = require('../dist/node/wt-js-libs');
 const User = library.User;
 const web3providerFactory = library.web3providerFactory;
 const HotelEvents = library.HotelEvents;
 
-xdescribe('HotelEvents', function() {
+xdescribe('HotelEvents', function () {
   let Manager;
   let token;
   let index;
+  let wallet;
+  let hotel;
+  let user;
   let accounts;
   let ownerAccount;
   let augusto;
@@ -22,43 +25,40 @@ xdescribe('HotelEvents', function() {
   let hotelEvents;
   let web3provider;
 
-  before(async function(){
+  before(async function () {
     web3provider = web3providerFactory.getInstance(web3);
     accounts = await web3.eth.getAccounts();
     ({
       index,
       token,
-      wallet
+      wallet,
     } = await help.createWindingTreeEconomy(accounts, web3provider));
 
-    ownerAccount = wallet["1"].address;
-    augusto = wallet["2"].address;
-  })
-
-  describe('subscribe', function() {
+    ownerAccount = wallet['1'].address;
+    augusto = wallet['2'].address;
+  });
+  describe('subscribe', function () {
     const fromDate = new Date('10/10/2020');
     const daysAmount = 5;
     const price = 1;
     const guestData = 'guestData';
 
-    beforeEach(async function() {
+    beforeEach(async function () {
       ({
         Manager,
         hotelAddress,
-        unitAddress
+        unitAddress,
       } = await help.generateCompleteHotel(index.options.address, ownerAccount, 1.5, web3provider));
 
-      userOptions = {
+      user = new User({
         account: augusto,
         gasMargin: 1.5,
         tokenAddress: token.options.address,
-        web3provider: web3provider
-      }
+        web3provider: web3provider,
+      });
+      hotelEvents = new HotelEvents({ web3provider: web3provider });
 
-      user = new User(userOptions);
-      hotelEvents = new HotelEvents({web3provider: web3provider});
-
-      hotel = utils.getInstance('Hotel', hotelAddress);
+      hotel = web3provider.contracts.getHotelInstance(hotelAddress);
       await Manager.setDefaultLifPrice(hotelAddress, unitAddress, price);
     });
 
@@ -93,4 +93,3 @@ xdescribe('HotelEvents', function() {
     it.skip('should hear a CallFinish event');
   });
 });
-
