@@ -118,6 +118,7 @@ class BookingData {
 
   /**
    * Checks the availability of a unit for a range of days
+   * @param  {Address} hotelAddress 
    * @param  {Address} unitAddress Unit contract address
    * @param  {Date}    fromDate    check-in date
    * @param  {Number}  daysAmount  number of days
@@ -133,6 +134,7 @@ class BookingData {
 
   /**
    * Returns a unit's availability for a single month
+   * @param  {Address} hotelAddress 
    * @param  {Address} unitAddress Unit contract address
    * @param  {Moment}  date        Moment object
    * @return {Object}  Mapping of number of days since epoch to unit's price and availability for that day
