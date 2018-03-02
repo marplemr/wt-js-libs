@@ -22,7 +22,7 @@
     "smart-contracts"
   ],
   "author": "Winding Tree Developers <dev@windingtree.com>",
-  "license": "MIT",
+  "license": "Apache 2.0",
   "browser": {
     "fs": false,
     "child_process": false
