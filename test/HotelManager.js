@@ -6,9 +6,9 @@ const Web3PromiEvent = require('web3-core-promievent');
 const Web3 = require('web3');
 const provider = new Web3.providers.HttpProvider('http://localhost:8545');
 const web3 = new Web3(provider);
-const web3providerFactory = require('../libs/web3provider');
+const web3providerFactory = require('../src/web3provider');
 
-const HotelManager = require('../libs/HotelManager.js');
+const HotelManager = require('../src/HotelManager.js');
 const help = require('./helpers/index');
 
 describe('HotelManager', function () {

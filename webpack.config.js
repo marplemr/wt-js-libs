@@ -9,7 +9,7 @@ const getTargetPlugins = target => target === 'node'
 const createConfig = target => ({
   devtool: 'source-map',
   entry: {
-    'wt-js-libs': './libs/index.js'
+    'wt-js-libs': './src/index.js'
   },
   // This is here to make joi happy
   node: {

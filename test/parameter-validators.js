@@ -1,6 +1,6 @@
 const { assert } = require('chai');
 
-const utils = require('../libs/utils/index');
+const utils = require('../src/utils/index');
 
 describe('Parameters validators', function () {
   describe('Booking data validators', function () {

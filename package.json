@@ -2,12 +2,12 @@
   "name": "wt-js-libs",
   "version": "0.1.0",
   "description": "Javascript libraries to interact with the Winding Tree contracts",
-  "main": "dist/wt-js-libs.js",
+  "main": "dist/node/wt-js-libs.js",
   "directories": {
     "test": "test"
   },
   "scripts": {
-    "lint": "eslint libs test test-build",
+    "lint": "eslint src test test-build",
     "test": "mocha --timeout 20000",
     "test-build": "npm run clean && npm run build && ./scripts/test-build.sh",
     "recompile": "rimraf build && ./node_modules/.bin/truffle migrate --reset",
