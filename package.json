@@ -1,5 +1,5 @@
 {
-  "name": "wt-js-libs",
+  "name": "@windingtree/wt-js-libs",
   "version": "0.1.0",
   "description": "Javascript libraries to interact with the Winding Tree contracts",
   "main": "dist/node/wt-js-libs.js",
@@ -10,11 +10,13 @@
     "lint": "eslint src test test-build",
     "test": "mocha --timeout 20000",
     "test-build": "npm run clean && npm run build && ./scripts/test-build.sh",
-    "recompile": "rimraf build && ./node_modules/.bin/truffle migrate --reset",
     "docs-build": "./node_modules/.bin/esdoc",
     "docs-view": "open ./docs/index.html",
     "clean": "rimraf dist",
     "build": "webpack"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "keywords": [
     "winding-tree",

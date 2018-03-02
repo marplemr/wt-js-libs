@@ -8,3 +8,12 @@ script:
   - set -e
   - npm run lint
   - npm run test-build
+deploy:
+  provider: npm
+  email: augusto.lemble@gmail.com
+  skip_cleanup: true
+  api_key: $NPM_TOKEN
+  on:
+    repo: windingtree/wt-js-libs
+    tags: true
+
