@@ -4,9 +4,7 @@ group: beta
 language: node_js
 node_js:
   - "8"
-before_install:
-  - npm i -g jshint
 script:
   - set -e
-  - jshint --show-non-errors test/*.js || echo "Errors in jshint ignored bc it doesn't support async/await"
+  - npm run lint
   - npm run test-build
