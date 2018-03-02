@@ -42,7 +42,7 @@ class BookingData {
       const cost = await lib.getCost('0xad5..cd', '0xab3..cd', new Date('5/31/2020'), 5);
    */
   async getCost(hotelAddress, unitAddress, fromDate, daysAmount = 0){
-    // TODO validate.addressAndRange({unitAddress, fromDate, daysAmount});
+    validate.addressAndRange({hotelAddress, unitAddress, fromDate, daysAmount});
 
     const fromDay = this.web3provider.utils.formatDate(fromDate);
     const hotel = this.getHotelInstance(hotelAddress);
@@ -62,7 +62,7 @@ class BookingData {
       const cost = await lib.getCost('0xad5..cd', '0xab3..cd', new Date('5/31/2020'), 5);
    */
   async getLifCost(hotelAddress, unitAddress, fromDate, daysAmount = 0){
-    // TODO validate.addressAndRange({unitAddress, fromDate, daysAmount});
+    validate.addressAndRange({hotelAddress, unitAddress, fromDate, daysAmount});
 
     const fromDay = this.web3provider.utils.formatDate(fromDate);
     const hotel = this.getHotelInstance(hotelAddress);
@@ -79,7 +79,7 @@ class BookingData {
    * @return {Boolean}
    */
   async unitAvailability(hotelAddress, unitAddress, fromDate, daysAmount = 0) {
-    // TODO validate.addressAndRange({unitAddress, fromDate, daysAmount});
+    validate.addressAndRange({hotelAddress, unitAddress, fromDate, daysAmount});
     const unit = this.getHotelUnitInstance(unitAddress);
     const hotel = this.getHotelInstance(hotelAddress);
     const fromDay = this.web3provider.utils.formatDate(fromDate);
@@ -123,7 +123,7 @@ class BookingData {
    * @return {Boolean}
    */
   async unitIsAvailable(hotelAddress, unitAddress, fromDate, daysAmount) {
-    // TODO validate args
+    validate.addressAndRange({hotelAddress, unitAddress, fromDate, daysAmount});
     const availability = await this.unitAvailability(hotelAddress, unitAddress, fromDate, daysAmount);
     return _.every(availability, (dayAvailability) => {
       return dayAvailability.available;
@@ -137,7 +137,7 @@ class BookingData {
    * @return {Object}  Mapping of number of days since epoch to unit's price and availability for that day
    */
   async unitMonthlyAvailability(hotelAddress, unitAddress, date) {
-    // TODO validate.addressAndDate({unitAddress, date});
+    validate.addressAndDate({hotelAddress, unitAddress, date});
     let fromDate = moment().year(date.year()).month(date.month()).date(1);
     let toDate = moment(fromDate).endOf('month');
     let daysAmount = toDate.diff(fromDate, 'days');

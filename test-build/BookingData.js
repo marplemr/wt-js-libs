@@ -25,8 +25,7 @@ describe('BookingData', function() {
   let hotelAddress;
   let unitAddress;
   let web3provider;
-
-  const sync = true;
+  let typeName;
 
   before(async function() {
     web3provider = web3providerFactory.getInstance(web3);
@@ -46,7 +45,8 @@ describe('BookingData', function() {
     ({
       Manager,
       hotelAddress,
-      unitAddress
+      unitAddress,
+      typeName
     } = await help.generateCompleteHotel(index.options.address, ownerAccount, 1.5, web3provider));
 
     userOptions = {
@@ -58,7 +58,7 @@ describe('BookingData', function() {
 
     user = new User(userOptions);
     data = new BookingData({web3provider: web3provider});
-    hotel = web3provider.contracts.getContractInstance('Hotel', hotelAddress);
+    hotel = web3provider.contracts.getHotelInstance(hotelAddress);
   });
 
   describe('getCost | getLifCost', function(){
@@ -68,8 +68,7 @@ describe('BookingData', function() {
       const daysAmount = 5;
       const price = 100.00;
       const expectedCost = price * daysAmount;
-      // TODO improve
-      await Manager.setDefaultPrice(hotelAddress, 'BASIC_ROOM', price, sync);
+      await Manager.setDefaultPrice(hotelAddress, typeName, price);
       const actualCost = await data.getCost(hotelAddress, unitAddress, fromDate, daysAmount);
 
       assert.equal(expectedCost, actualCost);
@@ -81,7 +80,7 @@ describe('BookingData', function() {
       const price = 20;
       const expectedCost = price * daysAmount;
 
-      await Manager.setDefaultLifPrice(hotelAddress, 'BASIC_ROOM', price, sync);
+      await Manager.setDefaultLifPrice(hotelAddress, typeName, price);
       const actualCost = await data.getLifCost(hotelAddress, unitAddress, fromDate, daysAmount);
 
       assert.equal(expectedCost, actualCost);
@@ -97,8 +96,8 @@ describe('BookingData', function() {
     const specialLifPrice = 2;
 
     it('returns a unit\'s price and availability for a range of dates', async () => {
-      await Manager.setDefaultPrice(hotelAddress, 'BASIC_ROOM', price);
-      await Manager.setDefaultLifPrice(hotelAddress, 'BASIC_ROOM', lifPrice);
+      await Manager.setDefaultPrice(hotelAddress, typeName, price);
+      await Manager.setDefaultLifPrice(hotelAddress, typeName, lifPrice);
       await Manager.setUnitSpecialPrice(hotelAddress, unitAddress, specialPrice, fromDate, 1);
       await Manager.setUnitSpecialLifPrice(hotelAddress, unitAddress, specialLifPrice, fromDate, 1);
 
@@ -115,9 +114,8 @@ describe('BookingData', function() {
     })
 
     it('given a single moment date, returns units price and availability for that month', async() => {
-      // TODO improve BASIC_ROOM passing
-      await Manager.setDefaultPrice(hotelAddress, 'BASIC_ROOM', price);
-      await Manager.setDefaultLifPrice(hotelAddress, 'BASIC_ROOM', lifPrice);
+      await Manager.setDefaultPrice(hotelAddress, typeName, price);
+      await Manager.setDefaultLifPrice(hotelAddress, typeName, lifPrice);
       await Manager.setUnitSpecialPrice(hotelAddress, unitAddress, specialPrice, fromDate, 1);
       await Manager.setUnitSpecialLifPrice(hotelAddress, unitAddress, specialLifPrice, fromDate, 1);
 
@@ -241,7 +239,7 @@ describe('BookingData', function() {
     });
 
     it('gets a booking for a hotel that requires confirmation', async() => {
-      await Manager.setRequireConfirmation(hotelAddress, true, sync);
+      await Manager.setRequireConfirmation(hotelAddress, true);
 
       await user.book(
         hotelAddress,
@@ -254,7 +252,7 @@ describe('BookingData', function() {
       let requests = await data.getBookingRequests(hotelAddress);
       assert.equal(requests.length, 1);
       const firstRequest = requests[0];
-      await Manager.confirmBooking(hotelAddress, firstRequest.dataHash, sync);
+      await Manager.confirmBooking(hotelAddress, firstRequest.dataHash);
 
       const bookings = await data.getBookings(hotelAddress);
 
@@ -279,7 +277,7 @@ describe('BookingData', function() {
     const price = 1;
     const guestData = 'guestData';
 
-    beforeEach(async () => await Manager.setRequireConfirmation(hotelAddress, true, sync));
+    beforeEach(async () => await Manager.setRequireConfirmation(hotelAddress, true));
 
     it('gets pending booking requests for a hotel', async() => {
       await user.book(
@@ -319,7 +317,7 @@ describe('BookingData', function() {
       const hotelAddressTwo = hotelTwo.hotelAddress;
       const unitAddressTwo = hotelTwo.unitAddress;
 
-      await managerTwo.setRequireConfirmation(hotelAddressTwo, true, sync);
+      await managerTwo.setRequireConfirmation(hotelAddressTwo, true);
 
       jakubOptions = {
         account: jakub,
@@ -409,7 +407,7 @@ describe('BookingData', function() {
       assert.equal(requests.length, 1);
       const firstRequest = requests[0];
 
-      await Manager.confirmBooking(hotelAddress, firstRequest.dataHash, sync);
+      await Manager.confirmBooking(hotelAddress, firstRequest.dataHash);
 
       await user.bookWithLif(
         hotelAddress,

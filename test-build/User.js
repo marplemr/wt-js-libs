@@ -21,6 +21,7 @@ describe('User', function(){
   let hotelAddress;
   let unitAddress;
   let web3provider;
+  let typeName;
 
   before(async function(){
     web3provider = web3providerFactory.getInstance(web3);
@@ -72,7 +73,8 @@ describe('User', function(){
       ({
         Manager,
         hotelAddress,
-        unitAddress
+        unitAddress,
+        typeName
       } = await help.generateCompleteHotel(index.options.address, ownerAccount, 1.5, web3provider));
       userOptions = {
         account: augusto,
@@ -82,7 +84,7 @@ describe('User', function(){
 
       user = new User(userOptions);
       data = new BookingData({web3provider: web3provider});
-      hotel = web3provider.contracts.getContractInstance('Hotel', hotelAddress);
+      hotel = web3provider.contracts.getHotelInstance(hotelAddress);
 
       await Manager.setRequireConfirmation(hotelAddress, true);
     });
@@ -165,7 +167,8 @@ describe('User', function(){
       ({
         Manager,
         hotelAddress,
-        unitAddress
+        unitAddress,
+        typeName
       } = await help.generateCompleteHotel(index.options.address, ownerAccount, 1.5, web3provider));
 
       userOptions = {
@@ -179,8 +182,7 @@ describe('User', function(){
       data = new BookingData({web3provider: web3provider});
       hotel = web3provider.contracts.getHotelInstance(hotelAddress);
 
-      // TODO improve BASIC_ROOM passing
-      await Manager.setDefaultLifPrice(hotelAddress, 'BASIC_ROOM', price);
+      await Manager.setDefaultLifPrice(hotelAddress, typeName, price);
     });
 
     it('should make a booking: event fired', async () => {
@@ -297,8 +299,7 @@ describe('User', function(){
       // Augusto's total balance is set to 500 in the before();
       // Total price for this booking will be 2500;
       const newPrice = 500;
-      // TODO improve BASIC_ROOM passing
-      await Manager.setDefaultLifPrice(hotelAddress, 'BASIC_ROOM', newPrice);
+      await Manager.setDefaultLifPrice(hotelAddress, typeName, newPrice);
 
       const args = [
         hotelAddress,

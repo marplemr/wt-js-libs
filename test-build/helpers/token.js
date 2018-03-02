@@ -17,7 +17,7 @@ async function runTokenGenerationEvent(web3provider) {
   const accounts = await web3provider.web3.eth.getAccounts();
   const crowdsale = await simulateCrowdsale(web3provider, rate, [40,30,20,10,0], accounts, 1);
   const tokenAddress = await crowdsale.methods.token().call();
-  return web3provider.contracts.getContractInstance('LifToken', tokenAddress);
+  return web3provider.contracts.getTokenInstance(tokenAddress);
 }
 
 

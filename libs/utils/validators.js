@@ -29,7 +29,7 @@ const unitDateRangeValidator = {
 
 function addressAndRange(params) {
   const schema = Joi.object().keys({
-    unitAddress: addressValidator,
+    ...unitValidator,
     fromDate: dateValidator,
     daysAmount: Joi.number().positive().optional()
   });
@@ -38,7 +38,7 @@ function addressAndRange(params) {
 
 function addressAndDate(params) {
   const schema = Joi.object().keys({
-    unitAddress: addressValidator,
+    ...unitValidator,
     date: dateValidator
   });
   return Joi.validate(params, schema);
@@ -163,7 +163,6 @@ function unitTypeInfo(params) {
     description: Joi.string(),
     minGuests: Joi.number().positive(),
     maxGuests: Joi.number().positive(),
-    price: Joi.string().required()
   });
   return Joi.validate(params, schema);
 }
@@ -207,17 +206,17 @@ function unitActive(params) {
   return Joi.validate(params, schema);
 }
 
-function unitPrice(params) {
+function unitTypePrice(params) {
   const schema = Joi.object().keys({
-    ...unitValidator,
+    ...unitTypeValidator,
     price: monetaryValidator
   });
   return Joi.validate(params, schema);
 }
 
-function unitLifPrice(params) {
+function unitTypeLifPrice(params) {
   const schema = Joi.object().keys({
-    ...unitValidator,
+    ...unitTypeValidator,
     price: Joi.number().min(0).required()
   });
   return Joi.validate(params, schema);
@@ -225,7 +224,7 @@ function unitLifPrice(params) {
 
 function currencyCode(params) {
   const schema = Joi.object().keys({
-    ...unitValidator,
+    ...unitTypeValidator,
     code: Joi.number().required()
   });
   return Joi.validate(params, schema);
@@ -262,7 +261,6 @@ module.exports = {
   addressesAndBlock,
   addressAndRange,
   bookInfo,
-  unitSpecialPrice,
   cost,
   currencyCode,
   hotelAddress,
@@ -278,10 +276,11 @@ module.exports = {
   removeImageUnitType,
   txHash,
   unitActive,
-  unitLifPrice,
-  unitPrice,
+  unitSpecialPrice,
   unitSpecialPrice,
   unitSpecialLifPrice,
+  unitTypeLifPrice,
+  unitTypePrice,
   unitTypeAmenity,
   unitTypeInfo
 }

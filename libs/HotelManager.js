@@ -285,7 +285,8 @@ class HotelManager {
  * @return {Promievent}
  */
   async changeHotelLocation(hotelAddress, lineOne, lineTwo, zipCode, country, timezone, longitude, latitude, callbacks){
-    // TODO validate.hotelCoordinatesAndTimezone({hotelAddress, timezone, latitude, longitude});
+    validate.physicalAddress({hotelAddress, lineOne, lineTwo, zipCode, country});
+    validate.hotelCoordinatesAndTimezone({hotelAddress, timezone, latitude, longitude});
     const {
       hotel,
       index
@@ -427,7 +428,7 @@ class HotelManager {
    * @return {Promievent}
    */
   async editUnitType(hotelAddress, unitType, description, minGuests, maxGuests, callbacks){
-    // TODO validate.unitTypeInfo({hotelAddress, unitType, description, minGuests, maxGuests, price});
+    validate.unitTypeInfo({hotelAddress, unitType, description, minGuests, maxGuests});
     const {
       hotel,
       index
@@ -656,7 +657,7 @@ class HotelManager {
    * @return {Promievent}
    */
   async setDefaultPrice(hotelAddress, unitType, price, callbacks){
-    // TODO validate.unitPrice({hotelAddress, unitAddress, price});
+    validate.unitTypePrice({hotelAddress, unitType, price});
     const {
       hotel,
       index
@@ -687,7 +688,7 @@ class HotelManager {
    * @return {Promievent}
   */
   async setDefaultLifPrice(hotelAddress, unitType, price, callbacks){
-    // TODO validate.unitLifPrice({hotelAddress, unitAddress, price});
+    validate.unitTypeLifPrice({hotelAddress, unitType, price});
     const {
       hotel,
       index
@@ -719,7 +720,7 @@ class HotelManager {
    * @return {Promievent}
    */
   async setCurrencyCode(hotelAddress, unitType, code, callbacks){
-    // TODO validate.currencyCode({hotelAddress, unitAddress, code});
+    validate.currencyCode({hotelAddress, unitType, code});
 
     if(! this.web3provider.utils.currencyCodes.number(code)) {
       throw new Error('Invalid currency code');

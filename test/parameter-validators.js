@@ -419,39 +419,39 @@ describe('Parametes validators', function(){
           }
         })
       })
-      describe('unitPrice', function(){
+      describe('unitTypePrice', function(){
         const hotelAddress='0x9ec823DB4c3B774e82DE9d8B94185Cb3d78277c7';
-        const unitAddress = '0x9ec823DB4c3B774e82DE9d8B94185Cb3d78277c9';
+        const unitType = 'BASIC_ROOM';
         const price = 22
-        it('validate unitPrice: Expect OK.', async () => {
+        it('validate unitTypePrice: Expect OK.', async () => {
           try {
-            validate.unitPrice({hotelAddress, unitAddress, price})
+            validate.unitTypePrice({hotelAddress, unitType, price})
           } catch (err){
             assert.isNull(err);
           }
         })
-        it('validate unitPrice: Expect error.', async () => {
+        it('validate unitTypePrice: Expect error.', async () => {
           try {
-            awaitutils.validate.unitPrice({hotelAddress, unitAddress})
+            awaitutils.validate.unitTypePrice({hotelAddress, unitType})
           } catch (err){
             assert.isNotNull(err);
           }
         })
       })
-      describe('unitLifPrice', function(){
+      describe('unitTypeLifPrice', function(){
         const hotelAddress='0x9ec823DB4c3B774e82DE9d8B94185Cb3d78277c7';
-        const unitAddress = '0x9ec823DB4c3B774e82DE9d8B94185Cb3d78277c9';
+        const unitType = 'BASIC_ROOM';
         const price = '22'
-        it('validate unitLifPrice: Expect OK.', async () => {
+        it('validate unitTypeLifPrice: Expect OK.', async () => {
           try {
-            validate.unitLifPrice({hotelAddress, unitAddress, price})
+            validate.unitTypeLifPrice({hotelAddress, unitType, price})
           } catch (err){
             assert.isNull(err);
           }
         })
-        it('validate unitLifPrice: Expect error.', async () => {
+        it('validate unitTypeLifPrice: Expect error.', async () => {
           try {
-            awaitutils.validate.unitLifPrice({hotelAddress, unitAddress})
+            awaitutils.validate.unitLifPrice({hotelAddress, unitType})
           } catch (err){
             assert.isNotNull(err);
           }

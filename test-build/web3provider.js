@@ -123,7 +123,7 @@ describe('web3provider', function() {
       bookTx = txs.find(tx => tx.hash === bookTx.transactionHash);
       assert.equal(web3.utils.toChecksumAddress(bookTx.hotel), hotelAddress);
       assert.equal(web3.utils.toChecksumAddress(bookTx.unit), unitAddress);
-      assert.equal(bookTx.unitType, web3provider.utils.bytes32ToString(await web3provider.contracts.getContractInstance('HotelUnit', unitAddress).methods.unitType().call()));
+      assert.equal(bookTx.unitType, web3provider.utils.bytes32ToString(await web3provider.contracts.getHotelUnitInstance(unitAddress).methods.unitType().call()));
       assert.equal(bookTx.fromDate.toDateString(), fromDate.toDateString());
       let toDate = fromDate;
       toDate.setDate(fromDate.getDate() + daysAmount);
@@ -145,7 +145,7 @@ describe('web3provider', function() {
       bookTx = txs.find(tx => tx.hash === bookTx.transactionHash);
       assert.equal(web3.utils.toChecksumAddress(bookTx.hotel), hotelAddress);
       assert.equal(web3.utils.toChecksumAddress(bookTx.unit), unitAddress);
-      assert.equal(bookTx.unitType, web3provider.utils.bytes32ToString(await web3provider.contracts.getContractInstance('HotelUnit', unitAddress).methods.unitType().call()));
+      assert.equal(bookTx.unitType, web3provider.utils.bytes32ToString(await web3provider.contracts.getHotelUnitInstance(unitAddress).methods.unitType().call()));
       assert.equal(bookTx.fromDate.toDateString(), fromDate.toDateString());
       let toDate = fromDate;
       toDate.setDate(fromDate.getDate() + daysAmount);
