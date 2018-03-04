@@ -1,22 +1,34 @@
-const misc = require('./misc');
-const token = require('./token');
-const hotel = require('./hotel');
-const economy = require('./economy');
+const _ = require('lodash');
 
-module.exports = {
-  // -- Misc --
-  sendTokens: misc.sendTokens,
-
-  // -- Token --
-  increaseTimeTestRPC: token.increaseTimeTestRPC,
-  increaseTimeTestRPCTo: token.increaseTimeTestRpcTo,
-  simulateCrowdsale: token.simulateCrowdsale,
-  runTokenGenerationEvent: token.runTokenGenerationEvent,
-
-  // -- Hotel --
-  generateCompleteHotel: hotel.generateCompleteHotel,
-
-  // -- Economy --
-  createWindingTreeEconomy: economy.createWindingTreeEconomy
+function stubContractMethodResult (callResult, encodeAbiResult = {}, estimatedGas = 33) {
+  return function () {
+    let methodParams = arguments;
+    return {
+      call: function () {
+        if (_.isFunction(callResult)) {
+          return callResult({
+            methodParams: methodParams,
+            callParams: arguments,
+          });
+        }
+        return callResult;
+      },
+      encodeABI: function () {
+        if (_.isFunction(encodeAbiResult)) {
+          return encodeAbiResult({
+            methodParams: methodParams,
+            callParams: arguments,
+          });
+        }
+        return encodeAbiResult;
+      },
+      estimateGas: function () {
+        return estimatedGas;
+      },
+    };
+  };
 }
 
+module.exports = {
+  stubContractMethodResult: stubContractMethodResult,
+};

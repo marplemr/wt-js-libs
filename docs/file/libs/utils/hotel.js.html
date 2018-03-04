@@ -235,7 +235,7 @@ async function getHotelInfo(wtHotel, context){
         description: isZeroString(info[0]) ? null : info[0],
         minGuests: isZeroUint(info[1]) ? null : parseInt(info[1]),
         maxGuests: isZeroUint(info[2]) ? null : parseInt(info[2]),
-        price: isZeroString(info[3]) ? null : info[3],
+        defaultPrice: isZeroString(info[3]) ? null : info[3],
       }
 
       // UnitType Images

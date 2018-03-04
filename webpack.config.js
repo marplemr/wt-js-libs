@@ -9,11 +9,11 @@ const getTargetPlugins = target => target === 'node'
 const createConfig = target => ({
   devtool: 'source-map',
   entry: {
-    BookingData: './libs/BookingData.js',
-    HotelEvents: './libs/HotelEvents.js',
-    HotelManager: './libs/HotelManager.js',
-    User: './libs/User.js',
-    Utils: './libs/utils/index.js'
+    'wt-js-libs': './src/index.js'
+  },
+  // This is here to make joi happy
+  node: {
+    net: 'empty'
   },
   module: {
     rules: [

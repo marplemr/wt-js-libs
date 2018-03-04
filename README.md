@@ -9,16 +9,20 @@ See documentation here https://windingtree.github.io/wt-js-libs/
 ## Install
 
 ```sh
-git clone https://github.com/windingtree/wt-js-libs --recursive
+git clone https://github.com/windingtree/wt-js-libs
+nvm install
 npm install
 ```
 
 ## Test
 
-To run unit tests on the contracts `npm test`, it will start a testrpc instance and run the tests in a private network.
+To run fast unit tests, run `npm test`.
+
+To run unit tests on the contracts `npm run test-build`, it will start a testrpc instance and run the tests in a private network.
 
 ```sh
 npm test
+npm run test-build
 ```
 
 ## Build Docs
