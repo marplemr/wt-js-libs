@@ -162,7 +162,7 @@ async function _getTransactionsByAccount (web3, myaccount, startBlockNumber, end
     var block = await web3.eth.getBlock(i, true);
     if (block != null && block.transactions != null) {
       block.transactions.forEach(function (e) {
-        if (myaccount === e.from) {
+        if (myaccount.toLowerCase() === e.from.toLowerCase()) {
           e.timeStamp = block.timestamp;
           txs.push(e);
         }
@@ -216,19 +216,22 @@ async function _callHotel (web3, contracts, hotelInstances, _method, _txData, _h
 }
 
 async function _getRawTxs (networkName, walletAddress, startBlock) {
-  if (networkName === 'test') {
+  // etherscan supports only main, kovan, ropsten, rinkeby
+  if (['main', 'kovan', 'ropsten', 'rinkeby'].includes(networkName)) {
+    let apiPrefix = networkName === 'main' ? '' : networkName + '.';
+    const rawTxs = await request.get('https://' + apiPrefix + 'etherscan.io/api')
+      .query({
+        module: 'account',
+        action: 'txlist',
+        address: walletAddress,
+        startBlock: startBlock,
+        endBlock: 'latest',
+        apikey: '6I7UFMJTUXG6XWXN8BBP86DWNHC9MI893F',
+      });
+    return rawTxs.body.result;
+  } else {
     return getTransactionsByAccount(walletAddress, 0, null);
   }
-  const rawTxs = await request.get('http://' + networkName + '.etherscan.io/api')
-    .query({
-      module: 'account',
-      action: 'txlist',
-      address: walletAddress,
-      startBlock: startBlock,
-      endBlock: 'latest',
-      apikey: '6I7UFMJTUXG6XWXN8BBP86DWNHC9MI893F',
-    });
-  return rawTxs.body.result;
 }
 
 /**
@@ -394,6 +397,7 @@ async function getGuestData (web3, abiDecoder, hash) {
 module.exports = function (web3, utils, contracts) {
   getTransactionsByAccount = _.partial(_getTransactionsByAccount, web3);
   return {
+    _getRawTxs: _getRawTxs,
     decodeTxInput: _.partial(decodeTxInput, web3, utils, contracts),
     getGuestData: _.partial(getGuestData, web3, contracts.abiDecoder),
     getUnitTypeIndex: _.partial(getUnitTypeIndex, web3),

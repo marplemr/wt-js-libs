@@ -104,6 +104,22 @@ describe('web3provider', function () {
       } = await help.generateCompleteHotel(index.options.address, ownerAccount, 1.5, web3provider));
     });
 
+    it('works for a lowercase address and on a private network', async () => {
+      const fromDate = new Date('2020-10-10T00:00:00');
+      let bookTx = await user.bookWithLif(
+        hotelAddress,
+        unitAddress,
+        fromDate,
+        daysAmount,
+        guestData
+      );
+      const txs = await web3provider.data.getBookingTransactions(userOptions.account.toLowerCase(), index.options.address, 0, 'private');
+      assert.notEqual(txs.length, 0);
+      bookTx = txs.find(tx => tx.hash === bookTx.transactionHash);
+      assert.equal(web3.utils.toChecksumAddress(bookTx.hotel), hotelAddress);
+      assert.equal(web3.utils.toChecksumAddress(bookTx.unit), unitAddress);
+    });
+
     it('returns a single booking made by an address', async () => {
       const fromDate = new Date('2020-10-10T00:00:00');
       let bookTx = await user.bookWithLif(

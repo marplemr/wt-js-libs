@@ -268,18 +268,18 @@ class HotelManager {
   }
 
   /**
- * Edits a hotel's location and timezone.
- * @param  {Address} hotelAddress contract address
- * @param  {String} lineOne       physical address data
- * @param  {String} lineTwo       physical address data
- * @param  {String} zipCode       physical address data
- * @param  {String} country       physical address data
- * @param  {Number} timezone      positive integer timezone relative to GMT
- * @param  {Number} longitude     GPS longitude location data e.g `40.426371`
- * @param  {Number} latitude      GPS latitude location data e.g `-3.703578`
- * @param  {Boolean} callbacks    object with callback functions
- * @return {Promievent}
- */
+   * Edits a hotel's location and timezone.
+   * @param  {Address} hotelAddress contract address
+   * @param  {String} lineOne       physical address data
+   * @param  {String} lineTwo       physical address data
+   * @param  {String} zipCode       physical address data
+   * @param  {String} country       physical address data
+   * @param  {Number} timezone      positive integer timezone relative to GMT
+   * @param  {Number} longitude     GPS longitude location data e.g `40.426371`
+   * @param  {Number} latitude      GPS latitude location data e.g `-3.703578`
+   * @param  {Boolean} callbacks    object with callback functions
+   * @return {Promievent}
+   */
   async changeHotelLocation (hotelAddress, lineOne, lineTwo, zipCode, country, timezone, longitude, latitude, callbacks) {
     await validate.physicalAddress({ hotelAddress, lineOne, lineTwo, zipCode, country });
     await validate.hotelCoordinatesAndTimezone({ hotelAddress, timezone, latitude, longitude });
