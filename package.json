@@ -9,6 +9,8 @@
   "scripts": {
     "lint": "eslint src test test-build",
     "test": "mocha --timeout 20000",
+    "test-build-node": "WT_BUILD=node npm run test-build",
+    "test-build-web": "WT_BUILD=web npm run test-build",
     "test-build": "npm run clean && npm run build && ./scripts/test-build.sh",
     "docs-build": "./node_modules/.bin/esdoc",
     "docs-view": "open ./docs/index.html",
@@ -66,6 +68,8 @@
     "eslint-plugin-promise": "^3.6.0",
     "eslint-plugin-standard": "^3.0.1",
     "ethereumjs-testrpc": "3.9.2",
+    "jsdom": "11.6.2",
+    "jsdom-global": "3.0.2",
     "rimraf": "^2.6.2",
     "sinon": "^4.3.0",
     "truffle": "4.0.0",

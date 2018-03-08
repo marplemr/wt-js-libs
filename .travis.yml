@@ -4,11 +4,21 @@ group: beta
 language: node_js
 node_js:
   - "8"
-script:
-  - set -e
-  - npm run lint
-  - npm run test
-  - npm run test-build
+jobs:
+  include:
+    - stage: test
+      script:
+        - set -e
+        - npm run lint
+        - npm run test
+    - stage: integration test
+      script:
+        - set -e
+        - npm run test-build-node
+    - 
+      script:
+        - set -e
+        - npm run test-build-web
 deploy:
   provider: npm
   email: augusto.lemble@gmail.com

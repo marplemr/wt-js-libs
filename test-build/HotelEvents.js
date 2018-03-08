@@ -5,9 +5,10 @@ const assert = require('chai').assert;
 const Web3 = require('web3');
 const provider = new Web3.providers.HttpProvider('http://localhost:8545');
 const web3 = new Web3(provider);
-const library = require('../dist/node/wt-js-libs');
+const library = process.env.WT_BUILD === 'node' ? require('../dist/node/wt-js-libs') : require('../dist/web/wt-js-libs');
 const User = library.User;
 const web3providerFactory = library.web3providerFactory;
+const HotelManager = library.HotelManager;
 const HotelEvents = library.HotelEvents;
 
 xdescribe('HotelEvents', function () {
@@ -44,11 +45,16 @@ xdescribe('HotelEvents', function () {
     const guestData = 'guestData';
 
     beforeEach(async function () {
+      Manager = new HotelManager({
+        indexAddress: index.options.address,
+        owner: ownerAccount,
+        gasMargin: 1.5,
+        web3provider: web3provider,
+      });
       ({
-        Manager,
         hotelAddress,
         unitAddress,
-      } = await help.generateCompleteHotel(index.options.address, ownerAccount, 1.5, web3provider));
+      } = await help.generateCompleteHotel(Manager));
 
       user = new User({
         account: augusto,

@@ -4,9 +4,10 @@ const provider = new Web3.providers.HttpProvider('http://localhost:8545');
 const web3 = new Web3(provider);
 
 const help = require('./helpers/index');
-const library = require('../dist/node/wt-js-libs');
+const library = process.env.WT_BUILD === 'node' ? require('../dist/node/wt-js-libs') : require('../dist/web/wt-js-libs');
 const User = library.User;
 const BookingData = library.BookingData;
+const HotelManager = library.HotelManager;
 const web3providerFactory = library.web3providerFactory;
 
 describe('User', function () {
@@ -69,12 +70,17 @@ describe('User', function () {
 
     beforeEach(async function () {
       guestData = web3provider.web3.utils.toHex('guestData');
+      Manager = new HotelManager({
+        indexAddress: index.options.address,
+        owner: ownerAccount,
+        gasMargin: 1.5,
+        web3provider: web3provider,
+      });
       ({
-        Manager,
         hotelAddress,
         unitAddress,
         typeName,
-      } = await help.generateCompleteHotel(index.options.address, ownerAccount, 1.5, web3provider));
+      } = await help.generateCompleteHotel(Manager));
       userOptions = {
         account: augusto,
         gasMargin: 1.5,
@@ -163,12 +169,17 @@ describe('User', function () {
 
     beforeEach(async function () {
       guestData = web3provider.web3.utils.toHex('guestData');
+      Manager = new HotelManager({
+        indexAddress: index.options.address,
+        owner: ownerAccount,
+        gasMargin: 1.5,
+        web3provider: web3provider,
+      });
       ({
-        Manager,
         hotelAddress,
         unitAddress,
         typeName,
-      } = await help.generateCompleteHotel(index.options.address, ownerAccount, 1.5, web3provider));
+      } = await help.generateCompleteHotel(Manager));
 
       userOptions = {
         account: augusto,

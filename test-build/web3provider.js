@@ -4,7 +4,7 @@ const assert = chai.assert;
 const Web3 = require('web3');
 
 const help = require('./helpers/index');
-const library = require('../dist/node/wt-js-libs');
+const library = process.env.WT_BUILD === 'node' ? require('../dist/node/wt-js-libs') : require('../dist/web/wt-js-libs');
 const User = library.User;
 const web3providerFactory = library.web3providerFactory;
 const HotelManager = library.HotelManager;
@@ -94,14 +94,13 @@ describe('web3provider', function () {
   describe('getBookingTransactions', () => {
     const daysAmount = 5;
     const guestData = 'guestData';
-    let Manager, hotelAddress, unitAddress;
+    let hotelAddress, unitAddress;
 
     beforeEach(async () => {
       ({
-        Manager,
         hotelAddress,
         unitAddress,
-      } = await help.generateCompleteHotel(index.options.address, ownerAccount, 1.5, web3provider));
+      } = await help.generateCompleteHotel(hotelManager));
     });
 
     it('works for a lowercase address and on a private network', async () => {
@@ -143,7 +142,7 @@ describe('web3provider', function () {
     });
 
     it('shows booking status as false when confirmation is required', async () => {
-      await Manager.setRequireConfirmation(hotelAddress, true);
+      await hotelManager.setRequireConfirmation(hotelAddress, true);
       const fromDate = new Date('2021-10-10T00:00:00');
       let bookTx = await user.bookWithLif(
         hotelAddress,

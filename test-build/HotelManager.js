@@ -5,7 +5,7 @@ const Web3 = require('web3');
 const provider = new Web3.providers.HttpProvider('http://localhost:8545');
 const web3 = new Web3(provider);
 
-const library = require('../dist/node/wt-js-libs');
+const library = process.env.WT_BUILD === 'node' ? require('../dist/node/wt-js-libs') : require('../dist/web/wt-js-libs');
 const web3providerFactory = library.web3providerFactory;
 const HotelManager = library.HotelManager;
 

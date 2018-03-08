@@ -41,4 +41,5 @@ else
   start_testrpc
 fi
 
-./node_modules/mocha/bin/mocha test-build --timeout 20000
+echo "Testing $WT_BUILD build flavour"
+./node_modules/mocha/bin/mocha -r jsdom-global/register test-build --timeout 20000

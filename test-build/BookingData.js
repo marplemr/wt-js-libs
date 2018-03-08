@@ -5,16 +5,17 @@ const moment = require('moment');
 const Web3 = require('web3');
 
 const help = require('./helpers/index');
-const library = require('../dist/node/wt-js-libs');
+const library = process.env.WT_BUILD === 'node' ? require('../dist/node/wt-js-libs') : require('../dist/web/wt-js-libs');
 const User = library.User;
 const BookingData = library.BookingData;
+const HotelManager = library.HotelManager;
 const web3providerFactory = library.web3providerFactory;
 
 const provider = new Web3.providers.HttpProvider('http://localhost:8545');
 const web3 = new Web3(provider);
 
 describe('BookingData', function () {
-  let Manager;
+  let Manager, secondManager;
   let token;
   let index;
   let accounts;
@@ -44,12 +45,24 @@ describe('BookingData', function () {
   });
 
   beforeEach(async function () {
+    Manager = new HotelManager({
+      indexAddress: index.options.address,
+      owner: ownerAccount,
+      gasMargin: 1.5,
+      web3provider: web3provider,
+    });
+    secondManager = new HotelManager({
+      indexAddress: index.options.address,
+      owner: ownerAccount,
+      gasMargin: 1.5,
+      web3provider: web3provider,
+    });
+
     ({
-      Manager,
       hotelAddress,
       unitAddress,
       typeName,
-    } = await help.generateCompleteHotel(index.options.address, ownerAccount, 1.5, web3provider));
+    } = await help.generateCompleteHotel(Manager));
 
     userOptions = {
       account: augusto,
@@ -156,12 +169,7 @@ describe('BookingData', function () {
     });
 
     it('gets bookings for two hotels', async () => {
-      const hotelTwo = await help.generateCompleteHotel(
-        index.options.address,
-        ownerAccount,
-        1.5,
-        web3provider
-      );
+      const hotelTwo = await help.generateCompleteHotel(secondManager);
       const hotelAddressTwo = hotelTwo.hotelAddress;
       const unitAddressTwo = hotelTwo.unitAddress;
 
@@ -302,17 +310,11 @@ describe('BookingData', function () {
     });
 
     it('gets booking requests for two hotels', async () => {
-      const hotelTwo = await help.generateCompleteHotel(
-        index.options.address,
-        ownerAccount,
-        1.5,
-        web3provider
-      );
-      const managerTwo = hotelTwo.Manager;
+      const hotelTwo = await help.generateCompleteHotel(secondManager);
       const hotelAddressTwo = hotelTwo.hotelAddress;
       const unitAddressTwo = hotelTwo.unitAddress;
 
-      await managerTwo.setRequireConfirmation(hotelAddressTwo, true);
+      await secondManager.setRequireConfirmation(hotelAddressTwo, true);
 
       const jakubUser = new User({
         account: jakub,
