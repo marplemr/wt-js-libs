@@ -20,6 +20,7 @@ jobs:
         - set -e
         - npm run test-build-web
     - stage: NPM release
+      if: branch = master
       script: echo 'Deploying to NPM...'
       before_deploy: npm run build
       deploy:
