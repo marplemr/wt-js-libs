@@ -19,12 +19,16 @@ jobs:
       script:
         - set -e
         - npm run test-build-web
-deploy:
-  provider: npm
-  email: augusto.lemble@gmail.com
-  skip_cleanup: true
-  api_key: $NPM_TOKEN
-  on:
-    repo: windingtree/wt-js-libs
-    tags: true
+    - stage: NPM release
+      if: branch = master
+      script: echo 'Deploying to NPM...'
+      before_deploy: npm run build
+      deploy:
+        provider: npm
+        email: augusto.lemble@gmail.com
+        skip_cleanup: true
+        api_key: $NPM_TOKEN
+        on:
+          repo: windingtree/wt-js-libs
+          tags: true
 
