@@ -66,12 +66,11 @@ describe('WTLibs usage', () => {
       let list = (await index.getAllHotels());
       assert.equal(list.length, 3);
       assert.include(await Promise.all(list.map(async (a) => a.getAddress())), await hotel.getAddress());
-
       const result = await index.removeHotel(hotel);
       assert.equal(result, true);
       list = await index.getAllHotels();
       assert.equal(list.length, 2);
-      assert.notInclude(list.map((a) => a.getAddress()), await hotel.getAddress());
+      assert.notInclude(await Promise.all(list.map(async (a) => a.getAddress())), await hotel.getAddress());
     });
   });
 

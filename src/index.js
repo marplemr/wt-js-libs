@@ -21,7 +21,7 @@ class WTLibs {
 
   constructor (options: WtLibsOptionsType) {
     this.options = options || {};
-    this.options.networkConnectorType = this.options.networkConnectorType || 'json';
+    this.options.networkConnectorType = this.options.networkConnectorType || 'web3';
     this.network = Network.createInstance(this.options.networkConnectorType, this.options.networkOptions);
   }
 

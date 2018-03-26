@@ -33,11 +33,11 @@ describe('WTLibs', () => {
       assert.isDefined(createNetworkSpy.firstCall.args[1].random);
     });
 
-    it('should fallback to json network if networkConnectorType is not specified', () => {
+    it('should fallback to web3 network if networkConnectorType is not specified', () => {
       const libs = WTLibs.createInstance();
       assert.isDefined(libs.network);
       assert.equal(createNetworkSpy.callCount, 1);
-      assert.equal(createNetworkSpy.firstCall.args[0], 'json');
+      assert.equal(createNetworkSpy.firstCall.args[0], 'web3');
     });
   });
 });

@@ -9,8 +9,9 @@
   "scripts": {
     "flow": "flow",
     "lint": "eslint src test test-build",
-    "test": "rimraf .nyc_output .nyc_coverage && npm run test-json",
+    "test": "rimraf .nyc_output .nyc_coverage && npm run test-json && npm run test-web3",
     "test-json": "TESTED_NETWORK=json npm run test-runner",
+    "test-web3": "./test/utils/scripts/localtestnet.sh",
     "test-runner": "nyc --clean=false --reporter=text mocha \"test/**/*.spec.js\" --timeout 20000 --require babel-register --require babel-polyfill",
     "coverage": "nyc report --reporter=text-lcov | coveralls",
     "clean": "rimraf dist",
