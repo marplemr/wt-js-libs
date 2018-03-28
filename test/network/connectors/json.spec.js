@@ -56,43 +56,16 @@ describe('WTLibs.network.connectors.json', () => {
         assert.isDefined(index.dataProvider.source.index);
         assert.isDefined(index.dataProvider.source.index.hotels);
       });
-
-      it('should initialize async data accessors', async () => {
-        const address = '0xbf18b616ac81830dd0c5d4b771f22fd8144fe769';
-        const myDataSource = getFreshDataSource();
-        assert.isUndefined(myDataSource.fullIndex.index.hotels[address].getAddress);
-        const myConnector = JsonConnector.createInstance({ source: myDataSource });
-        const myIndex = await myConnector.getWindingTreeIndex('fullIndex');
-        assert.isDefined(myIndex.dataProvider);
-        assert.isDefined(myIndex.dataProvider.source.index);
-        assert.isDefined(myIndex.dataProvider.source.index.hotels[address].getAddress);
-      });
-
-      it('should not initialize async data accessors if they are already there', async () => {
-        const address = '0xbf18b616ac81830dd0c5d4b771f22fd8144fe769';
-        const myDataSource = getFreshDataSource();
-        const enhancedHotel = Object.assign(myDataSource.fullIndex.index.hotels[address], {
-          getAddress: async () => myDataSource.fullIndex.index.hotels[address].address,
-          getName: async () => myDataSource.fullIndex.index.hotels[address].name,
-          getDescription: async () => myDataSource.fullIndex.index.hotels[address].description,
-          getManager: async () => myDataSource.fullIndex.index.hotels[address].manager,
-        });
-        const myConnector = JsonConnector.createInstance({ source: myDataSource });
-        const myIndex = await myConnector.getWindingTreeIndex('fullIndex');
-        assert.isDefined(myIndex.dataProvider);
-        assert.isDefined(myIndex.dataProvider.source.index);
-        assert.equal(myIndex.dataProvider.source.index.hotels[address].getAddress, enhancedHotel.getAddress);
-      });
     });
 
     describe('addHotel', () => {
       it('should add hotel', async () => {
         const hotel = await index.addHotel({ name: 'a', description: 'b' });
         assert.isDefined(hotel);
-        assert.equal(await hotel.getName(), 'a');
-        assert.equal(await hotel.getDescription(), 'b');
+        assert.equal(await hotel.name, 'a');
+        assert.equal(await hotel.description, 'b');
         assert.isDefined(index.dataProvider.source.index.hotels);
-        assert.isDefined(index.dataProvider.source.index.hotels[await hotel.getAddress()]);
+        assert.isDefined(index.dataProvider.source.index.hotels[await hotel.address]);
       });
     });
 
@@ -102,10 +75,10 @@ describe('WTLibs.network.connectors.json', () => {
         const hotel = await index.getHotel(address);
         assert.isDefined(hotel);
         assert.isDefined(index.dataProvider.source.index.hotels);
-        assert.equal(await hotel.getAddress(), address);
-        assert.equal(await hotel.getName(), index.dataProvider.source.index.hotels[address].name);
-        assert.equal(await hotel.getDescription(), index.dataProvider.source.index.hotels[address].description);
-        assert.equal(await hotel.getManager(), index.dataProvider.source.index.hotels[address].manager);
+        assert.equal(await hotel.address, address);
+        assert.equal(await hotel.name, index.dataProvider.source.index.hotels[address].name);
+        assert.equal(await hotel.description, index.dataProvider.source.index.hotels[address].description);
+        assert.equal(await hotel.manager, index.dataProvider.source.index.hotels[address].manager);
       });
 
       it('should throw when hotel does not exist', async () => {
@@ -119,15 +92,15 @@ describe('WTLibs.network.connectors.json', () => {
 
       it('should get added hotel', async () => {
         const hotel = await index.addHotel({ name: 'Third one', description: '3' });
-        assert.isDefined(await hotel.getName(), 'Third one');
+        assert.isDefined(await hotel.name, 'Third one');
         assert.isDefined(index.dataProvider.source.index.hotels);
-        assert.isDefined(index.dataProvider.source.index.hotels[await hotel.getAddress()]);
-        const hotel2 = await index.getHotel(await hotel.getAddress());
+        assert.isDefined(index.dataProvider.source.index.hotels[await hotel.address]);
+        const hotel2 = await index.getHotel(await hotel.address);
         assert.isDefined(hotel2);
-        assert.equal(await hotel2.getAddress(), await hotel.getAddress());
-        assert.equal(await hotel2.getName(), await hotel.getName());
-        assert.equal(await hotel2.getDescription(), await hotel.getDescription());
-        assert.equal(await hotel2.getManager(), await hotel.getManager());
+        assert.equal(await hotel2.address, await hotel.address);
+        assert.equal(await hotel2.name, await hotel.name);
+        assert.equal(await hotel2.description, await hotel.description);
+        assert.equal(await hotel2.manager, await hotel.manager);
       });
     });
 
@@ -137,7 +110,7 @@ describe('WTLibs.network.connectors.json', () => {
         const fakeAddress = '0x96eA4BbF71FEa3c9411C1Cefc555E9d7189695fA';
         try {
           const hotel = _.cloneDeep(await index.getHotel(address));
-          hotel.getAddress = async () => fakeAddress;
+          hotel.address = fakeAddress;
           await index.removeHotel(hotel);
           throw new Error('should not have been called');
         } catch (e) {
@@ -150,7 +123,7 @@ describe('WTLibs.network.connectors.json', () => {
         const address = '0xbf18b616ac81830dd0c5d4b771f22fd8144fe769';
         try {
           const hotel = _.cloneDeep(await index.getHotel(address));
-          hotel.getManager = async () => manager;
+          hotel.manager = manager;
           await index.removeHotel(hotel);
           throw new Error('should not have been called');
         } catch (e) {
@@ -161,7 +134,7 @@ describe('WTLibs.network.connectors.json', () => {
         const address = '0xbf18b616ac81830dd0c5d4b771f22fd8144fe769';
         try {
           const hotel = _.cloneDeep(await index.getHotel(address));
-          hotel.getAddress = async () => null;
+          hotel.address = null;
           await index.removeHotel(hotel);
           throw new Error('should not have been called');
         } catch (e) {

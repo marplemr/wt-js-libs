@@ -76,7 +76,7 @@ describe('WTLibs.network.connectors.web3.data-providers', () => {
       it('should throw when we want hotel from a bad address', async () => {
         try {
           const hotelProvider = HotelDataProvider.createInstance(connector, await indexDataProvider._getDeployedIndex(), '0x96eA4BbF71FEa3c9411C1Cefc555E9d7189695fA');
-          await hotelProvider._getDeployedHotel();
+          await hotelProvider._getContractInstance();
           throw new Error('should not have been called');
         } catch (e) {
           assert.match(e.message, /cannot get hotel instance/i);
@@ -86,7 +86,7 @@ describe('WTLibs.network.connectors.web3.data-providers', () => {
       it('should throw when we want hotel without an address', async () => {
         try {
           const hotelProvider = HotelDataProvider.createInstance(connector, await indexDataProvider._getDeployedIndex());
-          await hotelProvider._getDeployedHotel();
+          await hotelProvider._getContractInstance();
           throw new Error('should not have been called');
         } catch (e) {
           assert.match(e.message, /cannot get hotel instance/i);
@@ -96,7 +96,7 @@ describe('WTLibs.network.connectors.web3.data-providers', () => {
       it('should throw if we try to get data from network in a hotel without address', async () => {
         try {
           const hotelProvider = HotelDataProvider.createInstance(connector, await indexDataProvider._getDeployedIndex());
-          await hotelProvider._loadFromNetwork();
+          await hotelProvider._syncDataFromNetwork();
           throw new Error('should not have been called');
         } catch (e) {
           assert.match(e.message, /cannot call hotel/i);
@@ -106,9 +106,9 @@ describe('WTLibs.network.connectors.web3.data-providers', () => {
       it('should cache contract instances', async () => {
         const hotelProvider = HotelDataProvider.createInstance(connector, await indexDataProvider._getDeployedIndex(), '0x4a763f50dfe5cf4468b4171539e021a26fcee0cc');
         assert.equal(getHotelContractSpy.callCount, 0);
-        await hotelProvider._getDeployedHotel();
+        await hotelProvider._getContractInstance();
         assert.equal(getHotelContractSpy.callCount, 1);
-        await hotelProvider._getDeployedHotel();
+        await hotelProvider._getContractInstance();
         assert.equal(getHotelContractSpy.callCount, 1);
       });
     });
@@ -116,25 +116,25 @@ describe('WTLibs.network.connectors.web3.data-providers', () => {
     describe('data getters', () => {
       it('should fetch data from network only after the getter is accessed', async () => {
         const hotelProvider = HotelDataProvider.createInstance(connector, await indexDataProvider._getDeployedIndex(), '0xbf18b616ac81830dd0c5d4b771f22fd8144fe769');
-        sinon.spy(hotelProvider, '_loadFromNetwork');
-        assert.equal(hotelProvider._loadFromNetwork.callCount, 0);
-        assert.equal(await hotelProvider.getName(), 'First hotel');
-        assert.equal(hotelProvider._loadFromNetwork.callCount, 1);
-        assert.equal(await hotelProvider.getManager(), '0x87265a62c60247f862b9149423061b36b460f4bb');
-        assert.equal(hotelProvider._loadFromNetwork.callCount, 1);
+        sinon.spy(hotelProvider, '_syncDataFromNetwork');
+        assert.equal(hotelProvider._syncDataFromNetwork.callCount, 0);
+        assert.equal(await hotelProvider.name, 'First hotel');
+        assert.equal(hotelProvider._syncDataFromNetwork.callCount, 1);
+        assert.equal(await hotelProvider.manager, '0x87265a62c60247f862b9149423061b36b460f4bb');
+        assert.equal(hotelProvider._syncDataFromNetwork.callCount, 1);
       });
     });
 
     describe('data setters', () => {
       it('should not mark object dirty if data does not change', async () => {
         const hotelProvider = HotelDataProvider.createInstance(connector, await indexDataProvider._getDeployedIndex(), '0xbf18b616ac81830dd0c5d4b771f22fd8144fe769');
-        assert.equal(hotelProvider.state, 'fresh');
-        const currentName = await hotelProvider.getName();
-        assert.equal(hotelProvider.state, 'synced');
+        assert.equal(hotelProvider.__fieldStates.name, 'unsynced');
+        const currentName = await hotelProvider.name;
+        assert.equal(hotelProvider.__fieldStates.name, 'synced');
         hotelProvider.name = currentName;
-        assert.equal(hotelProvider.state, 'synced');
+        assert.equal(hotelProvider.__fieldStates.name, 'synced');
         hotelProvider.name = 'Changed name';
-        assert.equal(hotelProvider.state, 'dirty');
+        assert.equal(hotelProvider.__fieldStates.name, 'dirty');
       });
     });
 
@@ -142,30 +142,26 @@ describe('WTLibs.network.connectors.web3.data-providers', () => {
       // it should not update when data is not changed
       it('should update', async () => {
         const hotelProvider = HotelDataProvider.createInstance(connector, await indexDataProvider._getDeployedIndex(), '0xbf18b616ac81830dd0c5d4b771f22fd8144fe769');
-        
-        // TODO loadFromNetwork should happen automatically before write back to network, not by getName
-        const oldName = await hotelProvider.getName();
+        const oldName = await hotelProvider.name;
         const newName = 'Random changed name';
         hotelProvider.name = newName;
         await hotelProvider.updateOnNetwork({
-          from: await hotelProvider.getManager(),
+          from: await hotelProvider.manager,
           to: indexDataProvider.address,
         });
-        assert.equal(await hotelProvider.getName(), newName);
-        // Force reload from network
-        await hotelProvider._loadFromNetwork();
-        assert.equal(await hotelProvider.getName(), newName);
+        assert.equal(await hotelProvider.name, newName);
+        let freshHotelProvider = HotelDataProvider.createInstance(connector, await indexDataProvider._getDeployedIndex(), '0xbf18b616ac81830dd0c5d4b771f22fd8144fe769');
+        assert.equal(await hotelProvider.name, await freshHotelProvider.name);
 
         // And change this back to keep data consistent for other tests
         hotelProvider.name = oldName;
         await hotelProvider.updateOnNetwork({
-          from: await hotelProvider.getManager(),
+          from: await hotelProvider.manager,
           to: indexDataProvider.address,
         });
-        assert.equal(await hotelProvider.getName(), oldName);
-        // Force reload from network
-        await hotelProvider._loadFromNetwork();
-        assert.equal(await hotelProvider.getName(), oldName);
+        assert.equal(await hotelProvider.name, oldName);
+        freshHotelProvider = HotelDataProvider.createInstance(connector, await indexDataProvider._getDeployedIndex(), '0xbf18b616ac81830dd0c5d4b771f22fd8144fe769');
+        assert.equal(await hotelProvider.name, await freshHotelProvider.name);
       });
     });
   });

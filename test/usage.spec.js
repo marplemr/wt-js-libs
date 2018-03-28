@@ -20,9 +20,9 @@ describe('WTLibs usage', () => {
         // TODO test location adding as well
       });
       assert.isDefined(hotel);
-      assert.equal(await hotel.getName(), 'new hotel');
-      assert.equal(await hotel.getDescription(), 'some description');
-      assert.equal(await hotel.getManager(), '0xd39ca7d186a37bb6bf48ae8abfeb4c687dc8f906');
+      assert.equal(await hotel.name, 'new hotel');
+      assert.equal(await hotel.description, 'some description');
+      assert.equal(await hotel.manager, '0xd39ca7d186a37bb6bf48ae8abfeb4c687dc8f906');
       // We're removing the hotel to ensure clean slate after this test is run.
       // It is too expensive to re-set on-chain WTIndex after each test.
       const result = await index.removeHotel(hotel);
@@ -62,15 +62,16 @@ describe('WTLibs usage', () => {
         description: 'some desc',
         manager: manager,
       });
-      assert.isDefined(await hotel.getAddress());
+      assert.isDefined(await hotel.address);
       let list = (await index.getAllHotels());
       assert.equal(list.length, 3);
-      assert.include(await Promise.all(list.map(async (a) => a.getAddress())), await hotel.getAddress());
+      assert.include(await Promise.all(list.map(async (a) => a.address)), await hotel.address);
+
       const result = await index.removeHotel(hotel);
       assert.equal(result, true);
       list = await index.getAllHotels();
       assert.equal(list.length, 2);
-      assert.notInclude(await Promise.all(list.map(async (a) => a.getAddress())), await hotel.getAddress());
+      assert.notInclude(list.map(async (a) => a.address), await hotel.address);
     });
   });
 
@@ -79,8 +80,8 @@ describe('WTLibs usage', () => {
       const address = '0xbf18b616ac81830dd0c5d4b771f22fd8144fe769';
       const hotel = await index.getHotel(address);
       assert.isNotNull(hotel);
-      assert.equal(await hotel.getName(), 'First hotel');
-      assert.equal(await hotel.getAddress(), address);
+      assert.equal(await hotel.name, 'First hotel');
+      assert.equal(await hotel.address, address);
     });
 
     it('should throw if no hotel is found on given address', async () => {
@@ -97,15 +98,19 @@ describe('WTLibs usage', () => {
     const hotelAddress = '0xbf18b616ac81830dd0c5d4b771f22fd8144fe769';
     it('should update hotel', async () => {
       const newName = 'Great new hotel name';
+      const newDescription = 'Great new hotel description';
       const hotel = await index.getHotel(hotelAddress);
-      const oldName = await hotel.getName();
+      const oldName = await hotel.name;
+      const oldDescription = await hotel.description;
       hotel.name = newName;
+      hotel.description = newDescription;
       const updatedHotel = await index.updateHotel(hotel);
-      assert.equal(await updatedHotel.getName(), newName);
+      assert.equal(await updatedHotel.name, newName);
       // Change it back to keep data in line
       hotel.name = oldName;
+      hotel.description = oldDescription;
       const updatedHotel2 = await index.updateHotel(hotel);
-      assert.equal(await updatedHotel2.getName(), oldName);
+      assert.equal(await updatedHotel2.name, oldName);
     });
 
     it('should throw if hotel has no address', async () => {

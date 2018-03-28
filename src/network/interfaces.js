@@ -13,23 +13,16 @@ export interface HotelDataInterface extends Object {
   name?: ?string;
   description?: ?string;
   manager?: ?string
-  /* lineOne: ?string;
-  lineTwo: ?string;
-  zip: ?string;
-  country: ?string;
-  created: ?Date;
-  timezone: ?string;
-  latitude: ?number;
-  longitude: ?number */
 }
 
 export interface HotelInterface {
-  getAddress(): Promise<?string>;
-  getName(): Promise<?string>;
-  getDescription(): Promise<?string>;
-  getManager(): Promise<?string>;
-  // experimental
-  updateOnNetwork (transactionOptions: Object): Promise<HotelInterface>
+  address: Promise<?string>;
+  name: Promise<?string>;
+  description: Promise<?string>;
+  manager: Promise<?string>;
+  createOnNetwork (transactionOptions: Object): Promise<HotelInterface>;
+  updateOnNetwork (transactionOptions: Object): Promise<HotelInterface>;
+  removeFromNetwork (transactionOptions: Object): Promise<boolean>
 }
 
 export interface WTIndexInterface {

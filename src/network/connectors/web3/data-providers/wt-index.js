@@ -45,7 +45,7 @@ class WTIndexDataProvider implements WTIndexDataProviderInterface {
     try {
       // We need to separate calls to be able to properly catch exceptions
       const updatedHotel = await hotel.updateOnNetwork({
-        from: await hotel.getManager(),
+        from: await hotel.manager,
         to: this.address,
       });
       return updatedHotel;
@@ -59,7 +59,7 @@ class WTIndexDataProvider implements WTIndexDataProviderInterface {
     try {
       // We need to separate calls to be able to properly catch exceptions
       const result = ((hotel: any): HotelDataProvider).removeFromNetwork({ // eslint-disable-line flowtype/no-weak-types
-        from: await hotel.getManager(),
+        from: await hotel.manager,
         to: this.address,
       });
       return result;
