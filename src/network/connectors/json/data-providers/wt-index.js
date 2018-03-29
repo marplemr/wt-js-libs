@@ -24,24 +24,8 @@ class WTIndexDataProvider implements WTIndexDataProviderInterface {
     for (let addr in this.source.index.hotels) {
       let hotel = this.source.index.hotels[addr];
       // Initial data might lack data accessors
-      this.source.index.hotels[addr] = this._addAsyncGetters(hotel);
+      this.source.index.hotels[addr] = hotel;
     }
-  }
-
-  _addAsyncGetters (hotel: Object): HotelInterface {
-    if (!hotel.getAddress) {
-      hotel.getAddress = async (): Promise<?string> => hotel.address;
-    }
-    if (!hotel.getName) {
-      hotel.getName = async (): Promise<?string> => hotel.name;
-    }
-    if (!hotel.getDescription) {
-      hotel.getDescription = async (): Promise<?string> => hotel.description;
-    }
-    if (!hotel.getManager) {
-      hotel.getManager = async (): Promise<?string> => hotel.manager;
-    }
-    return hotel;
   }
 
   async addHotel (hotelData: HotelDataInterface): Promise<HotelInterface> {
@@ -52,7 +36,7 @@ class WTIndexDataProvider implements WTIndexDataProviderInterface {
       throw new Error('Cannot add hotel: Missing description');
     }
     const randomId = '0x000' + Object.keys(this.source.index.hotels).length;
-    this.source.index.hotels[randomId] = this._addAsyncGetters(Object.assign(hotelData, { address: randomId }));
+    this.source.index.hotels[randomId] = Object.assign(hotelData, { address: randomId });
     return this.source.index.hotels[randomId];
   }
 
@@ -65,7 +49,7 @@ class WTIndexDataProvider implements WTIndexDataProviderInterface {
   }
 
   async updateHotel (hotel: HotelInterface): Promise<HotelInterface> {
-    const hotelAddress: ?string = await hotel.getAddress();
+    const hotelAddress: ?string = await hotel.address;
     if (hotelAddress && this.source.index.hotels[hotelAddress]) {
       return Object.assign(this.source.index.hotels[hotelAddress], hotel);
     }
@@ -73,9 +57,9 @@ class WTIndexDataProvider implements WTIndexDataProviderInterface {
   }
 
   async removeHotel (hotel: HotelInterface): Promise<boolean> {
-    const address = await hotel.getAddress();
+    const address = await hotel.address;
     try {
-      if (address && this.source.index.hotels[address] && this.source.index.hotels[address].manager === await hotel.getManager()) {
+      if (address && this.source.index.hotels[address] && this.source.index.hotels[address].manager === await hotel.manager) {
         delete this.source.index.hotels[address];
         return true;
       }
