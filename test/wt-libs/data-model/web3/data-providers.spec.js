@@ -1,16 +1,16 @@
-import { assert } from 'chai';
+/* import { assert } from 'chai';
 import sinon from 'sinon';
 import WTIndexDataProvider from '../../../../src/network/connectors/web3/data-providers/wt-index';
 import HotelDataProvider from '../../../../src/network/connectors/web3/data-providers/hotel';
 import Web3Connector from '../../../../src/network/connectors/web3';
 import testedNetwork from '../../../utils/network-definition';
 import Contracts from '../../../../src/network/connectors/web3/contracts';
-
-describe('WTLibs.network.connectors.web3.data-providers', () => {
+*/
+xdescribe('WTLibs.network.connectors.web3.data-providers', () => {
   let connector, indexDataProvider;
 
   beforeEach(async function () {
-    if (process.env.TESTED_NETWORK !== 'web3') {
+    if (process.env.TESTED_DATA_MODEL !== 'web3') {
       this.skip();
     }
     connector = Web3Connector.createInstance(testedNetwork.withDataSource().networkOptions);
@@ -63,7 +63,7 @@ describe('WTLibs.network.connectors.web3.data-providers', () => {
     describe('_getDeployedHotel', () => {
       let getHotelContractSpy;
       beforeEach(function () {
-        if (process.env.TESTED_NETWORK !== 'web3') {
+        if (process.env.TESTED_DATA_MODEL !== 'web3') {
           this.skip();
         }
         getHotelContractSpy = sinon.spy(Contracts, 'getHotelInstance');

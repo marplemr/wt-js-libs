@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import { assert } from 'chai';
-import JsonConnector from '../../../src/network/connectors/json';
+import FullJsonDataModel from '../../../src/data-model/full-json';
 import dataSource from '../../utils/data/network.json';
 
 // cloneDeep to ensure data isolation
@@ -10,20 +10,20 @@ function getFreshDataSource () {
 
 describe('WTLibs.network.connectors.json', () => {
   beforeEach(function () {
-    if (process.env.TESTED_NETWORK !== 'json') {
+    if (process.env.TESTED_DATA_MODEL !== 'full-json') {
       this.skip();
     }
   });
 
   describe('createInstance', () => {
     it('should not panic on empty options', async () => {
-      const connector = await JsonConnector.createInstance();
+      const connector = await FullJsonDataModel.createInstance();
       assert.isDefined(connector.options);
       assert.isDefined(connector.source);
     });
 
     it('should store the original data source', async () => {
-      const connector = await JsonConnector.createInstance({ source: getFreshDataSource() });
+      const connector = await FullJsonDataModel.createInstance({ source: getFreshDataSource() });
       assert.isDefined(connector.options);
       assert.isDefined(connector.source);
       assert.isDefined(connector.source.fullIndex.index);
@@ -36,36 +36,34 @@ describe('WTLibs.network.connectors.json', () => {
 
     beforeEach(async () => {
       dataSource = getFreshDataSource();
-      connector = JsonConnector.createInstance({ source: dataSource });
+      connector = FullJsonDataModel.createInstance({ source: dataSource });
       index = await connector.getWindingTreeIndex('fullIndex');
     });
 
     describe('createInstance', () => {
       it('should create basic data structure if source is empty', async () => {
-        connector = JsonConnector.createInstance();
+        connector = FullJsonDataModel.createInstance();
         index = await connector.getWindingTreeIndex('random-address');
-        assert.isDefined(index.dataProvider);
-        assert.isDefined(index.dataProvider.source.index);
-        assert.isDefined(index.dataProvider.source.index.hotels);
+        assert.isDefined(index.source.index);
+        assert.isDefined(index.source.index.hotels);
       });
 
       it('should create basic data structure if hotels are empty', async () => {
-        connector = JsonConnector.createInstance({ source: { index: {} } });
+        connector = FullJsonDataModel.createInstance({ source: { index: {} } });
         index = await connector.getWindingTreeIndex('random-address');
-        assert.isDefined(index.dataProvider);
-        assert.isDefined(index.dataProvider.source.index);
-        assert.isDefined(index.dataProvider.source.index.hotels);
+        assert.isDefined(index.source.index);
+        assert.isDefined(index.source.index.hotels);
       });
     });
 
     describe('addHotel', () => {
       it('should add hotel', async () => {
-        const hotel = await index.addHotel({ name: 'a', description: 'b' });
+        const result = await index.addHotel({ url: 'a', manager: 'Donald' });
+        const hotel = await index.getHotel(result.address);
         assert.isDefined(hotel);
-        assert.equal(await hotel.name, 'a');
-        assert.equal(await hotel.description, 'b');
-        assert.isDefined(index.dataProvider.source.index.hotels);
-        assert.isDefined(index.dataProvider.source.index.hotels[await hotel.address]);
+        assert.equal(await hotel.url, 'a');
+        assert.isDefined(index.source.index.hotels);
+        assert.isDefined(index.source.index.hotels[await hotel.address]);
       });
     });
 
@@ -74,11 +72,10 @@ describe('WTLibs.network.connectors.json', () => {
         const address = '0xbf18b616ac81830dd0c5d4b771f22fd8144fe769';
         const hotel = await index.getHotel(address);
         assert.isDefined(hotel);
-        assert.isDefined(index.dataProvider.source.index.hotels);
+        assert.isDefined(index.source.index.hotels);
         assert.equal(await hotel.address, address);
-        assert.equal(await hotel.name, index.dataProvider.source.index.hotels[address].name);
-        assert.equal(await hotel.description, index.dataProvider.source.index.hotels[address].description);
-        assert.equal(await hotel.manager, index.dataProvider.source.index.hotels[address].manager);
+        assert.equal(await hotel.url, index.source.index.hotels[address].url);
+        assert.equal(await hotel.manager, index.source.index.hotels[address].manager);
       });
 
       it('should throw when hotel does not exist', async () => {
@@ -91,16 +88,13 @@ describe('WTLibs.network.connectors.json', () => {
       });
 
       it('should get added hotel', async () => {
-        const hotel = await index.addHotel({ name: 'Third one', description: '3' });
-        assert.isDefined(await hotel.name, 'Third one');
-        assert.isDefined(index.dataProvider.source.index.hotels);
-        assert.isDefined(index.dataProvider.source.index.hotels[await hotel.address]);
-        const hotel2 = await index.getHotel(await hotel.address);
-        assert.isDefined(hotel2);
-        assert.equal(await hotel2.address, await hotel.address);
-        assert.equal(await hotel2.name, await hotel.name);
-        assert.equal(await hotel2.description, await hotel.description);
-        assert.equal(await hotel2.manager, await hotel.manager);
+        const result = await index.addHotel({ url: 'Third one', manager: 'Donald' });
+        assert.isDefined(index.source.index.hotels);
+        assert.isDefined(index.source.index.hotels[result.address]);
+        const hotel = await index.getHotel(result.address);
+        assert.isDefined(hotel);
+        assert.isDefined(await hotel.url, 'Third one');
+        assert.equal(result.address, await hotel.address);
       });
     });
 
@@ -147,11 +141,11 @@ describe('WTLibs.network.connectors.json', () => {
       it('should get all hotels', async () => {
         const hotels = await index.getAllHotels();
         assert.isDefined(hotels);
-        assert.equal(hotels.length, Object.keys(index.dataProvider.source.index.hotels).length);
+        assert.equal(hotels.length, Object.keys(index.source.index.hotels).length);
       });
 
       it('should get empty list if no hotels were added', async () => {
-        connector = JsonConnector.createInstance();
+        connector = FullJsonDataModel.createInstance();
         index = await connector.getWindingTreeIndex('random-address');
         const hotels = await index.getAllHotels();
         assert.isDefined(hotels);

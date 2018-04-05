@@ -1,51 +1,46 @@
 import { assert } from 'chai';
 import WTLibs from '../src/index';
-import testedNetwork from './utils/network-definition';
+import testedDataModel from './utils/data-model-definition';
 
 describe('WTLibs usage', () => {
   let libs, index, emptyIndex;
 
   beforeEach(async () => {
-    libs = WTLibs.createInstance(testedNetwork.withDataSource());
-    index = await libs.getWTIndex(testedNetwork.indexAddress);
-    emptyIndex = await libs.getWTIndex(testedNetwork.emptyIndexAddress);
+    libs = WTLibs.createInstance(testedDataModel.withDataSource());
+    index = await libs.getWTIndex(testedDataModel.indexAddress);
+    emptyIndex = await libs.getWTIndex(testedDataModel.emptyIndexAddress);
   });
 
   describe('addHotel', () => {
     it('should add hotel', async () => {
-      const hotel = await index.addHotel({
+      const result = await index.addHotel({
+        url: 'some url',
         name: 'new hotel',
         description: 'some description',
         manager: '0xd39ca7d186a37bb6bf48ae8abfeb4c687dc8f906',
         // TODO test location adding as well
       });
-      assert.isDefined(hotel);
+      // Returns hotel address (~= id)
+      // and list of transactionIds that take part in hotel creation for later reference
+      assert.isDefined(result);
+      assert.isDefined(result.address);
+      assert.isDefined(result.transactionIds);
+      const hotel = await index.getHotel(result.address);
       assert.equal(await hotel.name, 'new hotel');
       assert.equal(await hotel.description, 'some description');
       assert.equal(await hotel.manager, '0xd39ca7d186a37bb6bf48ae8abfeb4c687dc8f906');
       // We're removing the hotel to ensure clean slate after this test is run.
       // It is too expensive to re-set on-chain WTIndex after each test.
-      const result = await index.removeHotel(hotel);
-      assert.equal(result, true);
+      const removalResult = await index.removeHotel(hotel);
+      assert.isDefined(removalResult);
     });
 
-    it('should throw when adding hotel without name', async () => {
+    it('should throw when hotel does not have a manager', async () => {
       try {
         await index.addHotel({
+          url: 'some url',
+          name: 'new hotel',
           description: 'some description',
-          manager: '0xd39ca7d186a37bb6bf48ae8abfeb4c687dc8f906',
-        });
-        throw new Error('should not have been called');
-      } catch (e) {
-        assert.match(e.message, /cannot add hotel/i);
-      }
-    });
-
-    it('should throw when adding hotel without description', async () => {
-      try {
-        await index.addHotel({
-          name: 'some hotel',
-          manager: '0xd39ca7d186a37bb6bf48ae8abfeb4c687dc8f906',
         });
         throw new Error('should not have been called');
       } catch (e) {
@@ -57,21 +52,31 @@ describe('WTLibs usage', () => {
   describe('removeHotel', () => {
     it('should remove hotel', async () => {
       const manager = '0xd39ca7d186a37bb6bf48ae8abfeb4c687dc8f906';
-      const hotel = await index.addHotel({
+      const result = await index.addHotel({
+        url: 'some url',
         name: 'another hotel',
         description: 'some desc',
         manager: manager,
       });
-      assert.isDefined(await hotel.address);
+      assert.isDefined(result.address);
       let list = (await index.getAllHotels());
       assert.equal(list.length, 3);
-      assert.include(await Promise.all(list.map(async (a) => a.address)), await hotel.address);
-
-      const result = await index.removeHotel(hotel);
-      assert.equal(result, true);
+      assert.include(await Promise.all(list.map(async (a) => a.address)), result.address);
+      const hotel = await index.getHotel(result.address);
+      const removalResult = await index.removeHotel(hotel);
+      assert.isDefined(removalResult);
       list = await index.getAllHotels();
       assert.equal(list.length, 2);
       assert.notInclude(list.map(async (a) => a.address), await hotel.address);
+    });
+
+    it('should throw if no hotel is found on given address', async () => {
+      try {
+        await index.removeHotel('0x96eA4BbF71FEa3c9411C1Cefc555E9d7189695fA');
+        throw new Error('should not have been called');
+      } catch (e) {
+        assert.match(e.message, /cannot remove hotel/i);
+      }
     });
   });
 
@@ -96,6 +101,7 @@ describe('WTLibs usage', () => {
 
   describe('updateHotel', () => {
     const hotelAddress = '0xbf18b616ac81830dd0c5d4b771f22fd8144fe769';
+
     it('should update hotel', async () => {
       const newName = 'Great new hotel name';
       const newDescription = 'Great new hotel description';
@@ -104,13 +110,20 @@ describe('WTLibs usage', () => {
       const oldDescription = await hotel.description;
       hotel.name = newName;
       hotel.description = newDescription;
-      const updatedHotel = await index.updateHotel(hotel);
-      assert.equal(await updatedHotel.name, newName);
+      const updateResult = await index.updateHotel(hotel);
+      assert.isDefined(updateResult);
+      assert.isAtLeast(updateResult.length, 1);
+      const hotel2 = await index.getHotel(hotelAddress);
+      assert.equal(await hotel2.name, newName);
+      assert.equal(await hotel2.description, newDescription);
       // Change it back to keep data in line
       hotel.name = oldName;
       hotel.description = oldDescription;
-      const updatedHotel2 = await index.updateHotel(hotel);
-      assert.equal(await updatedHotel2.name, oldName);
+      const updateResult2 = await index.updateHotel(hotel);
+      assert.isDefined(updateResult2);
+      assert.isAtLeast(updateResult2.length, 1);
+      const hotel3 = await index.getHotel(hotelAddress);
+      assert.equal(await hotel3.name, oldName);
     });
 
     it('should throw if hotel has no address', async () => {
@@ -149,6 +162,17 @@ describe('WTLibs usage', () => {
     it('should get empty list if no hotels are set', async () => {
       const hotels = await emptyIndex.getAllHotels();
       assert.equal(hotels.length, 0);
+    });
+  });
+
+  // TODO
+  xdescribe('getTransactionStatus', () => {
+    it('should return transaction status', async () => {
+
+    });
+
+    it('should return nothing if transactions does not exist', async () => {
+
     });
   });
 });

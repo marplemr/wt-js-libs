@@ -1,18 +1,18 @@
 // @flow
 
-import type { NetworkConnectorType, NetworkOptionsType } from './network';
-import type { WTIndexInterface } from './network/interfaces';
-import Network from './network';
+import type { DataModelType, DataModelOptionsType } from './data-model';
+import type { WTIndexInterface } from './interfaces';
+import DataModel from './data-model';
 
 type WtLibsOptionsType = {
   // Blockchain address of WTIndex contract
   wtIndexAddress: string,
-  networkConnectorType: NetworkConnectorType,
-  networkOptions: NetworkOptionsType
+  dataModelType: DataModelType,
+  dataModelOptions: DataModelOptionsType
 };
 
 class WTLibs {
-  network: Network;
+  dataModel: DataModel;
   options: WtLibsOptionsType;
 
   static createInstance (options: WtLibsOptionsType): WTLibs {
@@ -21,12 +21,12 @@ class WTLibs {
 
   constructor (options: WtLibsOptionsType) {
     this.options = options || {};
-    this.options.networkConnectorType = this.options.networkConnectorType || 'web3';
-    this.network = Network.createInstance(this.options.networkConnectorType, this.options.networkOptions);
+    this.options.dataModelType = this.options.dataModelType || 'web3-swarm';
+    this.dataModel = DataModel.createInstance(this.options.dataModelType, this.options.dataModelOptions);
   }
 
   async getWTIndex (address: string): Promise<WTIndexInterface> {
-    return this.network.getWindingTreeIndex(address);
+    return this.dataModel.getWindingTreeIndex(address);
   }
 }
 

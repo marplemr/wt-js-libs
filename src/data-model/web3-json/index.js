@@ -2,9 +2,8 @@
 
 import Web3 from 'web3';
 
-import type { ConnectorInterface, WTIndexInterface } from '../../interfaces';
-import WTIndexDataAccessor from '../../data-accessors/wt-index';
-import WTIndexDataProvider from './data-providers/wt-index';
+import type { DataModelAccessorInterface, WTIndexInterface } from '../../interfaces';
+import WTIndexDataProvider from './wt-index';
 
 export type Web3ConnectorOptionsType = {
   // URL of currently used RPC provider
@@ -15,7 +14,7 @@ export type Web3ConnectorOptionsType = {
   gasCoefficient?: number
 };
 
-class Web3Connector implements ConnectorInterface {
+class Web3Connector implements DataModelAccessorInterface {
   options: Web3ConnectorOptionsType;
   web3: Web3;
 
@@ -30,11 +29,10 @@ class Web3Connector implements ConnectorInterface {
   }
 
   async getWindingTreeIndex (address: string): Promise<WTIndexInterface> {
-    const providerInstance = await WTIndexDataProvider.createInstance(address, this);
-    return WTIndexDataAccessor.createInstance(providerInstance);
+    return WTIndexDataProvider.createInstance(address, this);
   }
 
-  // TODO improve or automate
+  // TODO improve or automate or move elsewhere
   applyGasCoefficient (gas: number): number {
     if (this.options.gasCoefficient) {
       return Math.ceil(gas * this.options.gasCoefficient);

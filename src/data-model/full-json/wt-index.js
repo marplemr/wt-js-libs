@@ -1,8 +1,8 @@
 // @flow
 
-import type { WTIndexDataProviderInterface, HotelInterface, HotelDataInterface } from '../../../interfaces';
+import type { WTIndexInterface, HotelInterface, AddHotelResponse, TxReceipt } from '../../interfaces';
 
-class WTIndexDataProvider implements WTIndexDataProviderInterface {
+class WTIndexDataProvider implements WTIndexInterface {
   source: {index: {
     hotels: {}
   }};
@@ -23,21 +23,20 @@ class WTIndexDataProvider implements WTIndexDataProviderInterface {
     this.source = source;
     for (let addr in this.source.index.hotels) {
       let hotel = this.source.index.hotels[addr];
-      // Initial data might lack data accessors
       this.source.index.hotels[addr] = hotel;
     }
   }
 
-  async addHotel (hotelData: HotelDataInterface): Promise<HotelInterface> {
-    if (!hotelData.name) {
-      throw new Error('Cannot add hotel: Missing name');
-    }
-    if (!hotelData.description) {
-      throw new Error('Cannot add hotel: Missing description');
+  async addHotel (hotelData: HotelInterface): Promise<AddHotelResponse> {
+    if (!hotelData.manager) {
+      throw new Error('Cannot add hotel without manager');
     }
     const randomId = '0x000' + Object.keys(this.source.index.hotels).length;
     this.source.index.hotels[randomId] = Object.assign(hotelData, { address: randomId });
-    return this.source.index.hotels[randomId];
+    return {
+      address: randomId,
+      transactionIds: ['tx-add-' + randomId],
+    };
   }
 
   async getHotel (address: string): Promise<HotelInterface> {
@@ -48,20 +47,21 @@ class WTIndexDataProvider implements WTIndexDataProviderInterface {
     return hotel;
   }
 
-  async updateHotel (hotel: HotelInterface): Promise<HotelInterface> {
+  async updateHotel (hotel: HotelInterface): Promise<Array<string>> {
     const hotelAddress: ?string = await hotel.address;
     if (hotelAddress && this.source.index.hotels[hotelAddress]) {
-      return Object.assign(this.source.index.hotels[hotelAddress], hotel);
+      Object.assign(this.source.index.hotels[hotelAddress], hotel);
+      return ['tx-update-' + hotelAddress];
     }
     throw new Error('Cannot update hotel at ' + (hotelAddress || '~unknown~') + ': not found');
   }
 
-  async removeHotel (hotel: HotelInterface): Promise<boolean> {
+  async removeHotel (hotel: HotelInterface): Promise<Array<string>> {
     const address = await hotel.address;
     try {
       if (address && this.source.index.hotels[address] && this.source.index.hotels[address].manager === await hotel.manager) {
         delete this.source.index.hotels[address];
-        return true;
+        return ['tx-remove-' + address];
       }
       throw new Error('Hotel does not exist');
     } catch (err) {
@@ -72,6 +72,13 @@ class WTIndexDataProvider implements WTIndexDataProviderInterface {
   async getAllHotels (): Promise<Array<HotelInterface>> {
     const hotels: Array<HotelInterface> = (Object.values(this.source.index.hotels): any); // eslint-disable-line flowtype/no-weak-types
     return hotels;
+  }
+
+  // TODO fix this
+  async getTransactionStatus (txHash: string): Promise<TxReceipt> {
+    // getTransactionReceipt - reciept not available when tx is pending
+    // truffle-contract can throw errors pretty quickly or throws an error when polling for receipt is not successful
+    return null;
   }
 }
 

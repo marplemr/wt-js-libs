@@ -1,12 +1,12 @@
 // @flow
 
-import type { WTIndexDataProviderInterface, HotelInterface, HotelDataInterface } from '../../../interfaces';
-import Web3Connector from '../';
-import Contracts from '../contracts';
+import type { WTIndexInterface, HotelInterface, AddHotelResponse, TxReceipt } from '../../interfaces';
+import Web3Connector from './index';
+import Contracts from '../../common-web3/contracts';
 import HotelDataProvider from './hotel';
-import Utils from '../utils';
+import Utils from '../../common-web3/utils';
 
-class WTIndexDataProvider implements WTIndexDataProviderInterface {
+class WTIndexDataProvider implements WTIndexInterface {
   address: string;
   connector: Web3Connector;
   deployedIndex: Object; // TODO get rid of Object type
@@ -27,21 +27,26 @@ class WTIndexDataProvider implements WTIndexDataProviderInterface {
     return this.deployedIndex;
   }
 
-  async addHotel (hotelData: HotelDataInterface): Promise<HotelInterface> {
+  async addHotel (hotelData: HotelInterface): Promise<AddHotelResponse> {
     try {
       const hotel = HotelDataProvider.createInstance(this.connector, await this._getDeployedIndex());
       hotel.setLocalData(hotelData);
-      return hotel.createOnNetwork({
+      const transactionIds = await hotel.createOnNetwork({
         from: hotelData.manager,
         to: this.address,
       });
+      return {
+        // TODO fix this
+        address: '0xaaaa',
+        transactionIds: transactionIds,
+      };
     } catch (err) {
       // TODO improve error handling
       throw new Error('Cannot add hotel: ' + err.message);
     }
   }
 
-  async updateHotel (hotel: HotelInterface): Promise<HotelInterface> {
+  async updateHotel (hotel: HotelInterface): Promise<Array<string>> {
     try {
       // We need to separate calls to be able to properly catch exceptions
       const updatedHotel = await hotel.updateOnNetwork({
@@ -55,7 +60,7 @@ class WTIndexDataProvider implements WTIndexDataProviderInterface {
     }
   }
 
-  async removeHotel (hotel: HotelInterface): Promise<boolean> {
+  async removeHotel (hotel: HotelInterface): Promise<Array<string>> {
     try {
       // We need to separate calls to be able to properly catch exceptions
       const result = ((hotel: any): HotelDataProvider).removeFromNetwork({ // eslint-disable-line flowtype/no-weak-types
@@ -106,6 +111,14 @@ class WTIndexDataProvider implements WTIndexDataProviderInterface {
     const hotelDetails: Array<?HotelInterface> = await (Promise.all(getHotelDetails): any); // eslint-disable-line flowtype/no-weak-types
     const hotelList: Array<HotelInterface> = (hotelDetails.filter((a: ?HotelInterface): boolean => a != null): any); // eslint-disable-line flowtype/no-weak-types
     return hotelList;
+  }
+
+  // TODO fix this with web3
+  // TODO maybe group multiple transactions together and do some meta over them
+  async getTransactionStatus (txHash: string): Promise<TxReceipt> {
+    // getTransactionReceipt - reciept not available when tx is pending
+    // truffle-contract can throw errors pretty quickly or throws an error when polling for receipt is not successful
+    return null;
   }
 }
 
