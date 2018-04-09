@@ -4,20 +4,21 @@ import _ from 'lodash';
 class RemotelyBacked {
   constructor () {
     this.__obsoleteFlag = false;
+    this.__deployedFlag = false;
     this.__localData = {};
     this.__remoteData = {};
     this.__fieldStates = {};
     this.__fieldKeys = [];
   }
 
-  setOptions (options) {
+  bindProperties (options, bindTo) {
     this.__options = options;
     this.__fieldKeys = Object.keys(options.fields);
 
     for (let i = 0; i < this.__fieldKeys.length; i++) {
       let fieldName = this.__fieldKeys[i];
       this.__fieldStates[fieldName] = 'unsynced';
-      Object.defineProperty(this, fieldName, {
+      Object.defineProperty(bindTo, fieldName, {
         configurable: false,
         enumerable: true,
         get: async () => {
@@ -38,12 +39,20 @@ class RemotelyBacked {
     this.__obsoleteFlag = true;
   }
 
+  isDeployed () {
+    return this.__deployedFlag;
+  }
+
+  markDeployed () {
+    this.__deployedFlag = true;
+  }
+
   async _genericGetter (property) {
     if (this.isObsolete()) {
       throw new Error('This object was destroyed in a remote storage!');
     }
     // This is a totally new instance
-    if (this.__fieldStates[property] === 'unsynced') {
+    if (this.isDeployed() && this.__fieldStates[property] === 'unsynced') {
       await this._syncRemoteData();
     }
 
@@ -61,6 +70,9 @@ class RemotelyBacked {
   }
 
   async _fetchRemoteData () {
+    if (!this.isDeployed()) {
+      throw new Error('Cannot fetch undeployed object');
+    }
     const remoteGetters = [];
     for (let i = 0; i < this.__fieldKeys.length; i++) {
       const remoteGetter = this.__options.fields[this.__fieldKeys[i]].remoteGetter;
@@ -125,9 +137,7 @@ class RemotelyBacked {
         }
       }
     }
-    // TODO check results
-    await (Promise.all(remoteSetters));
-    return this;
+    return Promise.all(remoteSetters);
   }
 }
 

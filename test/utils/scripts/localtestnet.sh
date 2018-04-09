@@ -47,7 +47,7 @@ fi
 # migrate contracts
 ./node_modules/.bin/truffle migrate --network development
 # Fire up the application
-TESTED_DATA_MODEL=web3-swarm npm run test-runner &
+npm run test-runner &
 npm_pid=$!
 # And let testrpc running
 wait $npm_pid

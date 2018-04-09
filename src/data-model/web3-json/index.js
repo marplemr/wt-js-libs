@@ -1,11 +1,12 @@
 // @flow
 
 import Web3 from 'web3';
-
+import Utils from '../../common-web3/utils';
+import Contracts from '../../common-web3/contracts';
 import type { DataModelAccessorInterface, WTIndexInterface } from '../../interfaces';
 import WTIndexDataProvider from './wt-index';
 
-export type Web3ConnectorOptionsType = {
+export type Web3JsonDataModelOptionsType = {
   // URL of currently used RPC provider
   provider?: string | Object,
   // Gas coefficient that is used as a multiplier when setting
@@ -14,30 +15,25 @@ export type Web3ConnectorOptionsType = {
   gasCoefficient?: number
 };
 
-class Web3Connector implements DataModelAccessorInterface {
-  options: Web3ConnectorOptionsType;
-  web3: Web3;
+class Web3JsonDataModel implements DataModelAccessorInterface {
+  options: Web3JsonDataModelOptionsType;
+  commonWeb3Utils: Utils;
+  commonWeb3Contracts: Contracts;
 
-  static createInstance (options: Web3ConnectorOptionsType): Web3Connector {
-    return new Web3Connector(options);
+  static createInstance (options: Web3JsonDataModelOptionsType): Web3JsonDataModel {
+    return new Web3JsonDataModel(options);
   }
 
-  constructor (options: Web3ConnectorOptionsType) {
+  constructor (options: Web3JsonDataModelOptionsType) {
     this.options = options;
     this.options.gasCoefficient = this.options.gasCoefficient || 2;
-    this.web3 = new Web3(options.provider);
+    const web3instance = new Web3(options.provider);
+    this.commonWeb3Utils = Utils.createInstance(this.options.gasCoefficient, web3instance);
+    this.commonWeb3Contracts = Contracts.createInstance(web3instance);
   }
 
   async getWindingTreeIndex (address: string): Promise<WTIndexInterface> {
-    return WTIndexDataProvider.createInstance(address, this);
-  }
-
-  // TODO improve or automate or move elsewhere
-  applyGasCoefficient (gas: number): number {
-    if (this.options.gasCoefficient) {
-      return Math.ceil(gas * this.options.gasCoefficient);
-    }
-    return gas;
+    return WTIndexDataProvider.createInstance(address, this.commonWeb3Utils, this.commonWeb3Contracts);
   }
 };
-export default Web3Connector;
+export default Web3JsonDataModel;

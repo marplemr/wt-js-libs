@@ -112,7 +112,6 @@ describe('WTLibs usage', () => {
       hotel.description = newDescription;
       const updateResult = await index.updateHotel(hotel);
       assert.isDefined(updateResult);
-      assert.isAtLeast(updateResult.length, 1);
       const hotel2 = await index.getHotel(hotelAddress);
       assert.equal(await hotel2.name, newName);
       assert.equal(await hotel2.description, newDescription);
@@ -121,7 +120,6 @@ describe('WTLibs usage', () => {
       hotel.description = oldDescription;
       const updateResult2 = await index.updateHotel(hotel);
       assert.isDefined(updateResult2);
-      assert.isAtLeast(updateResult2.length, 1);
       const hotel3 = await index.getHotel(hotelAddress);
       assert.equal(await hotel3.name, oldName);
     });

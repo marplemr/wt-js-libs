@@ -1,7 +1,7 @@
 // @flow
 
 export interface AddHotelResponse {
-  address: string;
+  address: ?string;
   transactionIds: Array<string>
 }
 
@@ -17,7 +17,7 @@ export interface HotelInterface {
   location: Promise<?HotelLocation> | ?HotelLocation;
   name: Promise<?string> | ?string;
   description: Promise<?string> | ?string
-  // TODO move this methods, drop HotelInterface, it's too web3 specific right now
+  // TODO move this methods, it's too web3 specific right now
   // createOnNetwork (transactionOptions: Object): Promise<Array<string>>; // It is possible that this operation generates multiple transactions
   // updateOnNetwork (transactionOptions: Object): Promise<Array<string>>; // It is possible that this operation generates multiple transactions
   // removeFromNetwork (transactionOptions: Object): Promise<Array<string>> // It is possible that this operation generates multiple transactions

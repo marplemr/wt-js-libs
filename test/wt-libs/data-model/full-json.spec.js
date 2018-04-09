@@ -8,7 +8,7 @@ function getFreshDataSource () {
   return _.cloneDeep(dataSource);
 }
 
-describe('WTLibs.network.connectors.json', () => {
+describe('WTLibs.data-model.full-json', () => {
   beforeEach(function () {
     if (process.env.TESTED_DATA_MODEL !== 'full-json') {
       this.skip();
@@ -17,40 +17,40 @@ describe('WTLibs.network.connectors.json', () => {
 
   describe('createInstance', () => {
     it('should not panic on empty options', async () => {
-      const connector = await FullJsonDataModel.createInstance();
-      assert.isDefined(connector.options);
-      assert.isDefined(connector.source);
+      const dataModel = await FullJsonDataModel.createInstance();
+      assert.isDefined(dataModel.options);
+      assert.isDefined(dataModel.source);
     });
 
     it('should store the original data source', async () => {
-      const connector = await FullJsonDataModel.createInstance({ source: getFreshDataSource() });
-      assert.isDefined(connector.options);
-      assert.isDefined(connector.source);
-      assert.isDefined(connector.source.fullIndex.index);
-      assert.isDefined(connector.source.fullIndex.index.hotels);
+      const dataModel = await FullJsonDataModel.createInstance({ source: getFreshDataSource() });
+      assert.isDefined(dataModel.options);
+      assert.isDefined(dataModel.source);
+      assert.isDefined(dataModel.source.fullIndex.index);
+      assert.isDefined(dataModel.source.fullIndex.index.hotels);
     });
   });
 
   describe('WindingTreeIndex', () => {
-    let connector, index, dataSource;
+    let dataModel, index, dataSource;
 
     beforeEach(async () => {
       dataSource = getFreshDataSource();
-      connector = FullJsonDataModel.createInstance({ source: dataSource });
-      index = await connector.getWindingTreeIndex('fullIndex');
+      dataModel = FullJsonDataModel.createInstance({ source: dataSource });
+      index = await dataModel.getWindingTreeIndex('fullIndex');
     });
 
     describe('createInstance', () => {
       it('should create basic data structure if source is empty', async () => {
-        connector = FullJsonDataModel.createInstance();
-        index = await connector.getWindingTreeIndex('random-address');
+        dataModel = FullJsonDataModel.createInstance();
+        index = await dataModel.getWindingTreeIndex('random-address');
         assert.isDefined(index.source.index);
         assert.isDefined(index.source.index.hotels);
       });
 
       it('should create basic data structure if hotels are empty', async () => {
-        connector = FullJsonDataModel.createInstance({ source: { index: {} } });
-        index = await connector.getWindingTreeIndex('random-address');
+        dataModel = FullJsonDataModel.createInstance({ source: { index: {} } });
+        index = await dataModel.getWindingTreeIndex('random-address');
         assert.isDefined(index.source.index);
         assert.isDefined(index.source.index.hotels);
       });
@@ -145,8 +145,8 @@ describe('WTLibs.network.connectors.json', () => {
       });
 
       it('should get empty list if no hotels were added', async () => {
-        connector = FullJsonDataModel.createInstance();
-        index = await connector.getWindingTreeIndex('random-address');
+        dataModel = FullJsonDataModel.createInstance();
+        index = await dataModel.getWindingTreeIndex('random-address');
         const hotels = await index.getAllHotels();
         assert.isDefined(hotels);
         assert.equal(hotels.length, 0);

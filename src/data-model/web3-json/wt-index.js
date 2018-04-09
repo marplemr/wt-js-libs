@@ -1,43 +1,43 @@
 // @flow
 
 import type { WTIndexInterface, HotelInterface, AddHotelResponse, TxReceipt } from '../../interfaces';
-import Web3Connector from './index';
+import Utils from '../../common-web3/utils';
 import Contracts from '../../common-web3/contracts';
 import HotelDataProvider from './hotel';
-import Utils from '../../common-web3/utils';
 
 class WTIndexDataProvider implements WTIndexInterface {
   address: string;
-  connector: Web3Connector;
+  web3Utils: Utils;
+  web3Contracts: Contracts;
   deployedIndex: Object; // TODO get rid of Object type
 
-  static async createInstance (indexAddress: string, connector: Web3Connector): Promise<WTIndexDataProvider> {
-    return new WTIndexDataProvider(indexAddress, connector);
+  static async createInstance (indexAddress: string, web3Utils: Utils, web3Contracts: Contracts): Promise<WTIndexDataProvider> {
+    return new WTIndexDataProvider(indexAddress, web3Utils, web3Contracts);
   }
 
-  constructor (indexAddress: string, connector: Web3Connector) {
+  constructor (indexAddress: string, web3Utils: Utils, web3Contracts: Contracts) {
     this.address = indexAddress;
-    this.connector = connector;
+    this.web3Utils = web3Utils;
+    this.web3Contracts = web3Contracts;
   }
 
   async _getDeployedIndex (): Promise<Object> {
     if (!this.deployedIndex) {
-      this.deployedIndex = await Contracts.getIndexInstance(this.address, this.connector.web3.currentProvider);
+      this.deployedIndex = await this.web3Contracts.getIndexInstance(this.address);
     }
     return this.deployedIndex;
   }
 
   async addHotel (hotelData: HotelInterface): Promise<AddHotelResponse> {
     try {
-      const hotel = HotelDataProvider.createInstance(this.connector, await this._getDeployedIndex());
+      const hotel = HotelDataProvider.createInstance(this.web3Utils, this.web3Contracts, await this._getDeployedIndex());
       hotel.setLocalData(hotelData);
       const transactionIds = await hotel.createOnNetwork({
         from: hotelData.manager,
         to: this.address,
       });
       return {
-        // TODO fix this
-        address: '0xaaaa',
+        address: await hotel.address,
         transactionIds: transactionIds,
       };
     } catch (err) {
@@ -49,6 +49,7 @@ class WTIndexDataProvider implements WTIndexInterface {
   async updateHotel (hotel: HotelInterface): Promise<Array<string>> {
     try {
       // We need to separate calls to be able to properly catch exceptions
+      // TODO make this independent on passed instance type
       const updatedHotel = await hotel.updateOnNetwork({
         from: await hotel.manager,
         to: this.address,
@@ -79,12 +80,13 @@ class WTIndexDataProvider implements WTIndexInterface {
   async getHotel (address: string): Promise<?HotelInterface> {
     const index = await this._getDeployedIndex();
     try {
-      const hotelIndex = await index.hotelsIndex(address);
-      // TODO is this really true? Are we not excluding legal data on zeroth position?
-      if (!hotelIndex || hotelIndex.isZero()) {
+      // This returns strings
+      const hotelIndex = parseInt(await index.methods.hotelsIndex(address).call(), 10);
+      // Zeroeth position is preserved during index deployment
+      if (!hotelIndex) {
         throw new Error('Not found in hotel list');
       } else {
-        return HotelDataProvider.createInstance(this.connector, index, address);
+        return HotelDataProvider.createInstance(this.web3Utils, this.web3Contracts, index, address);
       }
     } catch (err) {
       // TODO better error handling
@@ -94,10 +96,10 @@ class WTIndexDataProvider implements WTIndexInterface {
 
   async getAllHotels (): Promise<Array<HotelInterface>> {
     const index = await this._getDeployedIndex();
-    const hotelsAddressList = await index.getHotels();
+    const hotelsAddressList = await index.methods.getHotels().call();
     let getHotelDetails = hotelsAddressList
       // Filtering null addresses beforehand improves efficiency
-      .filter((addr: string): boolean => !Utils.isZeroAddress(addr))
+      .filter((addr: string): boolean => !this.web3Utils.isZeroAddress(addr))
       .map((addr: string): Promise<?HotelInterface> => {
         return this.getHotel(addr) // eslint-disable-line promise/no-nesting
           // We don't really care why the hotel is inaccessible

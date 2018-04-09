@@ -3,10 +3,12 @@
 import { DataModelAccessorInterface, WTIndexInterface } from '../interfaces';
 import FullJsonDataModel from './full-json';
 import type { FullJsonDataModelOptionsType } from './full-json';
+import Web3JsonDataModel from './web3-json';
+import type { Web3JsonDataModelOptionsType } from './web3-json';
 
 // Data Model Type, i. e. which data storage mode to use
 export type DataModelType = 'full-web3' | 'full-json' | 'web3-json' | 'web3-ipfs' | 'web3-swarm';
-export type DataModelOptionsType = FullJsonDataModelOptionsType;
+export type DataModelOptionsType = FullJsonDataModelOptionsType & Web3JsonDataModelOptionsType;
 
 class DataModel {
   type: string;
@@ -38,8 +40,10 @@ class DataModel {
       case 'full-json':
         this._datamodel = FullJsonDataModel.createInstance(this.options);
         break;
-      case 'full-web3':
       case 'web3-json':
+        this._datamodel = Web3JsonDataModel.createInstance(this.options);
+        break;
+      case 'full-web3':
       case 'web3-ipfs':
       case 'web3-swarm':
       default:
