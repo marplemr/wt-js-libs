@@ -43,14 +43,14 @@ describe('WTLibs.dataset.RemotelyBacked', () => {
 
   // TODO change
   xit('should not mark object dirty if data does not change', async () => {
-    /*const hotelProvider = HotelDataProvider.createInstance(dataModel.commonWeb3Utils, dataModel.commonWeb3Contracts, await indexDataProvider._getDeployedIndex(), '0xbf18b616ac81830dd0c5d4b771f22fd8144fe769');
+    /* const hotelProvider = HotelDataProvider.createInstance(dataModel.commonWeb3Utils, dataModel.commonWeb3Contracts, await indexDataProvider._getDeployedIndex(), '0xbf18b616ac81830dd0c5d4b771f22fd8144fe769');
     assert.equal(hotelProvider.__fieldStates.name, 'unsynced');
     const currentName = await hotelProvider.name;
     assert.equal(hotelProvider.__fieldStates.name, 'synced');
     hotelProvider.name = currentName;
     assert.equal(hotelProvider.__fieldStates.name, 'synced');
     hotelProvider.name = 'Changed name';
-    assert.equal(hotelProvider.__fieldStates.name, 'dirty');*/
+    assert.equal(hotelProvider.__fieldStates.name, 'dirty'); */
   });
 
   // TODO more tests de-doubling of setters

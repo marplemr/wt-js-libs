@@ -47,7 +47,7 @@ describe('WTLibs.data-models.web3-json.WTIndexDataProvider', () => {
       // TODO this might probably be emulated in another way
       const myIndexDataProvider = await WTIndexDataProvider.createInstance('some-other-address', dataModel.commonWeb3Utils, dataModel.commonWeb3Contracts);
       try {
-        await myIndexDataProvider.addHotel({ url: 'a', manager: 'b' });
+        await myIndexDataProvider.addHotel({ manager: 'b' });
         throw new Error('should not have been called');
       } catch (e) {
         assert.match(e.message, /cannot add hotel/i);

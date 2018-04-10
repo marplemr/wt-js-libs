@@ -58,11 +58,6 @@ class Utils {
     )));
   }
 
-  determineTransactionHash (contractAbi: Object, methodName: string, parameters: Array<mixed>): string {
-    const txData = this.encodeMethodCall(contractAbi, methodName, parameters);
-    return this.web3.utils.soliditySha3(txData);
-  }
-
   async determineCurrentAddressNonce (address: string): Promise<number> {
     // See if it's bitching, then use promisify
     return this.web3.eth.getTransactionCount(address);

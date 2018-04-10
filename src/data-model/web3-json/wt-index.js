@@ -30,7 +30,7 @@ class WTIndexDataProvider implements WTIndexInterface {
 
   async addHotel (hotelData: HotelInterface): Promise<AddHotelResponse> {
     try {
-      const hotel = HotelDataProvider.createInstance(this.web3Utils, this.web3Contracts, await this._getDeployedIndex());
+      const hotel = await HotelDataProvider.createInstance(this.web3Utils, this.web3Contracts, await this._getDeployedIndex());
       hotel.setLocalData(hotelData);
       const transactionIds = await hotel.createOnNetwork({
         from: hotelData.manager,
@@ -50,7 +50,7 @@ class WTIndexDataProvider implements WTIndexInterface {
     try {
       // We need to separate calls to be able to properly catch exceptions
       // TODO make this independent on passed instance type
-      const updatedHotel = await hotel.updateOnNetwork({
+      const updatedHotel = await ((hotel: any): HotelDataProvider).updateOnNetwork({ // eslint-disable-line flowtype/no-weak-types
         from: await hotel.manager,
         to: this.address,
       });
@@ -64,7 +64,7 @@ class WTIndexDataProvider implements WTIndexInterface {
   async removeHotel (hotel: HotelInterface): Promise<Array<string>> {
     try {
       // We need to separate calls to be able to properly catch exceptions
-      const result = ((hotel: any): HotelDataProvider).removeFromNetwork({ // eslint-disable-line flowtype/no-weak-types
+      const result = await ((hotel: any): HotelDataProvider).removeFromNetwork({ // eslint-disable-line flowtype/no-weak-types
         from: await hotel.manager,
         to: this.address,
       });

@@ -14,7 +14,6 @@ describe('WTLibs usage', () => {
   describe('addHotel', () => {
     it('should add hotel', async () => {
       const result = await index.addHotel({
-        url: 'some url',
         name: 'new hotel',
         description: 'some description',
         manager: '0xd39ca7d186a37bb6bf48ae8abfeb4c687dc8f906',
@@ -25,10 +24,12 @@ describe('WTLibs usage', () => {
       assert.isDefined(result);
       assert.isDefined(result.address);
       assert.isDefined(result.transactionIds);
+      
       const hotel = await index.getHotel(result.address);
       assert.equal(await hotel.name, 'new hotel');
       assert.equal(await hotel.description, 'some description');
-      assert.equal(await hotel.manager, '0xd39ca7d186a37bb6bf48ae8abfeb4c687dc8f906');
+      // Don't bother with checksummed address format
+      assert.equal((await hotel.manager).toLowerCase(), '0xd39ca7d186a37bb6bf48ae8abfeb4c687dc8f906');
       // We're removing the hotel to ensure clean slate after this test is run.
       // It is too expensive to re-set on-chain WTIndex after each test.
       const removalResult = await index.removeHotel(hotel);
@@ -38,7 +39,6 @@ describe('WTLibs usage', () => {
     it('should throw when hotel does not have a manager', async () => {
       try {
         await index.addHotel({
-          url: 'some url',
           name: 'new hotel',
           description: 'some description',
         });
@@ -53,7 +53,6 @@ describe('WTLibs usage', () => {
     it('should remove hotel', async () => {
       const manager = '0xd39ca7d186a37bb6bf48ae8abfeb4c687dc8f906';
       const result = await index.addHotel({
-        url: 'some url',
         name: 'another hotel',
         description: 'some desc',
         manager: manager,
@@ -139,10 +138,10 @@ describe('WTLibs usage', () => {
 
     it('should throw if hotel does not exist on network', async () => {
       try {
-        const newName = 'Great new hotel name';
-        const hotel = await index.getHotel(hotelAddress);
-        hotel.address = '0x96eA4BbF71FEa3c9411C1Cefc555E9d7189695fA';
-        hotel.name = newName;
+        const hotel = {
+          address: '0xcd2a3d9f938e13cd947ec05abc7fe734df8dd826',
+          name: 'Great new hotel name',
+        };
         await index.updateHotel(hotel);
         throw new Error('should not have been called');
       } catch (e) {

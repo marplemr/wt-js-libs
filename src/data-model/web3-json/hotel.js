@@ -3,14 +3,14 @@ import type { HotelInterface, HotelLocation } from '../../interfaces';
 import Utils from '../../common-web3/utils';
 import Contracts from '../../common-web3/contracts';
 import RemotelyBacked from '../../dataset/remotely-backed';
+import InMemoryBacked from '../../dataset/in-memory-backed';
 
 class HotelDataProvider implements HotelInterface {
   address: Promise<?string> | ?string;
 
-  // later redefined
+  // provided by backed datasets
   url: Promise<?string> | ?string;
   manager: Promise<?string> | ?string;
-  // TODO make these JSON backed
   description: Promise<?string> | ?string;
   name: Promise<?string> | ?string;
   location: Promise<?HotelLocation> | ?HotelLocation;
@@ -20,10 +20,11 @@ class HotelDataProvider implements HotelInterface {
   indexContract: Object;
   contractInstance: Object;
   ethBackedData: RemotelyBacked;
+  inMemBackedData: InMemoryBacked;
 
-  static createInstance (web3Utils: Utils, web3Contracts: Contracts, indexContract: Object, address?: string): HotelDataProvider {
+  static async createInstance (web3Utils: Utils, web3Contracts: Contracts, indexContract: Object, address?: string): Promise<HotelDataProvider> {
     const hotel = new HotelDataProvider(web3Utils, web3Contracts, indexContract, address);
-    hotel.initialize();
+    await hotel.initialize();
     return hotel;
   }
 
@@ -34,7 +35,7 @@ class HotelDataProvider implements HotelInterface {
     this.indexContract = indexContract;
   }
 
-  initialize () {
+  async initialize (): Promise<void> {
     this.ethBackedData = new RemotelyBacked();
     this.ethBackedData.bindProperties({
       fields: {
@@ -54,11 +55,28 @@ class HotelDataProvider implements HotelInterface {
     if (this.address) {
       this.ethBackedData.markDeployed();
     }
+    this.inMemBackedData = new InMemoryBacked();
+    this.inMemBackedData.bindProperties({
+      fields: {
+        description: {},
+        name: {},
+        location: {},
+      },
+    }, this);
+    if (this.address) {
+      // pre-heat contract to prevent multiple contract inits
+      await this._getContractInstance();
+      this.inMemBackedData.setHash(await this.url);
+    } else {
+      this.inMemBackedData.initialize();
+    }
   }
 
   setLocalData (newData: HotelInterface) {
-    this.url = newData.url;
     this.manager = newData.manager || this.manager;
+    this.name = newData.name;
+    this.description = newData.description;
+    this.location = newData.location;
   }
 
   async _getContractInstance (): Promise<Object> {
@@ -88,18 +106,19 @@ class HotelDataProvider implements HotelInterface {
   }
 
   async createOnNetwork (transactionOptions: Object): Promise<Array<string>> {
-    // TODO sync all other data into json storage
-    
+    // TODO create sleeker API, this hidden autofill is weird
+    // wrap into a strategy and re-use web3-backed hotel with url
+    const dataUrl = this.inMemBackedData.getHash();
+
     // Pre-compute hotel address, we need to use index for it's creating the contract
     const indexNonce = await this.web3Utils.determineCurrentAddressNonce(this.indexContract.options.address);
     this.address = this.web3Utils.determineDeployedContractFutureAddress(this.indexContract.options.address, indexNonce);
-    
+   
     // Create hotel on-network
     let transactionId;
-    const estimate = await this.indexContract.methods.registerHotel(await this.url).estimateGas(transactionOptions);
-    
+    const estimate = await this.indexContract.methods.registerHotel(dataUrl).estimateGas(transactionOptions);
     return new Promise(async (resolve, reject) => {
-      this.indexContract.methods.registerHotel(await this.url).send(Object.assign({}, transactionOptions, {
+      this.indexContract.methods.registerHotel(dataUrl).send(Object.assign({}, transactionOptions, {
         gas: this.web3Utils.applyGasCoefficient(estimate),
       })).on('transactionHash', (hash) => {
         transactionId = hash;
@@ -119,6 +138,8 @@ class HotelDataProvider implements HotelInterface {
   }
 
   async updateOnNetwork (transactionOptions: Object): Promise<Array<string>> {
+    // check if contract is available at all
+    await this._getContractInstance();
     // We have to clone options for each dataset as they may get modified
     // along the way
     return this.ethBackedData.updateRemoteData(Object.assign({}, transactionOptions));

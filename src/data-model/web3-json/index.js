@@ -5,6 +5,7 @@ import Utils from '../../common-web3/utils';
 import Contracts from '../../common-web3/contracts';
 import type { DataModelAccessorInterface, WTIndexInterface } from '../../interfaces';
 import WTIndexDataProvider from './wt-index';
+import { storageInstance } from '../../dataset/in-memory-backed';
 
 export type Web3JsonDataModelOptionsType = {
   // URL of currently used RPC provider
@@ -12,7 +13,9 @@ export type Web3JsonDataModelOptionsType = {
   // Gas coefficient that is used as a multiplier when setting
   // a transaction gas
   // TODO maybe we can set this up later or automagically?
-  gasCoefficient?: number
+  gasCoefficient?: number,
+  // Initial data for JSON storage, necessary for pre-existing data
+  initialJsonData?: Object
 };
 
 class Web3JsonDataModel implements DataModelAccessorInterface {
@@ -30,6 +33,12 @@ class Web3JsonDataModel implements DataModelAccessorInterface {
     const web3instance = new Web3(options.provider);
     this.commonWeb3Utils = Utils.createInstance(this.options.gasCoefficient, web3instance);
     this.commonWeb3Contracts = Contracts.createInstance(web3instance);
+
+    if (this.options.initialJsonData) {
+      for (let key in this.options.initialJsonData) {
+        storageInstance.update(key, this.options.initialJsonData[key]);
+      }
+    }
   }
 
   async getWindingTreeIndex (address: string): Promise<WTIndexInterface> {
