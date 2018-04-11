@@ -52,6 +52,7 @@ class RemotelyBacked {
       throw new Error('This object was destroyed in a remote storage!');
     }
     // This is a totally new instance
+    // TODO maybe don't init all at once, it might be expensive
     if (this.isDeployed() && this.__fieldStates[property] === 'unsynced') {
       await this._syncRemoteData();
     }
@@ -81,7 +82,6 @@ class RemotelyBacked {
       }
     }
     if (remoteGetters.length) {
-      // TODO deal with errors
       const attributes = await (Promise.all(remoteGetters));
       for (let i = 0; i < this.__fieldKeys.length; i++) {
         this.__remoteData[this.__fieldKeys[i]] = attributes[i];
@@ -111,9 +111,6 @@ class RemotelyBacked {
   // https://stackoverflow.com/questions/7616461/generate-a-hash-from-string-in-javascript-jquery
   __hashCode (text) {
     var hash = 0, i, chr;
-    if (text.length === 0) {
-      return hash;
-    }
     for (i = 0; i < text.length; i++) {
       chr = text.charCodeAt(i);
       hash = ((hash << 5) - hash) + chr;
@@ -133,7 +130,10 @@ class RemotelyBacked {
         let setterHashCode = this.__hashCode(remoteSetter.toString());
         if (!remoteSettersHashCodes[setterHashCode]) {
           remoteSettersHashCodes[setterHashCode] = true;
-          remoteSetters.push(remoteSetter(_.cloneDeep(transactionOptions)));
+          remoteSetters.push(remoteSetter(_.cloneDeep(transactionOptions)).then((result) => {
+            this.__fieldStates[this.__fieldKeys[i]] = 'synced';
+            return result;
+          }));
         }
       }
     }

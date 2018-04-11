@@ -50,6 +50,23 @@ describe('WTLibs.dataModel', () => {
       assert.equal(createInstanceSpy.callCount, 1);
       assert.equal(dataModelAccessor, dataModelAccessor2);
     });
+
+    it('should throw when dataModelAccessor type is not supported', () => {
+      try {
+        DataModel.createInstance('random-type', {});
+      } catch (e) {
+        assert.match(e.message, /is not recognized as a valid/i);
+      }
+    });
+
+    it('should throw when dataModelAccessor type is not yet implemented', () => {
+      try {
+        const dataModel = DataModel.createInstance('web3-ipfs', {});
+        dataModel.getDataModelAccessor();
+      } catch (e) {
+        assert.match(e.message, /data model is not yet implemented/i);
+      }
+    });
   });
 
   describe('getWindingTreeIndex', () => {

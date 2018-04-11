@@ -10,25 +10,23 @@ class Contracts {
     this.web3 = web3;
   }
 
-  async getIndexInstance (address) {
+  async _getInstance (name, abi, address) {
     if (!this.web3.utils.isAddress(address)) {
-      throw new Error('Cannot get index instance at an invalid address ' + address);
+      throw new Error('Cannot get ' + name + ' instance at an invalid address ' + address);
     }
     const deployedCode = await this.web3.eth.getCode(address);
     if (deployedCode === '0x0') {
-      throw new Error('Cannot get index instance at an address with no code ' + address);
+      throw new Error('Cannot get ' + name + ' instance at an address with no code ' + address);
     }
-    return new this.web3.eth.Contract(WTIndexContractMetadata.abi, address);
+    return new this.web3.eth.Contract(abi, address);
   }
+
+  async getIndexInstance (address) {
+    return this._getInstance('index', WTIndexContractMetadata.abi, address);
+  }
+
   async getHotelInstance (address) {
-    if (!this.web3.utils.isAddress(address)) {
-      throw new Error('Cannot get hotel instance at an invalid address ' + address);
-    }
-    const deployedCode = await this.web3.eth.getCode(address);
-    if (deployedCode === '0x0') {
-      throw new Error('Cannot get hotel instance at an address with no code ' + address);
-    }
-    return new this.web3.eth.Contract(HotelContractMetadata.abi, address);
+    return this._getInstance('hotel', HotelContractMetadata.abi, address);
   }
 }
 export default Contracts;

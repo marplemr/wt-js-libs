@@ -59,7 +59,6 @@ class Utils {
   }
 
   async determineCurrentAddressNonce (address: string): Promise<number> {
-    // See if it's bitching, then use promisify
     return this.web3.eth.getTransactionCount(address);
   }
 }

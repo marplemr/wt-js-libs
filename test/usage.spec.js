@@ -24,7 +24,6 @@ describe('WTLibs usage', () => {
       assert.isDefined(result);
       assert.isDefined(result.address);
       assert.isDefined(result.transactionIds);
-      
       const hotel = await index.getHotel(result.address);
       assert.equal(await hotel.name, 'new hotel');
       assert.equal(await hotel.description, 'some description');
