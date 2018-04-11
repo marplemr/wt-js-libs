@@ -49,7 +49,6 @@ class WTIndexDataProvider implements WTIndexInterface {
   async updateHotel (hotel: HotelInterface): Promise<Array<string>> {
     try {
       // We need to separate calls to be able to properly catch exceptions
-      // TODO make this independent on passed instance type
       const updatedHotel = await ((hotel: any): HotelDataProvider).updateOnNetwork({ // eslint-disable-line flowtype/no-weak-types
         from: await hotel.manager,
         to: this.address,
