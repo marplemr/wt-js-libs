@@ -40,7 +40,6 @@ class WTIndexDataProvider implements WTIndexInterface {
         transactionIds: transactionIds,
       };
     } catch (err) {
-      // TODO improve error handling
       throw new Error('Cannot add hotel: ' + err.message);
     }
   }
@@ -54,7 +53,6 @@ class WTIndexDataProvider implements WTIndexInterface {
       });
       return updatedHotel;
     } catch (err) {
-      // TODO improve error handling
       throw new Error('Cannot update hotel:' + err.message);
     }
   }
@@ -68,7 +66,6 @@ class WTIndexDataProvider implements WTIndexInterface {
       });
       return result;
     } catch (err) {
-      // TODO improve error handling
       // invalid opcode -> non-existent hotel
       // invalid opcode -> failed check for manager
       throw new Error('Cannot remove hotel: ' + err.message);
@@ -87,7 +84,6 @@ class WTIndexDataProvider implements WTIndexInterface {
         return HotelDataProvider.createInstance(this.web3Utils, this.web3Contracts, index, address);
       }
     } catch (err) {
-      // TODO better error handling
       throw new Error('Cannot find hotel at ' + address + ': ' + err.message);
     }
   }
@@ -126,7 +122,7 @@ class WTIndexDataProvider implements WTIndexInterface {
       if (!receipt) { continue; }
       let decodedLogs = this.web3Contracts.decodeLogs(receipt.logs);
       for (let logRecord of decodedLogs) {
-        // events is a really stupid name
+        // events is a really stupid name, so renaming
         logRecord.attributes = logRecord.events;
         delete logRecord.events;
       }

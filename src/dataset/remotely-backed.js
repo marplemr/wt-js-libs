@@ -103,7 +103,6 @@ class RemotelyBacked {
         }
       }
     } catch (err) {
-      // TODO better error handling
       throw new Error('Cannot sync remote data: ' + err.message);
     }
   }

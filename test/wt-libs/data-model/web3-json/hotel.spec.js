@@ -51,7 +51,7 @@ describe('WTLibs.data-model.web3-json.hotel', () => {
     it('should throw if we try to get data from network in a hotel without address', async () => {
       try {
         const hotelProvider = await HotelDataProvider.createInstance(dataModel.commonWeb3Utils, dataModel.commonWeb3Contracts, await indexDataProvider._getDeployedIndex());
-        await hotelProvider.ethBackedData._syncRemoteData();
+        await hotelProvider.ethBackedDataset._syncRemoteData();
         throw new Error('should not have been called');
       } catch (e) {
         assert.match(e.message, /cannot sync remote data/i);

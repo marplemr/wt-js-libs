@@ -30,7 +30,7 @@ class Utils {
   }
 
   encodeMethodCall (contractAbi: Object, methodName: string, parameters: Array<mixed>): string {
-    // todo type checking of parameters
+    // TODO type checking of parameters
     const methodAbi = contractAbi.filter((n: Object): boolean => n.name === methodName && n.inputs.length === parameters.length).pop();
     if (!methodAbi) {
       throw Error('Method not found, maybe you are using an invalid signature?');
@@ -38,7 +38,6 @@ class Utils {
     return web3Abi.encodeFunctionCall(methodAbi, parameters);
   }
 
-  // TODO improve or automate or move elsewhere
   applyGasCoefficient (gas: number): number {
     if (this.gasCoefficient) {
       return Math.ceil(gas * this.gasCoefficient);
@@ -50,9 +49,9 @@ class Utils {
     return this.web3.currentProvider;
   }
 
-  // Sample implementation for later re-use
   determineDeployedContractFutureAddress (sender: string, nonce: number): string {
     // web3js stores checksummed addresses by default
+    // (@see https://github.com/ethereum/EIPs/blob/master/EIPS/eip-55.md)
     return ethJsUtil.toChecksumAddress(ethJsUtil.bufferToHex(ethJsUtil.generateAddress(
       sender,
       nonce

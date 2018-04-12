@@ -7,7 +7,7 @@ import RemotelyBacked from '../dataset/remotely-backed';
 class EthBackedHotelProvider {
   address: Promise<?string> | ?string;
 
-  // provided by backed datasets
+  // provided by eth backed dataset
   url: Promise<?string> | ?string;
   manager: Promise<?string> | ?string;
   
@@ -15,7 +15,7 @@ class EthBackedHotelProvider {
   web3Contracts: Contracts;
   indexContract: Object;
   contractInstance: Object;
-  ethBackedData: RemotelyBacked;
+  ethBackedDataset: RemotelyBacked;
 
   constructor (web3Utils: Utils, web3Contracts: Contracts, indexContract: Object, address?: string) {
     this.address = address;
@@ -25,14 +25,14 @@ class EthBackedHotelProvider {
   }
 
   async initialize (): Promise<void> {
-    this.ethBackedData = new RemotelyBacked();
-    this.ethBackedData.bindProperties({
+    this.ethBackedDataset = new RemotelyBacked();
+    this.ethBackedDataset.bindProperties({
       fields: {
         url: {
           remoteGetter: async (): Promise<?string> => {
             return (await this._getContractInstance()).methods.url().call();
           },
-          remoteSetter: this._editInfo,
+          remoteSetter: this._editInfo.bind(this),
         },
         manager: {
           remoteGetter: async (): Promise<?string> => {
@@ -42,12 +42,13 @@ class EthBackedHotelProvider {
       },
     }, this);
     if (this.address) {
-      this.ethBackedData.markDeployed();
+      this.ethBackedDataset.markDeployed();
     }
   }
 
   setLocalData (newData: HotelInterface) {
     this.manager = newData.manager || this.manager;
+    this.url = newData.url;
   }
 
   async _getContractInstance (): Promise<Object> {
@@ -78,9 +79,10 @@ class EthBackedHotelProvider {
 
   async createOnNetwork (transactionOptions: Object, dataUrl: string): Promise<Array<string>> {
     // Pre-compute hotel address, we need to use index for it's creating the contract
-    const indexNonce = await this.web3Utils.determineCurrentAddressNonce(this.indexContract.options.address);
-    this.address = this.web3Utils.determineDeployedContractFutureAddress(this.indexContract.options.address, indexNonce);
-   
+    this.address = this.web3Utils.determineDeployedContractFutureAddress(
+      this.indexContract.options.address,
+      await this.web3Utils.determineCurrentAddressNonce(this.indexContract.options.address)
+    );
     // Create hotel on-network
     const estimate = await this.indexContract.methods.registerHotel(dataUrl).estimateGas(transactionOptions);
     return new Promise(async (resolve, reject) => {
@@ -91,8 +93,7 @@ class EthBackedHotelProvider {
           hash,
         ]);
       }).on('receipt', () => {
-        // TODO check that this actually happens
-        this.ethBackedData.markDeployed();
+        this.ethBackedDataset.markDeployed();
       }).on('error', (err) => {
         reject(new Error('Cannot create hotel: ' + err));
       }).catch((err) => {
@@ -106,10 +107,13 @@ class EthBackedHotelProvider {
     await this._getContractInstance();
     // We have to clone options for each dataset as they may get modified
     // along the way
-    return this.ethBackedData.updateRemoteData(Object.assign({}, transactionOptions));
+    return this.ethBackedDataset.updateRemoteData(Object.assign({}, transactionOptions));
   }
 
   async removeFromNetwork (transactionOptions: Object): Promise<Array<string>> {
+    if (!this.ethBackedDataset.isDeployed()) {
+      throw new Error('Cannot remove hotel: not deployed');
+    }
     const estimate = await this.indexContract.methods.deleteHotel(this.address).estimateGas(transactionOptions);
     return new Promise(async (resolve, reject) => {
       this.indexContract.methods.deleteHotel(this.address).send(Object.assign(transactionOptions, {
@@ -119,8 +123,7 @@ class EthBackedHotelProvider {
           hash,
         ]);
       }).on('receipt', () => {
-        // TODO check that this actually happens
-        this.ethBackedData.markObsolete();
+        this.ethBackedDataset.markObsolete();
       }).on('error', (err) => {
         reject(new Error('Cannot remove hotel: ' + err));
       }).catch((err) => {
