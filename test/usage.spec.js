@@ -3,7 +3,7 @@ import WTLibs from '../src/index';
 import testedDataModel from './utils/data-model-definition';
 
 describe('WTLibs usage', () => {
-  let libs, index, emptyIndex;
+  let libs, index, emptyIndex, minedTxHashes = [];
 
   beforeEach(async () => {
     libs = WTLibs.createInstance(testedDataModel.withDataSource());
@@ -17,22 +17,32 @@ describe('WTLibs usage', () => {
         name: 'new hotel',
         description: 'some description',
         manager: '0xd39ca7d186a37bb6bf48ae8abfeb4c687dc8f906',
-        // TODO test location adding as well
+        location: {
+          latitude: 50.0754789,
+          longitude: 14.4225864,
+        },
       });
-      // Returns hotel address (~= id)
-      // and list of transactionIds that take part in hotel creation for later reference
       assert.isDefined(result);
       assert.isDefined(result.address);
       assert.isDefined(result.transactionIds);
+      // prepare getTransactionsStatus test
+      minedTxHashes.push(result.transactionIds[0]);
+      const txResults = await index.getTransactionsStatus(result.transactionIds);
+      assert.equal(txResults.meta.allPassed, true);
+
+      // We should then get the hotel at the resulting address
       const hotel = await index.getHotel(result.address);
       assert.equal(await hotel.name, 'new hotel');
       assert.equal(await hotel.description, 'some description');
+      assert.deepEqual(await hotel.location, { latitude: 50.0754789, longitude: 14.4225864 });
       // Don't bother with checksummed address format
       assert.equal((await hotel.manager).toLowerCase(), '0xd39ca7d186a37bb6bf48ae8abfeb4c687dc8f906');
+
       // We're removing the hotel to ensure clean slate after this test is run.
       // It is too expensive to re-set on-chain WTIndex after each test.
       const removalResult = await index.removeHotel(hotel);
-      assert.isDefined(removalResult);
+      const removelTxResults = await index.getTransactionsStatus(removalResult);
+      assert.equal(removelTxResults.meta.allPassed, true);
     });
 
     it('should throw when hotel does not have a manager', async () => {
@@ -63,6 +73,8 @@ describe('WTLibs usage', () => {
       const hotel = await index.getHotel(result.address);
       const removalResult = await index.removeHotel(hotel);
       assert.isDefined(removalResult);
+      // prepare getTransactionsStatus test
+      minedTxHashes.push(...removalResult);
       list = await index.getAllHotels();
       assert.equal(list.length, 2);
       assert.notInclude(list.map(async (a) => a.address), await hotel.address);
@@ -161,14 +173,28 @@ describe('WTLibs usage', () => {
     });
   });
 
-  // TODO
-  xdescribe('getTransactionStatus', () => {
+  describe('getTransactionsStatus', () => {
+    // This unfortunately depends on other tests - to
+    // make this isolated, we would have to run some transactions
+    // beforehand
     it('should return transaction status', async () => {
-
+      let result = await index.getTransactionsStatus(minedTxHashes);
+      assert.isDefined(result.meta);
+      assert.equal(result.meta.total, minedTxHashes.length);
+      assert.equal(result.meta.processed, minedTxHashes.length);
+      assert.equal(result.meta.allPassed, true);
+      for (let hash of minedTxHashes) {
+        assert.isDefined(result.results[hash]);
+      }
     });
 
-    it('should return nothing if transactions does not exist', async () => {
-
+    it('should return nothing if transactions do not exist', async () => {
+      let result = await index.getTransactionsStatus(['random-tx', 'another-random-tx']);
+      assert.isDefined(result.meta);
+      assert.equal(result.meta.total, 2);
+      assert.equal(result.meta.processed, 0);
+      assert.equal(result.meta.allPassed, false);
+      assert.deepEqual(result.results, {});
     });
   });
 });

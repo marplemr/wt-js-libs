@@ -1,6 +1,6 @@
 // @flow
 
-import type { WTIndexInterface, HotelInterface, AddHotelResponse, TxReceipt } from '../../interfaces';
+import type { WTIndexInterface, HotelInterface, AddHotelResponse, AdaptedTxResults } from '../../interfaces';
 
 class WTIndexDataProvider implements WTIndexInterface {
   source: {index: {
@@ -74,11 +74,22 @@ class WTIndexDataProvider implements WTIndexInterface {
     return hotels;
   }
 
-  // TODO fix this
-  async getTransactionStatus (txHash: string): Promise<TxReceipt> {
-    // getTransactionReceipt - reciept not available when tx is pending
-    // truffle-contract can throw errors pretty quickly or throws an error when polling for receipt is not successful
-    return null;
+  async getTransactionsStatus (txHashes: Array<string>): Promise<AdaptedTxResults> {
+    const processed = txHashes.filter((a) => a.match(/tx-(add|remove|update)-/));
+    let results = {};
+    for (let hash of processed) {
+      results[hash] = { status: 1 };
+    }
+    return {
+      meta: {
+        total: txHashes.length,
+        processed: processed.length,
+        minBlockAge: 0,
+        maxBlockAge: 0,
+        allPassed: txHashes.length === processed.length,
+      },
+      results: results,
+    };
   }
 }
 

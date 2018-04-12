@@ -1,5 +1,9 @@
+import abiDecoder from 'abi-decoder';
 import WTIndexContractMetadata from '@windingtree/wt-contracts/build/contracts/WTIndex';
 import HotelContractMetadata from '@windingtree/wt-contracts/build/contracts/Hotel';
+
+abiDecoder.addABI(WTIndexContractMetadata.abi);
+abiDecoder.addABI(HotelContractMetadata.abi);
 
 class Contracts {
   static createInstance (web3) {
@@ -27,6 +31,10 @@ class Contracts {
 
   async getHotelInstance (address) {
     return this._getInstance('hotel', HotelContractMetadata.abi, address);
+  }
+
+  decodeLogs (logs) {
+    return abiDecoder.decodeLogs(logs);
   }
 }
 export default Contracts;

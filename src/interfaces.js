@@ -17,10 +17,6 @@ export interface HotelInterface {
   location: Promise<?HotelLocation> | ?HotelLocation;
   name: Promise<?string> | ?string;
   description: Promise<?string> | ?string
-  // TODO move this methods, it's too web3 specific right now
-  // createOnNetwork (transactionOptions: Object): Promise<Array<string>>; // It is possible that this operation generates multiple transactions
-  // updateOnNetwork (transactionOptions: Object): Promise<Array<string>>; // It is possible that this operation generates multiple transactions
-  // removeFromNetwork (transactionOptions: Object): Promise<Array<string>> // It is possible that this operation generates multiple transactions
 }
 
 export interface WTIndexInterface {
@@ -29,15 +25,14 @@ export interface WTIndexInterface {
   getAllHotels(): Promise<Array<HotelInterface>>;
   updateHotel(hotel: HotelInterface): Promise<Array<string>>; // It is possible that this operation generates multiple transactions
   removeHotel(hotel: HotelInterface): Promise<Array<string>>; // It is possible that this operation generates multiple transactions
-  getTransactionStatus (transactionHash: string): Promise<TxReceipt> // TODO subject to change
+  getTransactionsStatus (transactionHashes: Array<string>): Promise<AdaptedTxResults>
 }
 
 export interface DataModelAccessorInterface {
   getWindingTreeIndex(address: string): Promise<WTIndexInterface>
 }
 
-// TODO Subject to change and adaptation into a more friendly shape
-export interface LogRecord {
+export interface RawLogRecord {
   address: string;
   data: string;
   topics: Array<string>;
@@ -48,16 +43,44 @@ export interface LogRecord {
   blockNumber: number
 }
 
-// TODO Subject to change and adaptation into a more friendly shape
+export interface DecodedLogRecord {
+  address: string,
+  event: string,
+  attributes: Array<{
+    name: string,
+    type: string,
+    value: string
+  }>
+}
+
 export interface TxReceipt {
-  blockHash?: string;
-  blockNumber?: number;
-  transactionHash?: string;
-  transactionIndex?: number;
-  from?: string;
-  to?: string;
-  contractAddress?: string;
-  cumulativeGasUsed?: number;
-  gasUsed?: number;
-  logs?: Array<LogRecord>
+  transactionHash: string;
+  blockNumber: number;
+  blockHash: string;
+  transactionIndex: number;
+  from: string;
+  to: string;
+  contractAddress: string;
+  cumulativeGasUsed: number;
+  gasUsed: number;
+  logs: Array<RawLogRecord>,
+  // https://github.com/ethereum/EIPs/pull/658
+  status: number
+}
+
+export interface AdaptedTxResult {
+  blockAge: number,
+  decodedLogs: Array<DecodedLogRecord>,
+  raw: TxReceipt
+}
+
+export interface AdaptedTxResults {
+  meta: {
+    total: number,
+    processed: number,
+    minBlockAge: number,
+    maxBlockAge: number,
+    allPassed: boolean
+  },
+  results?: {[string]: AdaptedTxResult}
 }

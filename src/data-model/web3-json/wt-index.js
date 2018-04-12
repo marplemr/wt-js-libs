@@ -1,6 +1,5 @@
 // @flow
-
-import type { WTIndexInterface, HotelInterface, AddHotelResponse, TxReceipt } from '../../interfaces';
+import type { WTIndexInterface, HotelInterface, AddHotelResponse, AdaptedTxResults, AdaptedTxResult } from '../../interfaces';
 import Utils from '../../common-web3/utils';
 import Contracts from '../../common-web3/contracts';
 import HotelDataProvider from './hotel';
@@ -114,12 +113,40 @@ class WTIndexDataProvider implements WTIndexInterface {
     return hotelList;
   }
 
-  // TODO fix this with web3
-  // TODO maybe group multiple transactions together and do some meta over them
-  async getTransactionStatus (txHash: string): Promise<TxReceipt> {
-    // getTransactionReceipt - reciept not available when tx is pending
-    // truffle-contract can throw errors pretty quickly or throws an error when polling for receipt is not successful
-    return null;
+  async getTransactionsStatus (txHashes: Array<string>): Promise<AdaptedTxResults> {
+    let promises = [];
+    for (let hash of txHashes) {
+      promises.push(this.web3Utils.getTransactionReceipt(hash));
+    }
+    const currentBlockNumber = await this.web3Utils.getCurrentBlockNumber();
+    const receipts = await Promise.all(promises);
+    
+    let results = {};
+    for (let receipt of receipts) {
+      if (!receipt) { continue; }
+      let decodedLogs = this.web3Contracts.decodeLogs(receipt.logs);
+      for (let logRecord of decodedLogs) {
+        // events is a really stupid name
+        logRecord.attributes = logRecord.events;
+        delete logRecord.events;
+      }
+      results[receipt.transactionHash] = {
+        blockAge: currentBlockNumber - receipt.blockNumber,
+        decodedLogs: decodedLogs,
+        raw: receipt,
+      };
+    }
+    const resultsValues: Array<AdaptedTxResult> = (Object.values(results): Array<any>); // eslint-disable-line flowtype/no-weak-types
+    return {
+      meta: {
+        total: txHashes.length,
+        processed: resultsValues.length,
+        minBlockAge: Math.min(...(resultsValues.map((a) => a.blockAge))),
+        maxBlockAge: Math.max(...(resultsValues.map((a) => a.blockAge))),
+        allPassed: Math.min(...(resultsValues.map((a) => a.raw.status))) === 1 && txHashes.length === resultsValues.length,
+      },
+      results: results,
+    };
   }
 }
 
