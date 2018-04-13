@@ -1,6 +1,6 @@
 // @flow
 
-import type { WTIndexInterface, HotelInterface, AddHotelResponse, AdaptedTxResults } from '../../interfaces';
+import type { WTIndexInterface, HotelInterface, AddHotelResponseInterface, AdaptedTxResultsInterface } from '../../interfaces';
 
 class WTIndexDataProvider implements WTIndexInterface {
   source: {index: {
@@ -27,7 +27,7 @@ class WTIndexDataProvider implements WTIndexInterface {
     }
   }
 
-  async addHotel (hotelData: HotelInterface): Promise<AddHotelResponse> {
+  async addHotel (hotelData: HotelInterface): Promise<AddHotelResponseInterface> {
     if (!hotelData.manager) {
       throw new Error('Cannot add hotel without manager');
     }
@@ -74,7 +74,7 @@ class WTIndexDataProvider implements WTIndexInterface {
     return hotels;
   }
 
-  async getTransactionsStatus (txHashes: Array<string>): Promise<AdaptedTxResults> {
+  async getTransactionsStatus (txHashes: Array<string>): Promise<AdaptedTxResultsInterface> {
     const processed = txHashes.filter((a) => a.match(/tx-(add|remove|update)-/));
     let results = {};
     for (let hash of processed) {

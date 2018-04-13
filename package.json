@@ -14,8 +14,9 @@
     "test-web3-json": "TESTED_DATA_MODEL=web3-json ./test/utils/scripts/localtestnet.sh",
     "test-runner": "nyc --clean=false --reporter=text mocha \"test/**/*.spec.js\" --timeout 20000 --require babel-register --require babel-polyfill",
     "coverage": "nyc report --reporter=text-lcov | coveralls",
-    "clean": "rimraf dist",
-    "build": "webpack --config webpack.config.js --mode production"
+    "clean": "rimraf dist && rimraf docs",
+    "build": "webpack --config webpack.config.js --mode production",
+    "docs": "documentation build src/** -f html -o docs"
   },
   "publishConfig": {
     "access": "public"
@@ -62,6 +63,7 @@
     "chai": "^4.1.2",
     "chai-string": "^1.4.0",
     "coveralls": "^3.0.0",
+    "documentation": "^6.2.0",
     "esdoc": "^1.0.3",
     "esdoc-ecmascript-proposal-plugin": "^1.0.0",
     "esdoc-node": "^1.0.2",

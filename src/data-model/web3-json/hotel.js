@@ -1,23 +1,33 @@
 // @flow
-import type { HotelInterface, HotelLocation } from '../../interfaces';
+import type { HotelInterface, LocationInterface } from '../../interfaces';
 import Utils from '../../common-web3/utils';
 import Contracts from '../../common-web3/contracts';
 import EthBackedHotelProvider from '../../common-web3/eth-backed-hotel-provider';
 import InMemoryBacked from '../../dataset/in-memory-backed';
 
+/**
+ *
+ */
 class HotelDataProvider extends EthBackedHotelProvider implements HotelInterface {
   description: Promise<?string> | ?string;
   name: Promise<?string> | ?string;
-  location: Promise<?HotelLocation> | ?HotelLocation;
+  location: Promise<?LocationInterface> | ?LocationInterface;
   
   inMemBackedData: InMemoryBacked;
 
+  /**
+   * [web3Utils description]
+   * @type {[type]}
+   */
   static async createInstance (web3Utils: Utils, web3Contracts: Contracts, indexContract: Object, address?: string): Promise<HotelDataProvider> {
     const hotel = new HotelDataProvider(web3Utils, web3Contracts, indexContract, address);
     await hotel.initialize();
     return hotel;
   }
 
+  /**
+   *
+   */
   async initialize (): Promise<void> {
     super.initialize();
     this.inMemBackedData = new InMemoryBacked();
@@ -37,6 +47,8 @@ class HotelDataProvider extends EthBackedHotelProvider implements HotelInterface
     }
   }
 
+  /**
+   */
   setLocalData (newData: HotelInterface) {
     super.setLocalData(newData);
     this.name = newData.name;

@@ -1,6 +1,6 @@
 // @flow
 
-import type { TxReceipt } from '../interfaces';
+import type { TxReceiptInterface } from '../interfaces';
 import Web3 from 'web3';
 import BigNumber from 'bignumber.js';
 import web3Abi from 'web3-eth-abi';
@@ -66,7 +66,7 @@ class Utils {
     return this.web3.eth.getTransactionCount(address);
   }
 
-  async getTransactionReceipt (txHash: string): Promise<TxReceipt> {
+  async getTransactionReceipt (txHash: string): Promise<TxReceiptInterface> {
     return this.web3.eth.getTransactionReceipt(txHash);
   }
 }

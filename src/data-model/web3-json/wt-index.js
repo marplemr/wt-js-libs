@@ -1,5 +1,5 @@
 // @flow
-import type { WTIndexInterface, HotelInterface, AddHotelResponse, AdaptedTxResults, AdaptedTxResult } from '../../interfaces';
+import type { WTIndexInterface, HotelInterface, AddHotelResponseInterface, AdaptedTxResultInterface, AdaptedTxResultsInterface } from '../../interfaces';
 import Utils from '../../common-web3/utils';
 import Contracts from '../../common-web3/contracts';
 import HotelDataProvider from './hotel';
@@ -27,7 +27,7 @@ class WTIndexDataProvider implements WTIndexInterface {
     return this.deployedIndex;
   }
 
-  async addHotel (hotelData: HotelInterface): Promise<AddHotelResponse> {
+  async addHotel (hotelData: HotelInterface): Promise<AddHotelResponseInterface> {
     try {
       const hotel = await HotelDataProvider.createInstance(this.web3Utils, this.web3Contracts, await this._getDeployedIndex());
       hotel.setLocalData(hotelData);
@@ -109,7 +109,7 @@ class WTIndexDataProvider implements WTIndexInterface {
     return hotelList;
   }
 
-  async getTransactionsStatus (txHashes: Array<string>): Promise<AdaptedTxResults> {
+  async getTransactionsStatus (txHashes: Array<string>): Promise<AdaptedTxResultsInterface> {
     let promises = [];
     for (let hash of txHashes) {
       promises.push(this.web3Utils.getTransactionReceipt(hash));
@@ -132,7 +132,7 @@ class WTIndexDataProvider implements WTIndexInterface {
         raw: receipt,
       };
     }
-    const resultsValues: Array<AdaptedTxResult> = (Object.values(results): Array<any>); // eslint-disable-line flowtype/no-weak-types
+    const resultsValues: Array<AdaptedTxResultInterface> = (Object.values(results): Array<any>); // eslint-disable-line flowtype/no-weak-types
     return {
       meta: {
         total: txHashes.length,

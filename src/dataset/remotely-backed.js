@@ -1,6 +1,29 @@
-// This is so meta and generic that flow is hard to do here
 import _ from 'lodash';
 
+/**
+ * Dataset ready to use various strategies for storing the data
+ * in a remote storage. Every field backed by this strategy should
+ * have a getter and setter defined that interacts with the
+ * remote storage. The dataset strategy may be in the following states:
+ *
+ * - fresh - Purely in-memory created object with no data
+ * - unsynced - Some data may be set locally, but they were not
+ * propagated to the remote storage, and no data was loaded from the
+ * remote storage.
+ * - deployed - Data has its representation ready on the remote storage
+ * and we may call remote getters and setters to interact with the remote storage.
+ * - obsolete - Data lost its representation on the remote storage and 
+ * we should not interact with it anymore.
+ *
+ * Internally a state is held for each property. If you `get` a property
+ * that was not previously accessed, the whole dataset gets synced (this might
+ * get more efficient in the future), and you get a current value from
+ * the remote storage. If any value was changed locally, it is considered
+ * as the current value. Once you are done with data modification, you
+ * have to call `updateRemoteData` that propagates the whole dataset to the
+ * remote storage. These calls are deduplicated, so if a single call is used
+ * to update multiple properties, only once call is done.
+ */
 class RemotelyBacked {
   constructor () {
     this.__obsoleteFlag = false;
@@ -11,6 +34,35 @@ class RemotelyBacked {
     this.__fieldKeys = [];
   }
 
+  /**
+   * Creates generic getters and setters that proxy `remoteGetter` and
+   * `remoteSetter` when necessary.
+   * 
+   * The fields are specified as an `options.fields` property and every key
+   * represents a single property. Every property's options can than hold
+   * a `remoteGetter` and `remoteSetter` field such as 
+   *
+   * ```
+   * {fields: {
+   *     url: {
+   *       remoteGetter: async (): Promise<?string> => {
+   *         return (await this.contract.url().call();
+   *       },
+   *       // this will usually return a transaction ID 
+   *       remoteSetter: async (): Promise<string> => {
+   *         return this.contract.methods.callHotel(this.address, data).send(txOptions);
+   *       }
+   * },
+   * ```
+   *
+   * All passed fields are set as unsynced which means that
+   * after the first `get` on any of those, the whole dataset will
+   * be synced from the remote storage (if the dataset is marked as deployed).
+   * 
+   * @param  {Object} options `{fields: {[field]: fieldOptions}}`
+   * @param  {Object} bindTo  Object to which the properties will be bound.
+   * Typically the initiator of this operation.
+   */
   bindProperties (options, bindTo) {
     this.__options = options;
     this.__fieldKeys = Object.keys(options.fields);
@@ -31,22 +83,48 @@ class RemotelyBacked {
     }
   }
 
+  /**
+   * Is dataset marked as obsolete?
+   * @return {Boolean}
+   */
   isObsolete () {
     return this.__obsoleteFlag;
   }
 
+  /**
+   * Marks dataset as obsolete. Typically called after the remote storage
+   * is destroyed or made inaccessible. This is not propagated anywhere
+   * but merely serves as a flag to prevent further interaction with this object.
+   */
   markObsolete () {
     this.__obsoleteFlag = true;
   }
 
+  /**
+   * Is dataset deployed to the remote storage?
+   * @return {Boolean}
+   */
   isDeployed () {
     return this.__deployedFlag;
   }
 
+  /**
+   * Marks dataset as deployed. Typically called when the remote
+   * storage is set up, created or connected to.
+   */
   markDeployed () {
     this.__deployedFlag = true;
   }
 
+  /**
+   * Tries to get a value. If the property was not synced before,
+   * it will sync the whole dataset from a remote storage. If a property
+   * was modified locally before, the modified value will be returned.
+   * 
+   * @param  {string} property
+   * @throws {Error} when dataset is marked as obsolete
+   * @return {any} property's current value
+   */
   async _genericGetter (property) {
     if (this.isObsolete()) {
       throw new Error('This object was destroyed in a remote storage!');
@@ -60,6 +138,12 @@ class RemotelyBacked {
     return this.__localData[property];
   }
 
+  /**
+   * [_genericSetter description]
+   * @param  {[type]} property [description]
+   * @param  {[type]} newValue [description]
+   * @return {[type]}          [description]
+   */
   _genericSetter (property, newValue) {
     if (this.isObsolete()) {
       throw new Error('This object was destroyed in a remote storage!');
