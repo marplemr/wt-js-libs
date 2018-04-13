@@ -2,18 +2,16 @@ const webpack = require('webpack');
 
 const getDistPath = target => `${__dirname}/dist/${target}`;
 
-const getTargetPlugins = target => target === 'node'
+const getTargetPlugins = (target) => {
+  return target === 'node'
   ? [new webpack.DefinePlugin({ 'global.GENTLY': false })]
   : [];
+}
 
-const createConfig = target => ({
+const createConfig = (target) => ({
   devtool: 'source-map',
   entry: {
     'wt-js-libs': './src/index.js'
-  },
-  // This is here to make joi happy
-  node: {
-    net: 'empty'
   },
   module: {
     rules: [
@@ -21,8 +19,28 @@ const createConfig = target => ({
         test: /\.js?$/,
         exclude: /(node_modules)/,
         loader: ['babel-loader']
+      },
+      {
+        test: /\.node$/,
+        use: 'node-loader'
       }
     ]
+  },
+  optimization: {
+    splitChunks: {
+      chunks: "all",
+      name: true,
+    },
+  },
+  resolve: {
+    // On some platforms, scrypt gets built in an unexpected way
+    alias: {
+      './build/Release/scrypt': './build/Release/scrypt.node',
+    }
+  },
+  externals: {
+    // To make got (dependency of web3-bzz happy)
+    electron: 'electron',
   },
   output: {
     path: getDistPath(target),
@@ -32,7 +50,6 @@ const createConfig = target => ({
   },
   target,
   plugins: [
-    // new WebpackBundleSizeAnalyzerPlugin('../build-stats.md'),
     new webpack.DefinePlugin({
       VERSION: JSON.stringify(require('./package.json').version)
     }),
