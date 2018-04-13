@@ -38,7 +38,7 @@
   },
   "dependencies": {
     "@windingtree/lif-token": "^0.1.2-erc827",
-    "@windingtree/wt-contracts": "^0.1.0",
+    "@windingtree/wt-contracts": "^0.2.0",
     "abi-decoder": "^1.1.0",
     "bignumber.js": "^3.0.1",
     "ethereumjs-util": "^5.1.5",
