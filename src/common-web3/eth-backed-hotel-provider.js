@@ -62,7 +62,9 @@ class EthBackedHotelProvider {
   }
 
   async _editInfo (transactionOptions: Object): Promise<string> {
-    const data = this.web3Utils.encodeMethodCall((await this._getContractInstance()).abi, 'editInfo', [await this.url]);
+    // TODO replace this with
+    // const data = (await this._getContractInstance()).methods.editInfo(await this.url).encodeABI();
+    const data = this.web3Utils.encodeMethodCall((await this._getContractInstance()).options.jsonInterface, 'editInfo', [await this.url]);
     const estimate = await this.indexContract.methods.callHotel(this.address, data).estimateGas(transactionOptions);
     return new Promise(async (resolve, reject) => {
       return this.indexContract.methods.callHotel(this.address, data).send(Object.assign(transactionOptions, {

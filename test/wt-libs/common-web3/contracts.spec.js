@@ -23,7 +23,7 @@ describe('WTLibs.common-web3.Contracts', () => {
   it('should throw on an invalid address', async () => {
     contracts.web3.utils.isAddress = sinon.stub().returns(false);
     try {
-      await contracts._getInstance('some', {}, 'address');
+      await contracts.__getInstance('some', {}, 'address');
       throw new Error('should not have been called');
     } catch (e) {
       assert.match(e.message, /at an invalid address/i);
@@ -33,7 +33,7 @@ describe('WTLibs.common-web3.Contracts', () => {
   it('should throw if no code exists on the address', async () => {
     contracts.web3.eth.getCode = sinon.stub().returns('0x0');
     try {
-      await contracts._getInstance('some', {}, 'address');
+      await contracts.__getInstance('some', {}, 'address');
       throw new Error('should not have been called');
     } catch (e) {
       assert.match(e.message, /address with no code/i);

@@ -20,7 +20,9 @@ describe('WTLibs.common-web3.EthBackedHotelProvider', () => {
           url: helpers.stubContractMethodResult('some-remote-url'),
           manager: helpers.stubContractMethodResult('some-remote-manager'),
         },
-        abi: {},
+        options: {
+          jsonInterface: {},
+        },
       }),
     };
     indexContractStub = {

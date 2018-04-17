@@ -12,7 +12,7 @@ import _ from 'lodash';
  * remote storage.
  * - deployed - Data has its representation ready on the remote storage
  * and we may call remote getters and setters to interact with the remote storage.
- * - obsolete - Data lost its representation on the remote storage and 
+ * - obsolete - Data lost its representation on the remote storage and
  * we should not interact with it anymore.
  *
  * Internally a state is held for each property. If you `get` a property
@@ -37,10 +37,10 @@ class RemotelyBacked {
   /**
    * Creates generic getters and setters that proxy `remoteGetter` and
    * `remoteSetter` when necessary.
-   * 
+   *
    * The fields are specified as an `options.fields` property and every key
    * represents a single property. Every property's options can than hold
-   * a `remoteGetter` and `remoteSetter` field such as 
+   * a `remoteGetter` and `remoteSetter` field such as
    *
    * ```
    * {fields: {
@@ -48,7 +48,7 @@ class RemotelyBacked {
    *       remoteGetter: async (): Promise<?string> => {
    *         return (await this.contract.url().call();
    *       },
-   *       // this will usually return a transaction ID 
+   *       // this will usually return a transaction ID
    *       remoteSetter: async (): Promise<string> => {
    *         return this.contract.methods.callHotel(this.address, data).send(txOptions);
    *       }
@@ -58,7 +58,7 @@ class RemotelyBacked {
    * All passed fields are set as unsynced which means that
    * after the first `get` on any of those, the whole dataset will
    * be synced from the remote storage (if the dataset is marked as deployed).
-   * 
+   *
    * @param  {Object} options `{fields: {[field]: fieldOptions}}`
    * @param  {Object} bindTo  Object to which the properties will be bound.
    * Typically the initiator of this operation.
@@ -120,9 +120,9 @@ class RemotelyBacked {
    * Tries to get a value. If the property was not synced before,
    * it will sync the whole dataset from a remote storage. If a property
    * was modified locally before, the modified value will be returned.
-   * 
+   *
    * @param  {string} property
-   * @throws {Error} when dataset is marked as obsolete
+   * @throws {Error} When dataset is marked as obsolete
    * @return {any} property's current value
    */
   async _genericGetter (property) {
@@ -132,17 +132,19 @@ class RemotelyBacked {
     // This is a totally new instance
     // TODO maybe don't init all at once, it might be expensive
     if (this.isDeployed() && this.__fieldStates[property] === 'unsynced') {
-      await this._syncRemoteData();
+      await this.__syncRemoteData();
     }
 
     return this.__localData[property];
   }
 
   /**
-   * [_genericSetter description]
-   * @param  {[type]} property [description]
-   * @param  {[type]} newValue [description]
-   * @return {[type]}          [description]
+   * Sets a new value locally and marks the property as dirty. Thath
+   * means that even after syncing data from remote storage, the object will still
+   * serve the locally modified value.
+   *
+   * @param  {string} property
+   * @param  {any} newValue
    */
   _genericSetter (property, newValue) {
     if (this.isObsolete()) {
@@ -154,7 +156,7 @@ class RemotelyBacked {
     }
   }
 
-  async _fetchRemoteData () {
+  async __fetchRemoteData () {
     if (!this.isDeployed()) {
       throw new Error('Cannot fetch undeployed object');
     }
@@ -174,9 +176,9 @@ class RemotelyBacked {
     return this.__remoteData;
   }
 
-  async _syncRemoteData () {
+  async __syncRemoteData () {
     try {
-      await this._fetchRemoteData();
+      await this.__fetchRemoteData();
       // Copy over data from remoteData to local data
       for (let i = 0; i < this.__fieldKeys.length; i++) {
         // Do not update user-modified fields
@@ -202,8 +204,16 @@ class RemotelyBacked {
     return hash;
   }
 
+  /**
+   * Calls all remoteSetters if relevant data was changed.
+   * Calls are deduplicated, so if the same method would be used
+   * to update multiple fields, it is called only once.
+   *
+   * @param  {Object} transactionOptions passed to every remoteSetter, typically something like `{from: address, to: address}`
+   * @return {Array<any>} Results of remoteSetters, it would typically contain transaction IDs
+   */
   async updateRemoteData (transactionOptions) {
-    await this._syncRemoteData();
+    await this.__syncRemoteData();
     const remoteSetters = [];
     const remoteSettersHashCodes = {};
     for (let i = 0; i < this.__fieldKeys.length; i++) {

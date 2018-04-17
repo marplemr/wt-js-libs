@@ -13,7 +13,7 @@ class InMemoryStorage {
    * Private method that hashes arbitrary data with SHA-3.
    * Before hashing, data is JSON.stringified and a current
    * timestamp is prepended to prevent collisions.
-   * 
+   *
    * @param  {any} data to be hashed
    * @return {string} resulting sha3 hash
    */
@@ -64,13 +64,13 @@ export const storageInstance = new InMemoryStorage();
  * certain properties to the original object with InMemoryStorage
  * based getters and setters. The whole dataset is stored under
  * on hash.
- * 
+ *
  * This might be used to mock a distributed network storage.
  */
 class InMemoryBacked {
   /**
    * Creates an InMemoryBacked instance.
-   * 
+   *
    * @param  {string} hash optional hash from InMemoryStorage where the data is located
    * @return {InMemoryBacked}      [description]
    */
@@ -84,7 +84,7 @@ class InMemoryBacked {
     }
   }
 
- /**
+  /**
   * Enables changing the hash of the underlying data during runtime
   * @param {string} hash
   */
@@ -113,7 +113,7 @@ class InMemoryBacked {
    * for all passed fields using `defineProperty`. The fields
    * are specified as an `options.fields` property and every key
    * represents a single property.
-   * 
+   *
    * @param  {Object} options `{fields: {[field]: fieldOptions}}`
    * @param  {Object} bindTo  Object to which the properties will be bound.
    * Typically the initiator of this operation.

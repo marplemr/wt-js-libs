@@ -119,6 +119,8 @@ describe('WTLibs usage', () => {
       const oldName = await hotel.name;
       const oldDescription = await hotel.description;
       hotel.name = newName;
+      // TODO test real data modification on-chain
+      // hotel.url = '12345'
       hotel.description = newDescription;
       const updateResult = await index.updateHotel(hotel);
       assert.isDefined(updateResult);

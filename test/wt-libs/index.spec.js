@@ -21,7 +21,7 @@ describe('WTLibs.dataModel', () => {
     });
   });
 
-  describe('getDataModelAccessor', () => {
+  describe('__getDataModelAccessor', () => {
     let createInstanceSpy;
 
     beforeEach(() => {
@@ -34,7 +34,7 @@ describe('WTLibs.dataModel', () => {
 
     it('should create dataModelAccessor', () => {
       const dataModel = DataModel.createInstance(testedDataModel.type, testedDataModel.emptyConfig);
-      const dataModelAccessor = dataModel.getDataModelAccessor();
+      const dataModelAccessor = dataModel.__getDataModelAccessor();
       assert.isDefined(dataModelAccessor);
       assert.typeOf(dataModelAccessor, 'object');
       assert.equal(createInstanceSpy.callCount, 1);
@@ -42,9 +42,9 @@ describe('WTLibs.dataModel', () => {
 
     it('should re-use existing dataModelAccessor instance', () => {
       const dataModel = DataModel.createInstance(testedDataModel.type, testedDataModel.emptyConfig);
-      const dataModelAccessor = dataModel.getDataModelAccessor();
+      const dataModelAccessor = dataModel.__getDataModelAccessor();
       assert.equal(createInstanceSpy.callCount, 1);
-      const dataModelAccessor2 = dataModel.getDataModelAccessor();
+      const dataModelAccessor2 = dataModel.__getDataModelAccessor();
       assert.isDefined(dataModelAccessor2);
       assert.typeOf(dataModelAccessor2, 'object');
       assert.equal(createInstanceSpy.callCount, 1);
@@ -62,7 +62,7 @@ describe('WTLibs.dataModel', () => {
     it('should throw when dataModelAccessor type is not yet implemented', () => {
       try {
         const dataModel = DataModel.createInstance('web3-ipfs', {});
-        dataModel.getDataModelAccessor();
+        dataModel.__getDataModelAccessor();
       } catch (e) {
         assert.match(e.message, /data model is not yet implemented/i);
       }

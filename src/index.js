@@ -23,21 +23,15 @@ class WTLibs {
   options: WtLibsOptionsType;
 
   /**
-   * Call this to create wt-libs-js instance
+   * Call this to create wt-libs-js instance. If `dataModelType` is not passed,
+   * `web3-swarm` is used as a default. That is subject to change.
    * @param options
-   * @type WTLibs
+   * @return WTLibs
    */
   static createInstance (options: WtLibsOptionsType): WTLibs {
     return new WTLibs(options);
   }
 
-  /**
-   * constructs new instance. If `dataModelType` is not passed,
-   * `web3-swarm` is used as a default. That is subject to change.
-   *
-   * @param options
-   * @return WTLibs
-   */
   constructor (options: WtLibsOptionsType) {
     this.options = options || {};
     this.options.dataModelType = this.options.dataModelType || 'web3-swarm';

@@ -6,15 +6,31 @@ import type { FullJsonDataModelOptionsType } from './full-json';
 import Web3JsonDataModel from './web3-json';
 import type { Web3JsonDataModelOptionsType } from './web3-json';
 
-// Data Model Type, i. e. which data storage mode to use
+/**
+ * DataModelType is a chosen `data-model`. Not all options are implemented right now.
+ * @enum {String}
+ */
 export type DataModelType = 'full-web3' | 'full-json' | 'web3-json' | 'web3-ipfs' | 'web3-swarm';
+/**
+ * Combination of all implemented Data Model options.
+ * @type {Object}
+ */
 export type DataModelOptionsType = FullJsonDataModelOptionsType & Web3JsonDataModelOptionsType;
 
+/**
+ * Representation of a current data model. You should use this factory
+ * to obtain an implementation of Winding Tree index that serves data
+ * from the desired data-model.
+ */
 class DataModel {
   type: string;
   options: DataModelOptionsType;
   _datamodel: DataModelAccessorInterface;
 
+  /**
+   * Returns a new configured instance.
+   * @type {DataModel}
+   */
   static createInstance (dataModelType: DataModelType, options: DataModelOptionsType): DataModel {
     if (![
       'full-web3',
@@ -34,7 +50,7 @@ class DataModel {
     this.options = options || {};
   }
 
-  getDataModelAccessor (): DataModelAccessorInterface {
+  __getDataModelAccessor (): DataModelAccessorInterface {
     if (!this._datamodel) {
       switch (this.type) {
       case 'full-json':
@@ -53,8 +69,13 @@ class DataModel {
     return this._datamodel;
   }
 
+  /**
+   * Returns an instance of Winding Tree index backed by the previously
+   * chosen DataModel
+   * @type {string} address where to look for the Winding Tree index.
+   */
   async getWindingTreeIndex (address: string): Promise<WTIndexInterface> {
-    return this.getDataModelAccessor().getWindingTreeIndex(address);
+    return this.__getDataModelAccessor().getWindingTreeIndex(address);
   }
 }
 
