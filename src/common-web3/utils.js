@@ -45,28 +45,6 @@ class Utils {
     }
   }
 
-  /**
-   * Chooses the proper method from ABI based on a number of parameters
-   * and returns an encoded bytecode that can be executed on Ethereum
-   * blockchain. The picking of appropriate method can be simplified once
-   * web3.js resolves its issues.
-   *
-   * @see https://github.com/ethereum/web3.js/issues/924
-   *
-   * @param contractAbi
-   * @param methodName
-   * @param parameters
-   * @type {string}
-   */
-  encodeMethodCall (contractAbi: Object, methodName: string, parameters: Array<mixed>): string {
-    // TODO type checking of parameters
-    const methodAbi = contractAbi.filter((n: Object): boolean => n.name === methodName && n.inputs.length === parameters.length).pop();
-    if (!methodAbi) {
-      throw Error('Method not found, maybe you are using an invalid signature?');
-    }
-    return web3Abi.encodeFunctionCall(methodAbi, parameters);
-  }
-
   applyGasCoefficient (gas: number): number {
     if (this.gasCoefficient) {
       return Math.ceil(gas * this.gasCoefficient);

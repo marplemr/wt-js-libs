@@ -47,8 +47,12 @@ class EthBackedHotelProvider {
   }
 
   setLocalData (newData: HotelInterface) {
-    this.manager = newData.manager || this.manager;
-    this.url = newData.url;
+    if (newData.manager) {
+      this.manager = newData.manager;
+    }
+    if (newData.url) {
+      this.url = newData.url;
+    }
   }
 
   async _getContractInstance (): Promise<Object> {
@@ -62,9 +66,7 @@ class EthBackedHotelProvider {
   }
 
   async _editInfo (transactionOptions: Object): Promise<string> {
-    // TODO replace this with
-    // const data = (await this._getContractInstance()).methods.editInfo(await this.url).encodeABI();
-    const data = this.web3Utils.encodeMethodCall((await this._getContractInstance()).options.jsonInterface, 'editInfo', [await this.url]);
+    const data = (await this._getContractInstance()).methods.editInfo(await this.url).encodeABI();
     const estimate = await this.indexContract.methods.callHotel(this.address, data).estimateGas(transactionOptions);
     return new Promise(async (resolve, reject) => {
       return this.indexContract.methods.callHotel(this.address, data).send(Object.assign(transactionOptions, {

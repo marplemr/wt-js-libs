@@ -13,6 +13,7 @@ function stubContractMethodResult (callResult, sendSetup = { txHash: true, recei
 
   const methodMock = {
     call: sinon.stub().returns(finalCallResult),
+    encodeABI: sinon.stub().returns('encoded-abi-' + callResult),
     send: sinon.stub().returns({
       on: function (evt, callback) {
         if (evt === 'transactionHash' && sendSetup.txHash) {

@@ -60,6 +60,16 @@ class HotelDataProvider extends EthBackedHotelProvider implements HotelInterface
     const dataUrl = this.inMemBackedData.getHash();
     return super.createOnNetwork(transactionOptions, dataUrl);
   }
+
+  async updateOnNetwork (transactionOptions: Object): Promise<Array<string>> {
+    // url might have changed - copy over current inmem data and point a new url at them
+    const currentUrl = await this.url;
+    if (currentUrl !== this.inMemBackedData.getHash()) {
+      this.inMemBackedData.changeHashTo(currentUrl);
+    }
+    // TODO editInfo is not getting transactionOptions
+    return super.updateOnNetwork(transactionOptions);
+  }
 }
 
 export default HotelDataProvider;

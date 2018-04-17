@@ -115,25 +115,30 @@ describe('WTLibs usage', () => {
     it('should update hotel', async () => {
       const newName = 'Great new hotel name';
       const newDescription = 'Great new hotel description';
+      const newUrl = 'another-url';
       const hotel = await index.getHotel(hotelAddress);
       const oldName = await hotel.name;
       const oldDescription = await hotel.description;
+      const oldUrl = await hotel.url;
+      hotel.url = newUrl;
       hotel.name = newName;
-      // TODO test real data modification on-chain
-      // hotel.url = '12345'
       hotel.description = newDescription;
       const updateResult = await index.updateHotel(hotel);
       assert.isDefined(updateResult);
       const hotel2 = await index.getHotel(hotelAddress);
       assert.equal(await hotel2.name, newName);
       assert.equal(await hotel2.description, newDescription);
+      assert.equal(await hotel2.url, newUrl);
       // Change it back to keep data in line
       hotel.name = oldName;
       hotel.description = oldDescription;
+      hotel.url = oldUrl;
       const updateResult2 = await index.updateHotel(hotel);
       assert.isDefined(updateResult2);
       const hotel3 = await index.getHotel(hotelAddress);
       assert.equal(await hotel3.name, oldName);
+      assert.equal(await hotel3.url, oldUrl);
+      assert.equal(await hotel3.description, oldDescription);
     });
 
     it('should throw if hotel has no address', async () => {

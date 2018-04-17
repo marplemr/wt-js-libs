@@ -100,6 +100,12 @@ class InMemoryBacked {
     return this.__hash;
   }
 
+  changeHashTo (newHash) {
+    const currentData = storageInstance.get(this.__hash);
+    this.setHash(newHash);
+    storageInstance.update(newHash, currentData);
+  }
+
   /**
    * Initializes an empty data position in InMemoryStorage
    * and creates a new hash.
