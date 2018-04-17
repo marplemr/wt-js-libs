@@ -9,7 +9,6 @@ describe('WTLibs.common-web3.EthBackedHotelProvider', () => {
   beforeEach(() => {
     utilsStub = {
       getCurrentWeb3Provider: sinon.stub().returns('current-provider'),
-      encodeMethodCall: sinon.stub().returns('encoded-method-call'),
       applyGasCoefficient: sinon.stub().returns(12),
       determineCurrentAddressNonce: sinon.stub().resolves(3),
       determineDeployedContractFutureAddress: sinon.stub().returns('future-address'),

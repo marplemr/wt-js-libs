@@ -6,9 +6,9 @@ import EthBackedHotelProvider from '../../common-web3/eth-backed-hotel-provider'
 import InMemoryBacked from '../../dataset/in-memory-backed';
 
 /**
- *
+ * Ethereum based hotel with additional data stored in an in-memory JSON storage.
  */
-class HotelDataProvider extends EthBackedHotelProvider implements HotelInterface {
+class Web3JsonHotelDataProvider extends EthBackedHotelProvider implements HotelInterface {
   description: Promise<?string> | ?string;
   name: Promise<?string> | ?string;
   location: Promise<?LocationInterface> | ?LocationInterface;
@@ -16,17 +16,23 @@ class HotelDataProvider extends EthBackedHotelProvider implements HotelInterface
   inMemBackedData: InMemoryBacked;
 
   /**
-   * [web3Utils description]
-   * @type {[type]}
+   * Returns a configured instance of Web3JsonHotelDataProvider. Optionally
+   * may point to an existing Ethereum blockchain address with a hotel.
+   *
+   * Runs `initialize` before returning.
    */
-  static async createInstance (web3Utils: Utils, web3Contracts: Contracts, indexContract: Object, address?: string): Promise<HotelDataProvider> {
-    const hotel = new HotelDataProvider(web3Utils, web3Contracts, indexContract, address);
+  static async createInstance (web3Utils: Utils, web3Contracts: Contracts, indexContract: Object, address?: string): Promise<Web3JsonHotelDataProvider> {
+    const hotel = new Web3JsonHotelDataProvider(web3Utils, web3Contracts, indexContract, address);
     await hotel.initialize();
     return hotel;
   }
 
   /**
-   *
+   * Calls EthBackedHotelProvider's initialize
+   * and sets up the additional InMemoryBacked dataset containing
+   * `description`, `name` and `location`. If the address was provided,
+   * an on-chain url pointer is used as an identifier for the InMemoryBacked
+   * dataset.
    */
   async initialize (): Promise<void> {
     super.initialize();
@@ -40,7 +46,7 @@ class HotelDataProvider extends EthBackedHotelProvider implements HotelInterface
     }, this);
     if (this.address) {
       // pre-heat contract to prevent multiple contract inits
-      await this._getContractInstance();
+      await this.__getContractInstance();
       this.inMemBackedData.setHash(await this.url);
     } else {
       this.inMemBackedData.initialize();
@@ -48,6 +54,8 @@ class HotelDataProvider extends EthBackedHotelProvider implements HotelInterface
   }
 
   /**
+   * Updates data locally, calls EthBackedHotelProvider's setLocalData
+   * and sets `name`, `description` and `location`.
    */
   setLocalData (newData: HotelInterface) {
     super.setLocalData(newData);
@@ -56,20 +64,29 @@ class HotelDataProvider extends EthBackedHotelProvider implements HotelInterface
     this.location = newData.location;
   }
 
+  /**
+   * Creates hotel on network while passing a current InMemoryBacked
+   * storage hash as a data url. Calls EthBackedHotelProvider's `createOnNetwork`
+   * in the end
+   */
   async createOnNetwork (transactionOptions: Object): Promise<Array<string>> {
     const dataUrl = this.inMemBackedData.getHash();
     return super.createOnNetwork(transactionOptions, dataUrl);
   }
 
+  /**
+   * Updates hotel data. If the url has changed, the InMemoryBacked dataset
+   * is copied over into the new location. EthBackedHotelProvider's `updateOnNetwork`
+   * is called aferwards.
+   */
   async updateOnNetwork (transactionOptions: Object): Promise<Array<string>> {
     // url might have changed - copy over current inmem data and point a new url at them
     const currentUrl = await this.url;
     if (currentUrl !== this.inMemBackedData.getHash()) {
       this.inMemBackedData.changeHashTo(currentUrl);
     }
-    // TODO editInfo is not getting transactionOptions
     return super.updateOnNetwork(transactionOptions);
   }
 }
 
-export default HotelDataProvider;
+export default Web3JsonHotelDataProvider;

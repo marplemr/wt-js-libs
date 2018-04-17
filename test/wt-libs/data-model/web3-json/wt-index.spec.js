@@ -17,7 +17,7 @@ describe('WTLibs.data-models.web3-json.WTIndexDataProvider', () => {
   it('should throw when we want index from a bad address', async () => {
     const customIndexDataProvider = await WTIndexDataProvider.createInstance('0x96eA4BbF71FEa3c9411C1Cefc555E9d7189695fA', dataModel.commonWeb3Utils, dataModel.commonWeb3Contracts);
     try {
-      await customIndexDataProvider._getDeployedIndex();
+      await customIndexDataProvider.__getDeployedIndex();
       throw new Error('should not have been called');
     } catch (e) {
       assert.match(e.message, /cannot get index instance/i);

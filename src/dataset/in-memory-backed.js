@@ -100,6 +100,14 @@ class InMemoryBacked {
     return this.__hash;
   }
 
+  /**
+   * Copies the data to a different hash
+   * while not destroying the original data. The
+   * internal hash pointer is updated so the data
+   * is served from the new location.
+   *
+   * @param  {string} newHash
+   */
   changeHashTo (newHash) {
     const currentData = storageInstance.get(this.__hash);
     this.setHash(newHash);

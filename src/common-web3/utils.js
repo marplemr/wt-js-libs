@@ -3,7 +3,6 @@
 import type { TxReceiptInterface } from '../interfaces';
 import Web3 from 'web3';
 import BigNumber from 'bignumber.js';
-import web3Abi from 'web3-eth-abi';
 import ethJsUtil from 'ethereumjs-util';
 
 /**
@@ -45,6 +44,11 @@ class Utils {
     }
   }
 
+  /**
+   * Multiplies the gas with a previously configured `gasCoefficient`
+   * @param {number} gas
+   * @return {number}
+   */
   applyGasCoefficient (gas: number): number {
     if (this.gasCoefficient) {
       return Math.ceil(gas * this.gasCoefficient);
@@ -52,10 +56,16 @@ class Utils {
     return gas;
   }
 
-  getCurrentWeb3Provider (): Object {
-    return this.web3.currentProvider;
-  }
-
+  /**
+   * Determines the future address of a deployed contact if such
+   * contact is deployed in a transaction originating from `sender`
+   * with `nonce`. Uses `ethereumjs-util` implementation
+   * and always returns a checksum formatted Ethereum address.
+   *
+   * @param {string} sender
+   * @param {number} nonce
+   * @type {string} Resulting address
+   */
   determineDeployedContractFutureAddress (sender: string, nonce: number): string {
     // web3js stores checksummed addresses by default
     // (@see https://github.com/ethereum/EIPs/blob/master/EIPS/eip-55.md)
@@ -65,14 +75,37 @@ class Utils {
     )));
   }
 
+  /**
+   * Proxy method for `web3.currentProvider`
+   */
+  getCurrentWeb3Provider (): Object {
+    return this.web3.currentProvider;
+  }
+
+  /**
+   * Proxy method for `web3.eth.getBlockNumber`
+   */
   async getCurrentBlockNumber (): Promise<number> {
     return this.web3.eth.getBlockNumber();
   }
 
+  /**
+   * Returns current number of transactions mined for given
+   * Ethereum address
+   *
+   * @param {string} address
+   * @return number
+   */
   async determineCurrentAddressNonce (address: string): Promise<number> {
     return this.web3.eth.getTransactionCount(address);
   }
 
+  /**
+   * Proxy method for `web3.eth.getTransactionReceipt`
+   *
+   * @param {string} txHash
+   * @return {TxReceiptInterface}
+   */
   async getTransactionReceipt (txHash: string): Promise<TxReceiptInterface> {
     return this.web3.eth.getTransactionReceipt(txHash);
   }

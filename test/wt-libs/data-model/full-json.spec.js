@@ -26,8 +26,7 @@ describe('WTLibs.data-model.full-json', () => {
       const dataModel = await FullJsonDataModel.createInstance({ source: getFreshDataSource() });
       assert.isDefined(dataModel.options);
       assert.isDefined(dataModel.source);
-      assert.isDefined(dataModel.source.fullIndex.index);
-      assert.isDefined(dataModel.source.fullIndex.index.hotels);
+      assert.isDefined(dataModel.source.fullIndex.hotels);
     });
   });
 
@@ -41,18 +40,10 @@ describe('WTLibs.data-model.full-json', () => {
     });
 
     describe('createInstance', () => {
-      it('should create basic data structure if source is empty', async () => {
-        dataModel = FullJsonDataModel.createInstance();
-        index = await dataModel.getWindingTreeIndex('random-address');
-        assert.isDefined(index.source.index);
-        assert.isDefined(index.source.index.hotels);
-      });
-
       it('should create basic data structure if hotels are empty', async () => {
         dataModel = FullJsonDataModel.createInstance({ source: { index: {} } });
         index = await dataModel.getWindingTreeIndex('random-address');
-        assert.isDefined(index.source.index);
-        assert.isDefined(index.source.index.hotels);
+        assert.isDefined(index.source.hotels);
       });
     });
 
@@ -62,8 +53,8 @@ describe('WTLibs.data-model.full-json', () => {
         const hotel = await index.getHotel(result.address);
         assert.isDefined(hotel);
         assert.equal(await hotel.url, 'a');
-        assert.isDefined(index.source.index.hotels);
-        assert.isDefined(index.source.index.hotels[await hotel.address]);
+        assert.isDefined(index.source.hotels);
+        assert.isDefined(index.source.hotels[await hotel.address]);
       });
     });
 
@@ -72,10 +63,10 @@ describe('WTLibs.data-model.full-json', () => {
         const address = '0xbf18b616ac81830dd0c5d4b771f22fd8144fe769';
         const hotel = await index.getHotel(address);
         assert.isDefined(hotel);
-        assert.isDefined(index.source.index.hotels);
+        assert.isDefined(index.source.hotels);
         assert.equal(await hotel.address, address);
-        assert.equal(await hotel.url, index.source.index.hotels[address].url);
-        assert.equal(await hotel.manager, index.source.index.hotels[address].manager);
+        assert.equal(await hotel.url, index.source.hotels[address].url);
+        assert.equal(await hotel.manager, index.source.hotels[address].manager);
       });
 
       it('should throw when hotel does not exist', async () => {
@@ -89,8 +80,8 @@ describe('WTLibs.data-model.full-json', () => {
 
       it('should get added hotel', async () => {
         const result = await index.addHotel({ url: 'Third one', manager: 'Donald' });
-        assert.isDefined(index.source.index.hotels);
-        assert.isDefined(index.source.index.hotels[result.address]);
+        assert.isDefined(index.source.hotels);
+        assert.isDefined(index.source.hotels[result.address]);
         const hotel = await index.getHotel(result.address);
         assert.isDefined(hotel);
         assert.isDefined(await hotel.url, 'Third one');
@@ -141,7 +132,7 @@ describe('WTLibs.data-model.full-json', () => {
       it('should get all hotels', async () => {
         const hotels = await index.getAllHotels();
         assert.isDefined(hotels);
-        assert.equal(hotels.length, Object.keys(index.source.index.hotels).length);
+        assert.equal(hotels.length, Object.keys(index.source.hotels).length);
       });
 
       it('should get empty list if no hotels were added', async () => {

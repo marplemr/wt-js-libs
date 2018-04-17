@@ -19,8 +19,8 @@ export const FullJsonBackedDataModel = {
 
 function _computeInitialWeb3JsonData () {
   let data = {};
-  for (let address in dataSource.fullIndex.index.hotels) {
-    let hotel = dataSource.fullIndex.index.hotels[address];
+  for (let address in dataSource.fullIndex.hotels) {
+    let hotel = dataSource.fullIndex.hotels[address];
     data[hotel.url] = {
       name: hotel.name,
       description: hotel.description,

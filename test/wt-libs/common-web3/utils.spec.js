@@ -1,6 +1,5 @@
 import { assert } from 'chai';
 import sinon from 'sinon';
-import web3Abi from 'web3-eth-abi';
 import Utils from '../../../src/common-web3/utils';
 
 describe('WTLibs.common-web3.Utils', () => {
@@ -21,61 +20,6 @@ describe('WTLibs.common-web3.Utils', () => {
       assert.equal(utils.isZeroAddress('random-address'), true);
       assert.equal(utils.isZeroAddress('0x0000000000000000000000000000000000000000'), true);
       assert.equal(utils.isZeroAddress('0x96eA4BbF71FEa3c9411C1Cefc555E9d7189695fA'), false);
-    });
-  });
-
-  describe('encodeMethodCall', () => {
-    const abi = [
-      {
-        'inputs': [
-          {
-            'name': '_url',
-            'type': 'string',
-          },
-        ],
-        'name': 'editInfo',
-        'type': 'function',
-      },
-      {
-        'inputs': [
-          {
-            'name': '_url',
-            'type': 'string',
-          },
-          {
-            'name': '_param',
-            'type': 'string',
-          },
-        ],
-        'name': 'editInfo',
-        'type': 'function',
-      },
-    ];
-
-    beforeEach(() => {
-      sinon.stub(web3Abi, 'encodeFunctionCall').callsFake((methodAbi, params) => {
-        return [methodAbi, params];
-      });
-    });
-
-    afterEach(() => {
-      web3Abi.encodeFunctionCall.restore();
-    });
-
-    it('should pick the proper method based on argument count', () => {
-      let result = utils.encodeMethodCall(abi, 'editInfo', ['one', 'two']);
-      assert.equal(result[0].inputs.length, 2);
-      result = utils.encodeMethodCall(abi, 'editInfo', ['one']);
-      assert.equal(result[0].inputs.length, 1);
-    });
-
-    it('should throw when no appropriate method is found', () => {
-      try {
-        utils.encodeMethodCall(abi, 'editInfo2', ['one']);
-        throw new Error('should not have been called');
-      } catch (e) {
-        assert.match(e.message, /method not found/i);
-      }
     });
   });
 

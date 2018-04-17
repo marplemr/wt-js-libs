@@ -2,16 +2,25 @@
 import type { WTIndexInterface, HotelInterface, AddHotelResponseInterface, AdaptedTxResultInterface, AdaptedTxResultsInterface } from '../../interfaces';
 import Utils from '../../common-web3/utils';
 import Contracts from '../../common-web3/contracts';
-import HotelDataProvider from './hotel';
+import Web3JsonHotelDataProvider from './hotel';
 
-class WTIndexDataProvider implements WTIndexInterface {
+/**
+ * Ethereum smart contract backed implementation of Winding Tree
+ * index wrapper. It currently works exclusively with Web3JsonHotelDataProvider
+ * but it should be easily generalized to other Hotel implementations.
+ */
+class Web3JsonWTIndexDataProvider implements WTIndexInterface {
   address: string;
   web3Utils: Utils;
   web3Contracts: Contracts;
   deployedIndex: Object; // TODO get rid of Object type
 
-  static async createInstance (indexAddress: string, web3Utils: Utils, web3Contracts: Contracts): Promise<WTIndexDataProvider> {
-    return new WTIndexDataProvider(indexAddress, web3Utils, web3Contracts);
+  /**
+   * Returns a configured instance of Web3JsonWTIndexDataProvider
+   * representing a Winding Tree index contract on a given `address`.
+   */
+  static async createInstance (indexAddress: string, web3Utils: Utils, web3Contracts: Contracts): Promise<Web3JsonWTIndexDataProvider> {
+    return new Web3JsonWTIndexDataProvider(indexAddress, web3Utils, web3Contracts);
   }
 
   constructor (indexAddress: string, web3Utils: Utils, web3Contracts: Contracts) {
@@ -20,16 +29,23 @@ class WTIndexDataProvider implements WTIndexInterface {
     this.web3Contracts = web3Contracts;
   }
 
-  async _getDeployedIndex (): Promise<Object> {
+  async __getDeployedIndex (): Promise<Object> {
     if (!this.deployedIndex) {
       this.deployedIndex = await this.web3Contracts.getIndexInstance(this.address);
     }
     return this.deployedIndex;
   }
 
+  /**
+   * Adds a totally new hotel on chain. Does not wait for the transactions
+   * to be mined, but as fast as possible returns a list of transaction IDs
+   * and the new hotel on chain address.
+   *
+   * @throws {Error} When anything goes wrong.
+   */
   async addHotel (hotelData: HotelInterface): Promise<AddHotelResponseInterface> {
     try {
-      const hotel = await HotelDataProvider.createInstance(this.web3Utils, this.web3Contracts, await this._getDeployedIndex());
+      const hotel = await Web3JsonHotelDataProvider.createInstance(this.web3Utils, this.web3Contracts, await this.__getDeployedIndex());
       hotel.setLocalData(hotelData);
       const transactionIds = await hotel.createOnNetwork({
         from: hotelData.manager,
@@ -44,10 +60,17 @@ class WTIndexDataProvider implements WTIndexInterface {
     }
   }
 
+  /**
+   * Updates a hotel on chain. Does not wait for the transactions
+   * to be mined, but as fast as possible returns a list of transaction
+   * IDs so you can keep track of the progress.
+   *
+   * @throws {Error} When anything goes wrong.
+   */
   async updateHotel (hotel: HotelInterface): Promise<Array<string>> {
     try {
       // We need to separate calls to be able to properly catch exceptions
-      const updatedHotel = await ((hotel: any): HotelDataProvider).updateOnNetwork({ // eslint-disable-line flowtype/no-weak-types
+      const updatedHotel = await ((hotel: any): Web3JsonHotelDataProvider).updateOnNetwork({ // eslint-disable-line flowtype/no-weak-types
         from: await hotel.manager,
         to: this.address,
       });
@@ -57,10 +80,20 @@ class WTIndexDataProvider implements WTIndexInterface {
     }
   }
 
+  /**
+   * Removes the hotel from chain. Does not wait for the transaction
+   * to be mined, but as fast as possible returns a list of transaction
+   * IDs so you can keep track of the progress.
+   *
+   * @throws {Error} When anything goes wrong such as
+   *   - hotel does not exist
+   *   - hotel does not belong to the calling manager
+   *   - not enough gas
+   */
   async removeHotel (hotel: HotelInterface): Promise<Array<string>> {
     try {
       // We need to separate calls to be able to properly catch exceptions
-      const result = await ((hotel: any): HotelDataProvider).removeFromNetwork({ // eslint-disable-line flowtype/no-weak-types
+      const result = await ((hotel: any): Web3JsonHotelDataProvider).removeFromNetwork({ // eslint-disable-line flowtype/no-weak-types
         from: await hotel.manager,
         to: this.address,
       });
@@ -72,24 +105,36 @@ class WTIndexDataProvider implements WTIndexInterface {
     }
   }
 
+  /**
+   * Gets hotel representation of a hotel on a given address. If hotel
+   * on such address is not registered through this Winding Tree index
+   * instance, the method throws immediately.
+   *
+   * @throws {Error} When hotel does not exist.
+   * @throws {Error} When something breaks in the network communication.
+   */
   async getHotel (address: string): Promise<?HotelInterface> {
-    const index = await this._getDeployedIndex();
+    const index = await this.__getDeployedIndex();
     try {
       // This returns strings
       const hotelIndex = parseInt(await index.methods.hotelsIndex(address).call(), 10);
-      // Zeroeth position is preserved during index deployment
+      // Zeroeth position is reserved as empty during index deployment
       if (!hotelIndex) {
         throw new Error('Not found in hotel list');
       } else {
-        return HotelDataProvider.createInstance(this.web3Utils, this.web3Contracts, index, address);
+        return Web3JsonHotelDataProvider.createInstance(this.web3Utils, this.web3Contracts, index, address);
       }
     } catch (err) {
       throw new Error('Cannot find hotel at ' + address + ': ' + err.message);
     }
   }
 
+  /**
+   * Returns a list of all hotels. It will filter out
+   * all inaccessible hotels.
+   */
   async getAllHotels (): Promise<Array<HotelInterface>> {
-    const index = await this._getDeployedIndex();
+    const index = await this.__getDeployedIndex();
     const hotelsAddressList = await index.methods.getHotels().call();
     let getHotelDetails = hotelsAddressList
       // Filtering null addresses beforehand improves efficiency
@@ -109,6 +154,13 @@ class WTIndexDataProvider implements WTIndexInterface {
     return hotelList;
   }
 
+  /**
+   * Find out in what state are transactions. All logs
+   * are decoded along the way and some metrics such as blockAge
+   * are computed. If you pass all transactions related to a single
+   * operation (such as updateHotel), you may benefit from the computed
+   * metrics.
+   */
   async getTransactionsStatus (txHashes: Array<string>): Promise<AdaptedTxResultsInterface> {
     let promises = [];
     for (let hash of txHashes) {
@@ -146,4 +198,4 @@ class WTIndexDataProvider implements WTIndexInterface {
   }
 }
 
-export default WTIndexDataProvider;
+export default Web3JsonWTIndexDataProvider;

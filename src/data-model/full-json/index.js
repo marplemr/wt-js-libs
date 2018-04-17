@@ -1,17 +1,42 @@
 // @flow
 
-import type { DataModelAccessorInterface, WTIndexInterface } from '../../interfaces';
-import WTIndexDataProvider from './wt-index';
+import type { DataModelAccessorInterface } from '../../interfaces';
+import JsonWTIndexDataProvider from './wt-index';
 
+/**
+ * FullJSonDataModel options. Contains only `source`
+ * JSON object from which the whole data-model is
+ * constructed. Every key in `source` object should
+ * represent a Winding Tree index address that contains
+ * a list of hotels such as:
+ *
+ * ```
+ * {"index1": {
+ *     "hotels": {
+ *       "hotel1": {...data...}
+ *       "hotel2": {...data...}
+ *     }
+ *   }
+ * }
+ * ```
+ *
+ * @type {Object}
+ */
 export type FullJsonDataModelOptionsType = {
   // deserialized JSON data object
   source?: Object
 };
 
+/**
+ * FullJsonDataModel
+ */
 class FullJsonDataModel implements DataModelAccessorInterface {
   options: FullJsonDataModelOptionsType;
   source: Object;
 
+  /**
+   * Creates a configured FullJsonDataModel instance
+   */
   static createInstance (options: FullJsonDataModelOptionsType): FullJsonDataModel {
     return new FullJsonDataModel(options);
   }
@@ -21,9 +46,12 @@ class FullJsonDataModel implements DataModelAccessorInterface {
     this.source = this.options.source || {};
   }
 
-  async getWindingTreeIndex (address: string): Promise<WTIndexInterface> {
+  /**
+   * Returns a JSON backed Winding Tree index.
+   */
+  async getWindingTreeIndex (address: string): Promise<JsonWTIndexDataProvider> {
     const index = this.source[address] || {};
-    return WTIndexDataProvider.createInstance(index);
+    return JsonWTIndexDataProvider.createInstance(index);
   }
 };
 
