@@ -38,10 +38,6 @@ const createConfig = (target) => ({
       './build/Release/scrypt': './build/Release/scrypt.node',
     }
   },
-  externals: {
-    // To make got (dependency of web3-bzz happy)
-    electron: 'electron',
-  },
   output: {
     path: getDistPath(target),
     filename: '[name].js',
@@ -50,6 +46,8 @@ const createConfig = (target) => ({
   },
   target,
   plugins: [
+    // https://github.com/sindresorhus/got/issues/345
+    new webpack.IgnorePlugin(/^electron$/),
     new webpack.DefinePlugin({
       VERSION: JSON.stringify(require('./package.json').version)
     }),
