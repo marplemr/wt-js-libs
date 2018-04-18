@@ -36,7 +36,8 @@ const createConfig = (target) => ({
     path: getDistPath(target),
     filename: '[name].js',
     library: '[name]',
-    libraryTarget: 'umd'
+    libraryTarget: 'umd',
+    libraryExport: 'default',
   },
   target,
   plugins: [
