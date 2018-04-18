@@ -26,12 +26,6 @@ const createConfig = (target) => ({
       }
     ]
   },
-  optimization: {
-    splitChunks: {
-      chunks: "all",
-      name: true,
-    },
-  },
   resolve: {
     // On some platforms, scrypt gets built in an unexpected way
     alias: {
