@@ -50,8 +50,7 @@ export interface WTIndexInterface {
   // It is possible that this operation generates multiple transactions
   updateHotel(hotel: HotelInterface): Promise<Array<string>>;
   // It is possible that this operation generates multiple transactions
-  removeHotel(hotel: HotelInterface): Promise<Array<string>>;
-  getTransactionsStatus (transactionHashes: Array<string>): Promise<AdaptedTxResultsInterface>
+  removeHotel(hotel: HotelInterface): Promise<Array<string>>
 }
 
 /**
@@ -59,7 +58,8 @@ export interface WTIndexInterface {
  * and provide the necessary methods.
  */
 export interface DataModelAccessorInterface {
-  getWindingTreeIndex(address: string): Promise<WTIndexInterface>
+  getWindingTreeIndex(address: string): Promise<WTIndexInterface>,
+  getTransactionsStatus (transactionHashes: Array<string>): Promise<AdaptedTxResultsInterface>
 }
 
 /**

@@ -1,5 +1,5 @@
 // @flow
-import type { WTIndexInterface, HotelInterface, AddHotelResponseInterface, AdaptedTxResultInterface, AdaptedTxResultsInterface } from '../../interfaces';
+import type { WTIndexInterface, HotelInterface, AddHotelResponseInterface } from '../../interfaces';
 import Utils from '../../common-web3/utils';
 import Contracts from '../../common-web3/contracts';
 import Web3JsonHotelDataProvider from './hotel';
@@ -152,49 +152,6 @@ class Web3JsonWTIndexDataProvider implements WTIndexInterface {
     const hotelDetails: Array<?HotelInterface> = await (Promise.all(getHotelDetails): any); // eslint-disable-line flowtype/no-weak-types
     const hotelList: Array<HotelInterface> = (hotelDetails.filter((a: ?HotelInterface): boolean => a != null): any); // eslint-disable-line flowtype/no-weak-types
     return hotelList;
-  }
-
-  /**
-   * Find out in what state are transactions. All logs
-   * are decoded along the way and some metrics such as blockAge
-   * are computed. If you pass all transactions related to a single
-   * operation (such as updateHotel), you may benefit from the computed
-   * metrics.
-   */
-  async getTransactionsStatus (txHashes: Array<string>): Promise<AdaptedTxResultsInterface> {
-    let promises = [];
-    for (let hash of txHashes) {
-      promises.push(this.web3Utils.getTransactionReceipt(hash));
-    }
-    const currentBlockNumber = await this.web3Utils.getCurrentBlockNumber();
-    const receipts = await Promise.all(promises);
-    
-    let results = {};
-    for (let receipt of receipts) {
-      if (!receipt) { continue; }
-      let decodedLogs = this.web3Contracts.decodeLogs(receipt.logs);
-      for (let logRecord of decodedLogs) {
-        // events is a really stupid name, so renaming
-        logRecord.attributes = logRecord.events;
-        delete logRecord.events;
-      }
-      results[receipt.transactionHash] = {
-        blockAge: currentBlockNumber - receipt.blockNumber,
-        decodedLogs: decodedLogs,
-        raw: receipt,
-      };
-    }
-    const resultsValues: Array<AdaptedTxResultInterface> = (Object.values(results): Array<any>); // eslint-disable-line flowtype/no-weak-types
-    return {
-      meta: {
-        total: txHashes.length,
-        processed: resultsValues.length,
-        minBlockAge: Math.min(...(resultsValues.map((a) => a.blockAge))),
-        maxBlockAge: Math.max(...(resultsValues.map((a) => a.blockAge))),
-        allPassed: Math.min(...(resultsValues.map((a) => a.raw.status))) === 1 && txHashes.length === resultsValues.length,
-      },
-      results: results,
-    };
   }
 }
 

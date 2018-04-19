@@ -27,7 +27,7 @@ describe('WTLibs usage', () => {
       assert.isDefined(result.transactionIds);
       // prepare getTransactionsStatus test
       minedTxHashes.push(result.transactionIds[0]);
-      const txResults = await index.getTransactionsStatus(result.transactionIds);
+      const txResults = await libs.getTransactionsStatus(result.transactionIds);
       assert.equal(txResults.meta.allPassed, true);
 
       // We should then get the hotel at the resulting address
@@ -41,7 +41,7 @@ describe('WTLibs usage', () => {
       // We're removing the hotel to ensure clean slate after this test is run.
       // It is too expensive to re-set on-chain WTIndex after each test.
       const removalResult = await index.removeHotel(hotel);
-      const removelTxResults = await index.getTransactionsStatus(removalResult);
+      const removelTxResults = await libs.getTransactionsStatus(removalResult);
       assert.equal(removelTxResults.meta.allPassed, true);
     });
 
@@ -185,7 +185,7 @@ describe('WTLibs usage', () => {
     // make this isolated, we would have to run some transactions
     // beforehand
     it('should return transaction status', async () => {
-      let result = await index.getTransactionsStatus(minedTxHashes);
+      let result = await libs.getTransactionsStatus(minedTxHashes);
       assert.isDefined(result.meta);
       assert.equal(result.meta.total, minedTxHashes.length);
       assert.equal(result.meta.processed, minedTxHashes.length);
@@ -196,7 +196,7 @@ describe('WTLibs usage', () => {
     });
 
     it('should return nothing if transactions do not exist', async () => {
-      let result = await index.getTransactionsStatus(['random-tx', 'another-random-tx']);
+      let result = await libs.getTransactionsStatus(['random-tx', 'another-random-tx']);
       assert.isDefined(result.meta);
       assert.equal(result.meta.total, 2);
       assert.equal(result.meta.processed, 0);

@@ -1,6 +1,6 @@
 // @flow
 
-import { DataModelAccessorInterface, WTIndexInterface } from '../interfaces';
+import { DataModelAccessorInterface, WTIndexInterface, AdaptedTxResultsInterface } from '../interfaces';
 import FullJsonDataModel from './full-json';
 import type { FullJsonDataModelOptionsType } from './full-json';
 import Web3JsonDataModel from './web3-json';
@@ -76,6 +76,13 @@ class DataModel {
    */
   async getWindingTreeIndex (address: string): Promise<WTIndexInterface> {
     return this.__getDataModelAccessor().getWindingTreeIndex(address);
+  }
+
+  /**
+   * Returns transactions status from the previously chosen DataModel.
+   */
+  async getTransactionsStatus (transactionHashes: Array<string>): Promise<AdaptedTxResultsInterface> {
+    return this.__getDataModelAccessor().getTransactionsStatus(transactionHashes);
   }
 }
 

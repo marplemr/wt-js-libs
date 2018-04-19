@@ -15,7 +15,7 @@ describe('WTLibs.data-models.web3-json.WTIndexDataProvider', () => {
   });
 
   it('should throw when we want index from a bad address', async () => {
-    const customIndexDataProvider = await WTIndexDataProvider.createInstance('0x96eA4BbF71FEa3c9411C1Cefc555E9d7189695fA', dataModel.commonWeb3Utils, dataModel.commonWeb3Contracts);
+    const customIndexDataProvider = await WTIndexDataProvider.createInstance('0x96eA4BbF71FEa3c9411C1Cefc555E9d7189695fA', dataModel.web3Utils, dataModel.web3Contracts);
     try {
       await customIndexDataProvider.__getDeployedIndex();
       throw new Error('should not have been called');
@@ -45,7 +45,7 @@ describe('WTLibs.data-models.web3-json.WTIndexDataProvider', () => {
 
     it('should throw if hotel cannot be added due to network issues', async () => {
       // TODO this might probably be emulated in another way
-      const myIndexDataProvider = await WTIndexDataProvider.createInstance('some-other-address', dataModel.commonWeb3Utils, dataModel.commonWeb3Contracts);
+      const myIndexDataProvider = await WTIndexDataProvider.createInstance('some-other-address', dataModel.web3Utils, dataModel.web3Contracts);
       try {
         await myIndexDataProvider.addHotel({ manager: 'b' });
         throw new Error('should not have been called');

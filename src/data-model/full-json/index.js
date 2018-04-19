@@ -1,6 +1,6 @@
 // @flow
 
-import type { DataModelAccessorInterface } from '../../interfaces';
+import type { DataModelAccessorInterface, AdaptedTxResultsInterface } from '../../interfaces';
 import JsonWTIndexDataProvider from './wt-index';
 
 /**
@@ -52,6 +52,27 @@ class FullJsonDataModel implements DataModelAccessorInterface {
   async getWindingTreeIndex (address: string): Promise<JsonWTIndexDataProvider> {
     const index = this.source[address] || {};
     return JsonWTIndexDataProvider.createInstance(index);
+  }
+
+  /**
+   * Fakes a response for multiple transactions status.
+   */
+  async getTransactionsStatus (txHashes: Array<string>): Promise<AdaptedTxResultsInterface> {
+    const processed = txHashes.filter((a) => a.match(/tx-(add|remove|update)-/));
+    let results = {};
+    for (let hash of processed) {
+      results[hash] = { status: 1 };
+    }
+    return {
+      meta: {
+        total: txHashes.length,
+        processed: processed.length,
+        minBlockAge: 0,
+        maxBlockAge: 0,
+        allPassed: txHashes.length === processed.length,
+      },
+      results: results,
+    };
   }
 };
 

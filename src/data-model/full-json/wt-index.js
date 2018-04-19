@@ -1,6 +1,6 @@
 // @flow
 
-import type { WTIndexInterface, HotelInterface, AddHotelResponseInterface, AdaptedTxResultsInterface } from '../../interfaces';
+import type { WTIndexInterface, HotelInterface, AddHotelResponseInterface } from '../../interfaces';
 
 /**
  * JSON backed implementation of Winding Tree index wrapper.
@@ -103,27 +103,6 @@ class JsonWTIndexDataProvider implements WTIndexInterface {
   async getAllHotels (): Promise<Array<HotelInterface>> {
     const hotels: Array<HotelInterface> = (Object.values(this.source.hotels): any); // eslint-disable-line flowtype/no-weak-types
     return hotels;
-  }
-
-  /**
-   * Fakes a response for multiple transactions status.
-   */
-  async getTransactionsStatus (txHashes: Array<string>): Promise<AdaptedTxResultsInterface> {
-    const processed = txHashes.filter((a) => a.match(/tx-(add|remove|update)-/));
-    let results = {};
-    for (let hash of processed) {
-      results[hash] = { status: 1 };
-    }
-    return {
-      meta: {
-        total: txHashes.length,
-        processed: processed.length,
-        minBlockAge: 0,
-        maxBlockAge: 0,
-        allPassed: txHashes.length === processed.length,
-      },
-      results: results,
-    };
   }
 }
 

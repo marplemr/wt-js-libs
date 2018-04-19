@@ -1,7 +1,7 @@
 // @flow
 
 import type { DataModelType, DataModelOptionsType } from './data-model';
-import type { WTIndexInterface } from './interfaces';
+import type { WTIndexInterface, AdaptedTxResultsInterface } from './interfaces';
 import DataModel from './data-model';
 
 /**
@@ -46,6 +46,13 @@ class WTLibs {
    */
   async getWTIndex (address: string): Promise<WTIndexInterface> {
     return this.dataModel.getWindingTreeIndex(address);
+  }
+
+  /**
+   * Get a transactions status from the underlying `data-model`
+   */
+  async getTransactionsStatus (transactionHashes: Array<string>): Promise<AdaptedTxResultsInterface> {
+    return this.dataModel.getTransactionsStatus(transactionHashes);
   }
 }
 
