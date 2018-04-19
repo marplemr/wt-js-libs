@@ -1,5 +1,5 @@
 // @flow
-import type { WTIndexInterface, HotelInterface, AddHotelResponseInterface } from '../../interfaces';
+import type { WTIndexInterface, HotelInterface, AddHotelResponseInterface, WalletInterface } from '../../interfaces';
 import Utils from '../../common-web3/utils';
 import Contracts from '../../common-web3/contracts';
 import Web3JsonHotelDataProvider from './hotel';
@@ -43,11 +43,11 @@ class Web3JsonWTIndexDataProvider implements WTIndexInterface {
    *
    * @throws {Error} When anything goes wrong.
    */
-  async addHotel (hotelData: HotelInterface): Promise<AddHotelResponseInterface> {
+  async addHotel (wallet: WalletInterface, hotelData: HotelInterface): Promise<AddHotelResponseInterface> {
     try {
       const hotel = await Web3JsonHotelDataProvider.createInstance(this.web3Utils, this.web3Contracts, await this.__getDeployedIndex());
       hotel.setLocalData(hotelData);
-      const transactionIds = await hotel.createOnNetwork({
+      const transactionIds = await hotel.createOnNetwork(wallet, {
         from: hotelData.manager,
         to: this.address,
       });
@@ -67,10 +67,10 @@ class Web3JsonWTIndexDataProvider implements WTIndexInterface {
    *
    * @throws {Error} When anything goes wrong.
    */
-  async updateHotel (hotel: HotelInterface): Promise<Array<string>> {
+  async updateHotel (wallet: WalletInterface, hotel: HotelInterface): Promise<Array<string>> {
     try {
       // We need to separate calls to be able to properly catch exceptions
-      const updatedHotel = await ((hotel: any): Web3JsonHotelDataProvider).updateOnNetwork({ // eslint-disable-line flowtype/no-weak-types
+      const updatedHotel = await ((hotel: any): Web3JsonHotelDataProvider).updateOnNetwork(wallet, { // eslint-disable-line flowtype/no-weak-types
         from: await hotel.manager,
         to: this.address,
       });
@@ -90,10 +90,10 @@ class Web3JsonWTIndexDataProvider implements WTIndexInterface {
    *   - hotel does not belong to the calling manager
    *   - not enough gas
    */
-  async removeHotel (hotel: HotelInterface): Promise<Array<string>> {
+  async removeHotel (wallet: WalletInterface, hotel: HotelInterface): Promise<Array<string>> {
     try {
       // We need to separate calls to be able to properly catch exceptions
-      const result = await ((hotel: any): Web3JsonHotelDataProvider).removeFromNetwork({ // eslint-disable-line flowtype/no-weak-types
+      const result = await ((hotel: any): Web3JsonHotelDataProvider).removeFromNetwork(wallet, { // eslint-disable-line flowtype/no-weak-types
         from: await hotel.manager,
         to: this.address,
       });

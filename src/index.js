@@ -1,7 +1,7 @@
 // @flow
 
 import type { DataModelType, DataModelOptionsType } from './data-model';
-import type { WTIndexInterface, AdaptedTxResultsInterface } from './interfaces';
+import type { WTIndexInterface, AdaptedTxResultsInterface, WalletInterface } from './interfaces';
 import DataModel from './data-model';
 
 /**
@@ -53,6 +53,10 @@ class WTLibs {
    */
   async getTransactionsStatus (transactionHashes: Array<string>): Promise<AdaptedTxResultsInterface> {
     return this.dataModel.getTransactionsStatus(transactionHashes);
+  }
+
+  async createWallet (jsonWallet: Object): Promise<WalletInterface> {
+    return this.dataModel.createWallet(jsonWallet);
   }
 }
 

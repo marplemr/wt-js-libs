@@ -3,8 +3,9 @@
 import Web3 from 'web3';
 import Utils from '../../common-web3/utils';
 import Contracts from '../../common-web3/contracts';
-import type { DataModelAccessorInterface, AdaptedTxResultInterface, AdaptedTxResultsInterface } from '../../interfaces';
+import type { DataModelAccessorInterface, AdaptedTxResultInterface, AdaptedTxResultsInterface, WalletInterface } from '../../interfaces';
 import Web3JsonWTIndexDataProvider from './wt-index';
+import Web3JsonWTWallet from './wallet';
 import { storageInstance } from '../../dataset/in-memory-backed';
 
 /**
@@ -36,6 +37,7 @@ export type Web3JsonDataModelOptionsType = {
  */
 class Web3JsonDataModel implements DataModelAccessorInterface {
   options: Web3JsonDataModelOptionsType;
+  web3Instance: Web3;
   web3Utils: Utils;
   web3Contracts: Contracts;
 
@@ -54,9 +56,9 @@ class Web3JsonDataModel implements DataModelAccessorInterface {
   constructor (options: Web3JsonDataModelOptionsType) {
     this.options = options;
     this.options.gasCoefficient = this.options.gasCoefficient || 2;
-    const web3instance = new Web3(options.provider);
-    this.web3Utils = Utils.createInstance(this.options.gasCoefficient, web3instance);
-    this.web3Contracts = Contracts.createInstance(web3instance);
+    this.web3Instance = new Web3(options.provider);
+    this.web3Utils = Utils.createInstance(this.options.gasCoefficient, this.web3Instance);
+    this.web3Contracts = Contracts.createInstance(this.web3Instance);
 
     if (this.options.initialJsonData) {
       for (let key in this.options.initialJsonData) {
@@ -113,6 +115,12 @@ class Web3JsonDataModel implements DataModelAccessorInterface {
       },
       results: results,
     };
+  }
+
+  async createWallet (jsonWallet: Object): Promise<WalletInterface> {
+    const wallet = Web3JsonWTWallet.createInstance(jsonWallet);
+    wallet.setWeb3(this.web3Instance);
+    return Promise.resolve(wallet);
   }
 };
 

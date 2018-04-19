@@ -1,5 +1,5 @@
 // @flow
-import type { HotelInterface, LocationInterface } from '../../interfaces';
+import type { HotelInterface, LocationInterface, WalletInterface } from '../../interfaces';
 import Utils from '../../common-web3/utils';
 import Contracts from '../../common-web3/contracts';
 import EthBackedHotelProvider from '../../common-web3/eth-backed-hotel-provider';
@@ -69,9 +69,9 @@ class Web3JsonHotelDataProvider extends EthBackedHotelProvider implements HotelI
    * storage hash as a data url. Calls EthBackedHotelProvider's `createOnNetwork`
    * in the end
    */
-  async createOnNetwork (transactionOptions: Object): Promise<Array<string>> {
+  async createOnNetwork (wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>> {
     const dataUrl = this.inMemBackedData.getHash();
-    return super.createOnNetwork(transactionOptions, dataUrl);
+    return super.createOnNetwork(wallet, transactionOptions, dataUrl);
   }
 
   /**
@@ -79,13 +79,13 @@ class Web3JsonHotelDataProvider extends EthBackedHotelProvider implements HotelI
    * is copied over into the new location. EthBackedHotelProvider's `updateOnNetwork`
    * is called aferwards.
    */
-  async updateOnNetwork (transactionOptions: Object): Promise<Array<string>> {
+  async updateOnNetwork (wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>> {
     // url might have changed - copy over current inmem data and point a new url at them
     const currentUrl = await this.url;
     if (currentUrl !== this.inMemBackedData.getHash()) {
       this.inMemBackedData.changeHashTo(currentUrl);
     }
-    return super.updateOnNetwork(transactionOptions);
+    return super.updateOnNetwork(wallet, transactionOptions);
   }
 }
 

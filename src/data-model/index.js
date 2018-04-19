@@ -1,6 +1,6 @@
 // @flow
 
-import { DataModelAccessorInterface, WTIndexInterface, AdaptedTxResultsInterface } from '../interfaces';
+import { DataModelAccessorInterface, WTIndexInterface, AdaptedTxResultsInterface, WalletInterface } from '../interfaces';
 import FullJsonDataModel from './full-json';
 import type { FullJsonDataModelOptionsType } from './full-json';
 import Web3JsonDataModel from './web3-json';
@@ -83,6 +83,10 @@ class DataModel {
    */
   async getTransactionsStatus (transactionHashes: Array<string>): Promise<AdaptedTxResultsInterface> {
     return this.__getDataModelAccessor().getTransactionsStatus(transactionHashes);
+  }
+
+  async createWallet (jsonWallet: Object): Promise<WalletInterface> {
+    return this.__getDataModelAccessor().createWallet(jsonWallet);
   }
 }
 

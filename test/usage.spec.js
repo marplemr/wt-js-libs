@@ -1,19 +1,26 @@
 import { assert } from 'chai';
 import WTLibs from '../src/index';
+import jsonWallet from './utils/test-wallet';
 import testedDataModel from './utils/data-model-definition';
 
 describe('WTLibs usage', () => {
-  let libs, index, emptyIndex, minedTxHashes = [];
+  let libs, wallet, index, emptyIndex, minedTxHashes = [];
 
   beforeEach(async () => {
     libs = WTLibs.createInstance(testedDataModel.withDataSource());
     index = await libs.getWTIndex(testedDataModel.indexAddress);
+    wallet = await libs.createWallet(jsonWallet);
     emptyIndex = await libs.getWTIndex(testedDataModel.emptyIndexAddress);
+    await wallet.unlock('test123');
+  });
+
+  afterEach(() => {
+    wallet.destroy();
   });
 
   describe('addHotel', () => {
     it('should add hotel', async () => {
-      const result = await index.addHotel({
+      const result = await index.addHotel(wallet, {
         name: 'new hotel',
         description: 'some description',
         manager: '0xd39ca7d186a37bb6bf48ae8abfeb4c687dc8f906',
@@ -40,14 +47,14 @@ describe('WTLibs usage', () => {
 
       // We're removing the hotel to ensure clean slate after this test is run.
       // It is too expensive to re-set on-chain WTIndex after each test.
-      const removalResult = await index.removeHotel(hotel);
+      const removalResult = await index.removeHotel(wallet, hotel);
       const removelTxResults = await libs.getTransactionsStatus(removalResult);
       assert.equal(removelTxResults.meta.allPassed, true);
     });
 
     it('should throw when hotel does not have a manager', async () => {
       try {
-        await index.addHotel({
+        await index.addHotel(wallet, {
           name: 'new hotel',
           description: 'some description',
         });
@@ -61,7 +68,7 @@ describe('WTLibs usage', () => {
   describe('removeHotel', () => {
     it('should remove hotel', async () => {
       const manager = '0xd39ca7d186a37bb6bf48ae8abfeb4c687dc8f906';
-      const result = await index.addHotel({
+      const result = await index.addHotel(wallet, {
         name: 'another hotel',
         description: 'some desc',
         manager: manager,
@@ -71,7 +78,7 @@ describe('WTLibs usage', () => {
       assert.equal(list.length, 3);
       assert.include(await Promise.all(list.map(async (a) => a.address)), result.address);
       const hotel = await index.getHotel(result.address);
-      const removalResult = await index.removeHotel(hotel);
+      const removalResult = await index.removeHotel(wallet, hotel);
       assert.isDefined(removalResult);
       // prepare getTransactionsStatus test
       minedTxHashes.push(...removalResult);
@@ -82,7 +89,7 @@ describe('WTLibs usage', () => {
 
     it('should throw if no hotel is found on given address', async () => {
       try {
-        await index.removeHotel('0x96eA4BbF71FEa3c9411C1Cefc555E9d7189695fA');
+        await index.removeHotel(wallet, '0x96eA4BbF71FEa3c9411C1Cefc555E9d7189695fA');
         throw new Error('should not have been called');
       } catch (e) {
         assert.match(e.message, /cannot remove hotel/i);
@@ -123,7 +130,7 @@ describe('WTLibs usage', () => {
       hotel.url = newUrl;
       hotel.name = newName;
       hotel.description = newDescription;
-      const updateResult = await index.updateHotel(hotel);
+      const updateResult = await index.updateHotel(wallet, hotel);
       assert.isDefined(updateResult);
       const hotel2 = await index.getHotel(hotelAddress);
       assert.equal(await hotel2.name, newName);
@@ -133,7 +140,7 @@ describe('WTLibs usage', () => {
       hotel.name = oldName;
       hotel.description = oldDescription;
       hotel.url = oldUrl;
-      const updateResult2 = await index.updateHotel(hotel);
+      const updateResult2 = await index.updateHotel(wallet, hotel);
       assert.isDefined(updateResult2);
       const hotel3 = await index.getHotel(hotelAddress);
       assert.equal(await hotel3.name, oldName);
@@ -147,7 +154,7 @@ describe('WTLibs usage', () => {
         const hotel = await index.getHotel(hotelAddress);
         hotel.address = undefined;
         hotel.name = newName;
-        await index.updateHotel(hotel);
+        await index.updateHotel(wallet, hotel);
         throw new Error('should not have been called');
       } catch (e) {
         assert.match(e.message, /cannot update hotel/i);
@@ -160,7 +167,7 @@ describe('WTLibs usage', () => {
           address: '0xcd2a3d9f938e13cd947ec05abc7fe734df8dd826',
           name: 'Great new hotel name',
         };
-        await index.updateHotel(hotel);
+        await index.updateHotel(wallet, hotel);
         throw new Error('should not have been called');
       } catch (e) {
         assert.match(e.message, /cannot update hotel/i);

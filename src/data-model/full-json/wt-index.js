@@ -1,6 +1,6 @@
 // @flow
 
-import type { WTIndexInterface, HotelInterface, AddHotelResponseInterface } from '../../interfaces';
+import type { WTIndexInterface, HotelInterface, AddHotelResponseInterface, WalletInterface } from '../../interfaces';
 
 /**
  * JSON backed implementation of Winding Tree index wrapper.
@@ -37,7 +37,7 @@ class JsonWTIndexDataProvider implements WTIndexInterface {
    * @throws {Error} When no manager is specified
    * @return {address: string, transactionIds: Array<string}
    */
-  async addHotel (hotelData: HotelInterface): Promise<AddHotelResponseInterface> {
+  async addHotel (wallet: WalletInterface, hotelData: HotelInterface): Promise<AddHotelResponseInterface> {
     if (!hotelData.manager) {
       throw new Error('Cannot add hotel without manager');
     }
@@ -67,7 +67,7 @@ class JsonWTIndexDataProvider implements WTIndexInterface {
    * @throws {Error} When there is no hotel on a given address.
    * @return {Promise<Array<string>>} List of fake transaction IDs.
    */
-  async updateHotel (hotel: HotelInterface): Promise<Array<string>> {
+  async updateHotel (wallet: WalletInterface, hotel: HotelInterface): Promise<Array<string>> {
     const hotelAddress: ?string = await hotel.address;
     if (hotelAddress && this.source.hotels[hotelAddress]) {
       Object.assign(this.source.hotels[hotelAddress], hotel);
@@ -84,7 +84,7 @@ class JsonWTIndexDataProvider implements WTIndexInterface {
    * @return {Promise<Array<string>>} List of fake transaction IDs.
    *
    */
-  async removeHotel (hotel: HotelInterface): Promise<Array<string>> {
+  async removeHotel (wallet: WalletInterface, hotel: HotelInterface): Promise<Array<string>> {
     const address = await hotel.address;
     try {
       if (address && this.source.hotels[address] && this.source.hotels[address].manager === await hotel.manager) {

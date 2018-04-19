@@ -1,6 +1,7 @@
 import { assert } from 'chai';
 import sinon from 'sinon';
 import testedDataModel from '../../../utils/data-model-definition';
+import jsonWallet from '../../../utils/test-wallet';
 import Web3JsonDataModel from '../../../../src/data-model/web3-json';
 import HotelDataProvider from '../../../../src/data-model/web3-json/hotel';
 
@@ -72,7 +73,9 @@ describe('WTLibs.data-model.web3-json.hotel', () => {
   describe('write to network', () => {
     // it should not update when data is not changed
     it('should update', async () => {
-      const result = await indexDataProvider.addHotel({
+      let wallet = await dataModel.createWallet(jsonWallet);
+      await wallet.unlock('test123');
+      const result = await indexDataProvider.addHotel(wallet, {
         name: 'new hotel',
         description: 'some description',
         manager: '0xd39ca7d186a37bb6bf48ae8abfeb4c687dc8f906',
@@ -81,7 +84,7 @@ describe('WTLibs.data-model.web3-json.hotel', () => {
       const hotelProvider = await HotelDataProvider.createInstance(dataModel.web3Utils, dataModel.web3Contracts, await indexDataProvider.__getDeployedIndex(), result.address);
       const newName = 'Random changed name';
       hotelProvider.name = newName;
-      await hotelProvider.updateOnNetwork({
+      await hotelProvider.updateOnNetwork(wallet, {
         from: await hotelProvider.manager,
         to: indexDataProvider.address,
       });
@@ -89,7 +92,8 @@ describe('WTLibs.data-model.web3-json.hotel', () => {
       let freshHotelProvider = await HotelDataProvider.createInstance(dataModel.web3Utils, dataModel.web3Contracts, await indexDataProvider.__getDeployedIndex(), result.address);
       assert.equal(await hotelProvider.name, await freshHotelProvider.name);
       // And remove the hotel to keep the data consistent
-      await indexDataProvider.removeHotel(freshHotelProvider);
+      await indexDataProvider.removeHotel(wallet, freshHotelProvider);
+      wallet.destroy();
     });
   });
 });

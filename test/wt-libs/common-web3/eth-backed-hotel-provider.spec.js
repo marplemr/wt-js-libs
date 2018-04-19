@@ -4,7 +4,7 @@ import helpers from '../../utils/helpers';
 import EthBackedHotelProvider from '../../../src/common-web3/eth-backed-hotel-provider';
 
 describe('WTLibs.common-web3.EthBackedHotelProvider', () => {
-  let contractsStub, utilsStub, indexContractStub;
+  let contractsStub, utilsStub, indexContractStub, walletStub;
 
   beforeEach(() => {
     utilsStub = {
@@ -34,6 +34,14 @@ describe('WTLibs.common-web3.EthBackedHotelProvider', () => {
         registerHotel: helpers.stubContractMethodResult('registered-hotel'),
         deleteHotel: helpers.stubContractMethodResult('deleted-hotel'),
       },
+    };
+    walletStub = {
+      signAndSendTransaction: sinon.spy((txOpts, callback) => {
+        if (callback) {
+          callback();
+        }
+        return Promise.resolve('tx-hash');
+      }),
     };
   });
 
@@ -81,49 +89,37 @@ describe('WTLibs.common-web3.EthBackedHotelProvider', () => {
       await provider.initialize();
     });
     it('should precompute address', async () => {
-      const result = await provider.createOnNetwork({}, 'data-url');
+      const result = await provider.createOnNetwork(walletStub, {}, 'data-url');
       assert.deepEqual(result, ['tx-hash']);
-      assert.equal(utilsStub.determineCurrentAddressNonce.callCount, 1);
+      // index nonce + caller nonce
+      assert.equal(utilsStub.determineCurrentAddressNonce.callCount, 2);
       assert.equal(utilsStub.determineDeployedContractFutureAddress.callCount, 1);
+      assert.equal(walletStub.signAndSendTransaction.callCount, 1);
     });
 
+    // TODO test cross hotel.manager vs. wallet.account
+
     it('should call registerHotel with applied gasCoefficient', async () => {
-      const result = await provider.createOnNetwork({ from: 'xx' }, 'data-url');
+      const result = await provider.createOnNetwork(walletStub, { from: 'xx' }, 'data-url');
       assert.deepEqual(result, ['tx-hash']);
       assert.equal(utilsStub.applyGasCoefficient.callCount, 1);
       assert.equal(indexContractStub.methods.registerHotel().estimateGas.callCount, 1);
-      assert.equal(indexContractStub.methods.registerHotel().send.callCount, 1);
+      assert.equal(indexContractStub.methods.registerHotel().encodeABI.callCount, 1);
       assert.equal(indexContractStub.methods.registerHotel().estimateGas.firstCall.args[0].from, 'xx');
-      assert.equal(indexContractStub.methods.registerHotel().send.firstCall.args[0].from, 'xx');
-      assert.equal(indexContractStub.methods.registerHotel().send.firstCall.args[0].gas, 12);
+      assert.equal(walletStub.signAndSendTransaction.callCount, 1);
+      assert.equal(walletStub.signAndSendTransaction.firstCall.args[0].from, 'xx');
     });
 
     it('should mark dataset as deployed on success', async () => {
       assert.isFalse(provider.ethBackedDataset.isDeployed());
-      await provider.createOnNetwork({ from: 'xx' }, 'data-url');
+      await provider.createOnNetwork(walletStub, { from: 'xx' }, 'data-url');
       assert.isTrue(provider.ethBackedDataset.isDeployed());
     });
 
-    it('should throw on error event', async () => {
-      indexContractStub.methods.registerHotel = helpers.stubContractMethodResult('registered-hotel', {
-        receipt: false,
-        error: true,
-      });
+    it('should throw on transaction error', async () => {
+      walletStub.signAndSendTransaction = sinon.stub().rejects(new Error('Cannot send signed transaction'));
       try {
-        await provider.createOnNetwork({ from: 'xx' }, 'data-url');
-        throw new Error('should not have been called');
-      } catch (e) {
-        assert.match(e.message, /cannot create hotel/i);
-      }
-    });
-
-    it('should throw on unexpected error', async () => {
-      indexContractStub.methods.registerHotel = helpers.stubContractMethodResult('registered-hotel', {
-        receipt: false,
-        catch: true,
-      });
-      try {
-        await provider.createOnNetwork({ from: 'xx' }, 'data-url');
+        await provider.createOnNetwork(walletStub, { from: 'xx' }, 'data-url');
         throw new Error('should not have been called');
       } catch (e) {
         assert.match(e.message, /cannot create hotel/i);
@@ -143,7 +139,7 @@ describe('WTLibs.common-web3.EthBackedHotelProvider', () => {
       try {
         let provider = new EthBackedHotelProvider(utilsStub, contractsStub, indexContractStub);
         await provider.initialize();
-        await provider.updateOnNetwork({});
+        await provider.updateOnNetwork(walletStub, {});
         throw new Error('should not have been called');
       } catch (e) {
         assert.match(e.message, /cannot get hotel/i);
@@ -151,36 +147,20 @@ describe('WTLibs.common-web3.EthBackedHotelProvider', () => {
     });
 
     it('should call callHotel with applied gasCoefficient', async () => {
-      const result = await provider.updateOnNetwork({ from: 'xx' }, 'data-url');
+      const result = await provider.updateOnNetwork(walletStub, { from: 'xx' }, 'data-url');
       assert.deepEqual(result, ['tx-hash']);
       assert.equal(utilsStub.applyGasCoefficient.callCount, 1);
       assert.equal(indexContractStub.methods.callHotel().estimateGas.callCount, 1);
-      assert.equal(indexContractStub.methods.callHotel().send.callCount, 1);
+      assert.equal(indexContractStub.methods.callHotel().encodeABI.callCount, 1);
       assert.equal(indexContractStub.methods.callHotel().estimateGas.firstCall.args[0].from, 'xx');
-      assert.equal(indexContractStub.methods.callHotel().send.firstCall.args[0].from, 'xx');
-      assert.equal(indexContractStub.methods.callHotel().send.firstCall.args[0].gas, 12);
+      assert.equal(walletStub.signAndSendTransaction.callCount, 1);
+      assert.equal(walletStub.signAndSendTransaction.firstCall.args[0].from, 'xx');
     });
 
-    it('should throw on error event', async () => {
-      indexContractStub.methods.callHotel = helpers.stubContractMethodResult('registered-hotel', {
-        receipt: false,
-        error: true,
-      });
+    it('should throw on error', async () => {
+      walletStub.signAndSendTransaction = sinon.stub().rejects(new Error('Cannot send signed transaction'));
       try {
-        await provider.updateOnNetwork({ from: 'xx' }, 'data-url');
-        throw new Error('should not have been called');
-      } catch (e) {
-        assert.match(e.message, /cannot update hotel/i);
-      }
-    });
-
-    it('should throw on unexpected error', async () => {
-      indexContractStub.methods.callHotel = helpers.stubContractMethodResult('registered-hotel', {
-        receipt: false,
-        catch: true,
-      });
-      try {
-        await provider.updateOnNetwork({ from: 'xx' }, 'data-url');
+        await provider.updateOnNetwork(walletStub, { from: 'xx' }, 'data-url');
         throw new Error('should not have been called');
       } catch (e) {
         assert.match(e.message, /cannot update hotel/i);
@@ -198,7 +178,7 @@ describe('WTLibs.common-web3.EthBackedHotelProvider', () => {
     it('should throw on an undeployed contract', async () => {
       try {
         provider.ethBackedDataset.__deployedFlag = false;
-        await provider.removeFromNetwork({});
+        await provider.removeFromNetwork(walletStub, {});
         throw new Error('should not have been called');
       } catch (e) {
         assert.match(e.message, /cannot remove hotel/i);
@@ -206,42 +186,26 @@ describe('WTLibs.common-web3.EthBackedHotelProvider', () => {
     });
 
     it('should call deleteHotel with applied gasCoefficient', async () => {
-      const result = await provider.removeFromNetwork({ from: 'xx' });
+      const result = await provider.removeFromNetwork(walletStub, { from: 'xx' });
       assert.deepEqual(result, ['tx-hash']);
       assert.equal(utilsStub.applyGasCoefficient.callCount, 1);
       assert.equal(indexContractStub.methods.deleteHotel().estimateGas.callCount, 1);
-      assert.equal(indexContractStub.methods.deleteHotel().send.callCount, 1);
+      assert.equal(indexContractStub.methods.deleteHotel().encodeABI.callCount, 1);
       assert.equal(indexContractStub.methods.deleteHotel().estimateGas.firstCall.args[0].from, 'xx');
-      assert.equal(indexContractStub.methods.deleteHotel().send.firstCall.args[0].from, 'xx');
-      assert.equal(indexContractStub.methods.deleteHotel().send.firstCall.args[0].gas, 12);
+      assert.equal(walletStub.signAndSendTransaction.callCount, 1);
+      assert.equal(walletStub.signAndSendTransaction.firstCall.args[0].from, 'xx');
     });
 
     it('should mark dataset as obsolete on success', async () => {
       assert.isFalse(provider.ethBackedDataset.isObsolete());
-      await provider.removeFromNetwork({ from: 'xx' });
+      await provider.removeFromNetwork(walletStub, { from: 'xx' });
       assert.isTrue(provider.ethBackedDataset.isObsolete());
     });
 
-    it('should throw on error event', async () => {
-      indexContractStub.methods.deleteHotel = helpers.stubContractMethodResult('deleted-hotel', {
-        receipt: false,
-        error: true,
-      });
+    it('should throw on error', async () => {
+      walletStub.signAndSendTransaction = sinon.stub().rejects(new Error('Cannot send signed transaction'));
       try {
-        await provider.removeFromNetwork({ from: 'xx' });
-        throw new Error('should not have been called');
-      } catch (e) {
-        assert.match(e.message, /cannot remove hotel/i);
-      }
-    });
-
-    it('should throw on unexpected error', async () => {
-      indexContractStub.methods.deleteHotel = helpers.stubContractMethodResult('deleted-hotel', {
-        receipt: false,
-        catch: true,
-      });
-      try {
-        await provider.removeFromNetwork({ from: 'xx' });
+        await provider.removeFromNetwork(walletStub, { from: 'xx' });
         throw new Error('should not have been called');
       } catch (e) {
         assert.match(e.message, /cannot remove hotel/i);

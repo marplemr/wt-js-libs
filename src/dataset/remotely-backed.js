@@ -212,7 +212,7 @@ class RemotelyBacked {
    * @param  {Object} transactionOptions passed to every remoteSetter, typically something like `{from: address, to: address}`
    * @return {Array<any>} Results of remoteSetters, it would typically contain transaction IDs
    */
-  async updateRemoteData (transactionOptions) {
+  async updateRemoteData (wallet, transactionOptions) {
     await this.__syncRemoteData();
     const remoteSetters = [];
     const remoteSettersHashCodes = {};
@@ -223,7 +223,7 @@ class RemotelyBacked {
         let setterHashCode = this.__hashCode(remoteSetter.toString());
         if (!remoteSettersHashCodes[setterHashCode]) {
           remoteSettersHashCodes[setterHashCode] = true;
-          remoteSetters.push(remoteSetter(_.cloneDeep(transactionOptions)).then((result) => {
+          remoteSetters.push(remoteSetter(wallet, _.cloneDeep(transactionOptions)).then((result) => {
             this.__fieldStates[this.__fieldKeys[i]] = 'synced';
             return result;
           }));

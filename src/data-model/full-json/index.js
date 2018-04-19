@@ -1,7 +1,8 @@
 // @flow
 
-import type { DataModelAccessorInterface, AdaptedTxResultsInterface } from '../../interfaces';
+import type { DataModelAccessorInterface, AdaptedTxResultsInterface, WalletInterface } from '../../interfaces';
 import JsonWTIndexDataProvider from './wt-index';
+import JSONWTWallet from './wallet';
 
 /**
  * FullJSonDataModel options. Contains only `source`
@@ -73,6 +74,10 @@ class FullJsonDataModel implements DataModelAccessorInterface {
       },
       results: results,
     };
+  }
+
+  async createWallet (jsonWallet: Object): Promise<WalletInterface> {
+    return JSONWTWallet.createInstance(jsonWallet);
   }
 };
 

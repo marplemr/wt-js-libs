@@ -9,10 +9,12 @@ function getFreshDataSource () {
 }
 
 describe('WTLibs.data-model.full-json', () => {
+  let wallet;
   beforeEach(function () {
     if (process.env.TESTED_DATA_MODEL !== 'full-json') {
       this.skip();
     }
+    wallet = {};
   });
 
   describe('createInstance', () => {
@@ -49,7 +51,7 @@ describe('WTLibs.data-model.full-json', () => {
 
     describe('addHotel', () => {
       it('should add hotel', async () => {
-        const result = await index.addHotel({ url: 'a', manager: 'Donald' });
+        const result = await index.addHotel(wallet, { url: 'a', manager: 'Donald' });
         const hotel = await index.getHotel(result.address);
         assert.isDefined(hotel);
         assert.equal(await hotel.url, 'a');
@@ -79,7 +81,7 @@ describe('WTLibs.data-model.full-json', () => {
       });
 
       it('should get added hotel', async () => {
-        const result = await index.addHotel({ url: 'Third one', manager: 'Donald' });
+        const result = await index.addHotel(wallet, { url: 'Third one', manager: 'Donald' });
         assert.isDefined(index.source.hotels);
         assert.isDefined(index.source.hotels[result.address]);
         const hotel = await index.getHotel(result.address);
@@ -96,7 +98,7 @@ describe('WTLibs.data-model.full-json', () => {
         try {
           const hotel = _.cloneDeep(await index.getHotel(address));
           hotel.address = fakeAddress;
-          await index.removeHotel(hotel);
+          await index.removeHotel(wallet, hotel);
           throw new Error('should not have been called');
         } catch (e) {
           assert.match(e.message, /cannot remove/i);
@@ -109,7 +111,7 @@ describe('WTLibs.data-model.full-json', () => {
         try {
           const hotel = _.cloneDeep(await index.getHotel(address));
           hotel.manager = manager;
-          await index.removeHotel(hotel);
+          await index.removeHotel(wallet, hotel);
           throw new Error('should not have been called');
         } catch (e) {
           assert.match(e.message, /cannot remove/i);
@@ -120,7 +122,7 @@ describe('WTLibs.data-model.full-json', () => {
         try {
           const hotel = _.cloneDeep(await index.getHotel(address));
           hotel.address = null;
-          await index.removeHotel(hotel);
+          await index.removeHotel(wallet, hotel);
           throw new Error('should not have been called');
         } catch (e) {
           assert.match(e.message, /cannot remove/i);

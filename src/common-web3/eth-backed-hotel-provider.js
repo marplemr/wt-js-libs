@@ -1,5 +1,5 @@
 // @flow
-import type { HotelInterface } from '../interfaces';
+import type { HotelInterface, WalletInterface } from '../interfaces';
 import Utils from './utils';
 import Contracts from './contracts';
 import RemotelyBacked from '../dataset/remotely-backed';
@@ -98,20 +98,24 @@ class EthBackedHotelProvider {
    * @param {Object} transactionOptions usually contains from and to. Gas is automatically computed.
    * @return {Promise<string>} resulting transaction hash
    */
-  async __editInfo (transactionOptions: Object): Promise<string> {
+  async __editInfo (wallet: WalletInterface, transactionOptions: Object): Promise<string> {
     const data = (await this.__getContractInstance()).methods.editInfo(await this.url).encodeABI();
     const estimate = await this.indexContract.methods.callHotel(this.address, data).estimateGas(transactionOptions);
-    return new Promise(async (resolve, reject) => {
-      return this.indexContract.methods.callHotel(this.address, data).send(Object.assign(transactionOptions, {
-        gas: this.web3Utils.applyGasCoefficient(estimate),
-      })).on('transactionHash', (hash) => {
-        resolve(hash);
-      }).on('error', (err) => {
-        reject(new Error('Cannot update hotel info: ' + err));
-      }).catch((err) => {
-        reject(new Error('Cannot update hotel info: ' + err));
+    const txData = this.indexContract.methods.callHotel(this.address, data).encodeABI();
+    const transactionData = {
+      nonce: await this.web3Utils.determineCurrentAddressNonce(transactionOptions.from),
+      data: txData,
+      from: transactionOptions.from,
+      to: this.indexContract.options.address,
+      gas: this.web3Utils.applyGasCoefficient(estimate),
+    };
+    return wallet.signAndSendTransaction(transactionData)
+      .then((hash) => {
+        return hash;
+      })
+      .catch((err) => {
+        throw new Error('Cannot update hotel: ' + err);
       });
-    });
   }
 
   /**
@@ -125,7 +129,7 @@ class EthBackedHotelProvider {
    * @param {Object} transactionOptions usually contains from and to. Gas is automatically computed.
    * @return {Promise<Array<string>>} list of resulting transaction hashes
    */
-  async createOnNetwork (transactionOptions: Object, url: string): Promise<Array<string>> {
+  async createOnNetwork (wallet: WalletInterface, transactionOptions: Object, url: string): Promise<Array<string>> {
     // Pre-compute hotel address, we need to use index for it's creating the contract
     this.address = this.web3Utils.determineDeployedContractFutureAddress(
       this.indexContract.options.address,
@@ -133,21 +137,23 @@ class EthBackedHotelProvider {
     );
     // Create hotel on-network
     const estimate = await this.indexContract.methods.registerHotel(url).estimateGas(transactionOptions);
-    return new Promise(async (resolve, reject) => {
-      this.indexContract.methods.registerHotel(url).send(Object.assign({}, transactionOptions, {
-        gas: this.web3Utils.applyGasCoefficient(estimate),
-      })).on('transactionHash', (hash) => {
-        resolve([
-          hash,
-        ]);
-      }).on('receipt', () => {
-        this.ethBackedDataset.markDeployed();
-      }).on('error', (err) => {
-        reject(new Error('Cannot create hotel: ' + err));
-      }).catch((err) => {
-        reject(new Error('Cannot create hotel: ' + err));
+    const data = this.indexContract.methods.registerHotel(url).encodeABI();
+    const transactionData = {
+      nonce: await this.web3Utils.determineCurrentAddressNonce(transactionOptions.from),
+      data: data,
+      from: transactionOptions.from,
+      to: this.indexContract.options.address,
+      gas: this.web3Utils.applyGasCoefficient(estimate),
+    };
+    return wallet.signAndSendTransaction(transactionData, () => {
+      this.ethBackedDataset.markDeployed();
+    })
+      .then((hash) => {
+        return [hash];
+      })
+      .catch((err) => {
+        throw new Error('Cannot create hotel: ' + err);
       });
-    });
   }
 
   /**
@@ -158,12 +164,12 @@ class EthBackedHotelProvider {
    * @throws {Error} When the underlying contract is not yet deployed.
    * @return {Promise<Array<string>>} List of transaction hashes
    */
-  async updateOnNetwork (transactionOptions: Object): Promise<Array<string>> {
+  async updateOnNetwork (wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>> {
     // pre-check if contract is available at all and fail fast
     await this.__getContractInstance();
     // We have to clone options for each dataset as they may get modified
     // along the way
-    return this.ethBackedDataset.updateRemoteData(Object.assign({}, transactionOptions));
+    return this.ethBackedDataset.updateRemoteData(wallet, Object.assign({}, transactionOptions));
   }
 
   /**
@@ -174,26 +180,28 @@ class EthBackedHotelProvider {
    * @throws {Error} When the underlying contract is not yet deployed.
    * @return {Promise<Array<string>>} List of transaction hashes
    */
-  async removeFromNetwork (transactionOptions: Object): Promise<Array<string>> {
+  async removeFromNetwork (wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>> {
     if (!this.ethBackedDataset.isDeployed()) {
       throw new Error('Cannot remove hotel: not deployed');
     }
     const estimate = await this.indexContract.methods.deleteHotel(this.address).estimateGas(transactionOptions);
-    return new Promise(async (resolve, reject) => {
-      this.indexContract.methods.deleteHotel(this.address).send(Object.assign(transactionOptions, {
-        gas: this.web3Utils.applyGasCoefficient(estimate),
-      })).on('transactionHash', (hash) => {
-        resolve([
-          hash,
-        ]);
-      }).on('receipt', () => {
-        this.ethBackedDataset.markObsolete();
-      }).on('error', (err) => {
-        reject(new Error('Cannot remove hotel: ' + err));
-      }).catch((err) => {
-        reject(new Error('Cannot remove hotel: ' + err));
+    const data = this.indexContract.methods.deleteHotel(this.address).encodeABI();
+    const transactionData = {
+      nonce: await this.web3Utils.determineCurrentAddressNonce(transactionOptions.from),
+      data: data,
+      from: transactionOptions.from,
+      to: this.indexContract.options.address,
+      gas: this.web3Utils.applyGasCoefficient(estimate),
+    };
+    return wallet.signAndSendTransaction(transactionData, () => {
+      this.ethBackedDataset.markObsolete();
+    })
+      .then((hash) => {
+        return [hash];
+      })
+      .catch((err) => {
+        throw new Error('Cannot remove hotel: ' + err);
       });
-    });
   }
 }
 

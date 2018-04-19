@@ -44,13 +44,13 @@ export interface HotelInterface {
  * in various `data-model`s.
  */
 export interface WTIndexInterface {
-  addHotel(data: HotelInterface): Promise<AddHotelResponseInterface>;
+  addHotel(wallet: WalletInterface, data: HotelInterface): Promise<AddHotelResponseInterface>;
   getHotel(address: string): Promise<?HotelInterface>;
   getAllHotels(): Promise<Array<HotelInterface>>;
   // It is possible that this operation generates multiple transactions
-  updateHotel(hotel: HotelInterface): Promise<Array<string>>;
+  updateHotel(wallet: WalletInterface, hotel: HotelInterface): Promise<Array<string>>;
   // It is possible that this operation generates multiple transactions
-  removeHotel(hotel: HotelInterface): Promise<Array<string>>
+  removeHotel(wallet: WalletInterface, hotel: HotelInterface): Promise<Array<string>>
 }
 
 /**
@@ -59,7 +59,8 @@ export interface WTIndexInterface {
  */
 export interface DataModelAccessorInterface {
   getWindingTreeIndex(address: string): Promise<WTIndexInterface>,
-  getTransactionsStatus (transactionHashes: Array<string>): Promise<AdaptedTxResultsInterface>
+  getTransactionsStatus (transactionHashes: Array<string>): Promise<AdaptedTxResultsInterface>,
+  createWallet (jsonWallet: Object): Promise<WalletInterface>
 }
 
 /**
@@ -139,4 +140,18 @@ export interface AdaptedTxResultsInterface {
     allPassed: boolean
   },
   results?: {[string]: AdaptedTxResultInterface}
+}
+
+// 1. api holds a json wallets
+// 2. api call finds an appropriate JSON wallet on request
+// 3. api creates wallet instance, passes the password from headers
+// 4. api calls wt-js-libs methods with wallet attached
+// 5. api locks the wallet and drops it from memory
+
+export interface WalletInterface {
+  unlock(password: string): Promise<void>,
+  // data: nonce, chainId, to, data, value, gasPrice, gas
+  signAndSendTransaction(transactionData: Object, onReceipt: ?(receipt: TxReceiptInterface) => void): Promise<string>,
+  lock(): void,
+  destroy(): void
 }
