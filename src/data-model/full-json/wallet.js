@@ -1,29 +1,74 @@
 // @flow
+import ethJsUtil from 'ethereumjs-util';
+import type { WalletInterface, TxReceiptInterface, TransactionDataInterface, KeystoreV3Interface } from '../../interfaces';
 
-import type { WalletInterface, TxReceiptInterface } from '../../interfaces';
-
+/**
+ * Fake and dummy WalletInterface implementation that does nothing.
+ */
 class JSONWTWallet implements WalletInterface {
-  jsonWallet: Object;
-
-  static createInstance (keystoreJsonV3: Object): WalletInterface {
-    return new JSONWTWallet(keystoreJsonV3);
+  address: string;
+  /**
+   * Returns a fresh instance of an empty object that does nothing
+   */
+  static createInstance (keystoreJsonV3: KeystoreV3Interface): JSONWTWallet {
+    const wallet = new JSONWTWallet();
+    wallet.address = keystoreJsonV3.address;
+    return wallet;
   }
 
-  constructor (keystoreJsonV3: Object) {
-    this.jsonWallet = keystoreJsonV3;
+  /**
+   * Does nothing
+   */
+  unlock (password: string) {
+    // pass
   }
 
-  async unlock (password: string): Promise<void> {}
+  /**
+   * Returns the address passed in `keystoreJsonV3`
+   * in a checksummed format, e.g. prefixed with 0x
+   * and case-sensitive.
+   */
+  getAddress (): string {
+    return ethJsUtil.toChecksumAddress(this.address);
+  }
   
-  async signAndSendTransaction (transactionData: Object, onReceipt: ?(receipt: TxReceiptInterface) => void): Promise<string> {
-    return Promise.resolve('random-string');
+  /**
+   * Does nothing. Always returns `tx-hash-signed-by-fake-wallet`.
+   * `onReceipt` is always called with some fake data.
+   */
+  async signAndSendTransaction (transactionData: TransactionDataInterface, onReceipt: ?(receipt: TxReceiptInterface) => void): Promise<string> {
+    const transactionHash = 'tx-hash-signed-by-fake-wallet';
+    if (onReceipt) {
+      onReceipt({
+        transactionHash: transactionHash,
+        blockNumber: 0,
+        blockHash: 'random-block-hash',
+        transactionIndex: 0,
+        from: 'TODO fix with getAssociatedAddress',
+        to: transactionData.to,
+        logs: [],
+        contractAddress: null,
+        cumulativeGasUsed: 123,
+        gasUsed: 123,
+        status: 1,
+      });
+    }
+    return Promise.resolve(transactionHash);
   }
 
-  lock () { }
-
+  /**
+   * Does nothing
+   */
+  lock () {
+    // pass
+  }
+  
+  /**
+   * Does nothing
+   */
   destroy () {
-    delete this.jsonWallet;
-    // TODO destroy the whole instance
+    wallet.address = null;
+    delete wallet.address;
   }
 }
 

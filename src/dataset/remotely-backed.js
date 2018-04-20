@@ -209,6 +209,7 @@ class RemotelyBacked {
    * Calls are deduplicated, so if the same method would be used
    * to update multiple fields, it is called only once.
    *
+   * @param {WalletInterface} wallet that signs the transaction
    * @param  {Object} transactionOptions passed to every remoteSetter, typically something like `{from: address, to: address}`
    * @return {Array<any>} Results of remoteSetters, it would typically contain transaction IDs
    */

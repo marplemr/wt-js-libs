@@ -47,7 +47,7 @@ module.exports = function (deployer, network, accounts) {
       }).then(function () {
         return Promise.all([
           firstIndex.registerHotel('urlone', { from: accounts[2], gas: 60000000 }),
-          firstIndex.registerHotel('urltwo', { from: accounts[2], gas: 60000000 }),
+          firstIndex.registerHotel('urltwo', { from: accounts[1], gas: 60000000 }),
         ]);
       }).then(function () {
         return firstIndex.getHotels();

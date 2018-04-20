@@ -95,6 +95,7 @@ class EthBackedHotelProvider {
   /**
    * Updates url on-chain. Used internally as a remoteSetter for `url` property.
    *
+   * @param {WalletInterface} wallet that signs the transaction
    * @param {Object} transactionOptions usually contains from and to. Gas is automatically computed.
    * @return {Promise<string>} resulting transaction hash
    */
@@ -126,6 +127,7 @@ class EthBackedHotelProvider {
    * It also precomputes the deployed hotel on-chain address. So even if
    * the resulting transaction is not yet mined, the address is already known.
    *
+   * @param {WalletInterface} wallet that signs the transaction
    * @param {Object} transactionOptions usually contains from and to. Gas is automatically computed.
    * @return {Promise<Array<string>>} list of resulting transaction hashes
    */
@@ -160,6 +162,7 @@ class EthBackedHotelProvider {
    * Updates all hotel-related data by calling `updateRemoteData` on a `RemotelyBacked`
    * dataset.
    *
+   * @param {WalletInterface} wallet that signs the transaction
    * @param {Object} transactionOptions usually contains from and to. Gas is automatically computed.
    * @throws {Error} When the underlying contract is not yet deployed.
    * @return {Promise<Array<string>>} List of transaction hashes
@@ -173,9 +176,10 @@ class EthBackedHotelProvider {
   }
 
   /**
-   * Destroys the object on network, in this cas, calls a `deleteHotel` on
-   * Winding Tree index. Gas is computed autaoma
+   * Destroys the object on network, in this case, calls a `deleteHotel` on
+   * Winding Tree index.
    *
+   * @param {WalletInterface} wallet that signs the transaction
    * @param {Object} transactionOptions usually contains from and to. Gas is automatically computed.
    * @throws {Error} When the underlying contract is not yet deployed.
    * @return {Promise<Array<string>>} List of transaction hashes

@@ -11,7 +11,7 @@ describe('WTLibs usage', () => {
     index = await libs.getWTIndex(testedDataModel.indexAddress);
     wallet = await libs.createWallet(jsonWallet);
     emptyIndex = await libs.getWTIndex(testedDataModel.emptyIndexAddress);
-    await wallet.unlock('test123');
+    wallet.unlock('test123');
   });
 
   afterEach(() => {

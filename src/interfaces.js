@@ -58,8 +58,8 @@ export interface WTIndexInterface {
  * and provide the necessary methods.
  */
 export interface DataModelAccessorInterface {
-  getWindingTreeIndex(address: string): Promise<WTIndexInterface>,
-  getTransactionsStatus (transactionHashes: Array<string>): Promise<AdaptedTxResultsInterface>,
+  getWindingTreeIndex(address: string): Promise<WTIndexInterface>;
+  getTransactionsStatus (transactionHashes: Array<string>): Promise<AdaptedTxResultsInterface>;
   createWallet (jsonWallet: Object): Promise<WalletInterface>
 }
 
@@ -85,13 +85,28 @@ export interface RawLogRecordInterface {
  * and act upon.
  */
 export interface DecodedLogRecordInterface {
-  address: string,
-  event: string,
+  address: string;
+  event: string;
   attributes: Array<{
-    name: string,
-    type: string,
+    name: string;
+    type: string;
     value: string
   }>
+}
+
+/**
+ * Ethereum transaction data, see for example
+ * https://web3js.readthedocs.io/en/1.0/web3-eth-accounts.html#signtransaction
+ */
+export interface TransactionDataInterface {
+  nonce?: string | number;
+  chainId?: string;
+  from?: string;
+  to: string;
+  data: string;
+  value?: string;
+  gasPrice?: string;
+  gas: string | number
 }
 
 /**
@@ -106,10 +121,11 @@ export interface TxReceiptInterface {
   transactionIndex: number;
   from: string;
   to: string;
-  contractAddress: string;
+  // For some reason ?string does not work here
+  contractAddress: any; // eslint-disable-line flowtype/no-weak-types
   cumulativeGasUsed: number;
   gasUsed: number;
-  logs: Array<RawLogRecordInterface>,
+  logs: Array<RawLogRecordInterface>;
   // https://github.com/ethereum/EIPs/pull/658
   status: number
 }
@@ -120,8 +136,8 @@ export interface TxReceiptInterface {
  */
 export interface AdaptedTxResultInterface {
   transactionHash: string;
-  blockAge: number,
-  decodedLogs: Array<DecodedLogRecordInterface>,
+  blockAge: number;
+  decodedLogs: Array<DecodedLogRecordInterface>;
   raw: TxReceiptInterface
 }
 
@@ -133,25 +149,59 @@ export interface AdaptedTxResultInterface {
  */
 export interface AdaptedTxResultsInterface {
   meta: {
-    total: number,
-    processed: number,
-    minBlockAge: number,
-    maxBlockAge: number,
+    total: number;
+    processed: number;
+    minBlockAge: number;
+    maxBlockAge: number;
     allPassed: boolean
-  },
+  };
   results?: {[string]: AdaptedTxResultInterface}
 }
 
-// 1. api holds a json wallets
-// 2. api call finds an appropriate JSON wallet on request
-// 3. api creates wallet instance, passes the password from headers
-// 4. api calls wt-js-libs methods with wallet attached
-// 5. api locks the wallet and drops it from memory
-
+/**
+ * Wallet abstraction interface. It assumes the following workflow:
+ * 1. libs user holds a json wallet
+ * 2. libs user unlocks the wallet abstraction with a password
+ * 3. libs user calls some business logic which internally uses `signAndSendTransaction`
+ * 4. libs user either locks the wallet (if she plans to use it again)
+ * 4. OR destroys the wallet object data by calling `destroy`
+ *
+ * `lock` should not remove the data necessary for unlocking the wallet again.
+ * `destroy` on the other hand should clean all data that may be exploited from memory
+ */
 export interface WalletInterface {
-  unlock(password: string): Promise<void>,
-  // data: nonce, chainId, to, data, value, gasPrice, gas
-  signAndSendTransaction(transactionData: Object, onReceipt: ?(receipt: TxReceiptInterface) => void): Promise<string>,
-  lock(): void,
-  destroy(): void
+  unlock(password: string): void;
+  signAndSendTransaction(transactionData: TransactionDataInterface, onReceipt: ?(receipt: TxReceiptInterface) => void): Promise<string>;
+  lock(): void;
+  destroy(): void;
+  getAddress(): string
+}
+
+/**
+ * Interface for Ethereum keystore
+ *
+ * Description: https://medium.com/@julien.m./what-is-an-ethereum-keystore-file-86c8c5917b97
+ *
+ * Specification: https://github.com/ethereum/wiki/wiki/Web3-Secret-Storage-Definition
+ */
+export interface KeystoreV3Interface {
+  version: number;
+  id: string;
+  address: string;
+  crypto: {
+    ciphertext: string;
+    cipherparams: {
+      iv: string
+    },
+    cipher: string;
+    kdf: string;
+    kdfparams: {
+      dklen: number;
+      salt: string;
+      n: number;
+      r: number;
+      p: number
+    },
+    mac: string
+  }
 }

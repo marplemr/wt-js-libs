@@ -64,4 +64,23 @@ describe('WTLibs.dataset.InMemoryBacked', () => {
     imb.setHash('super-secret-random');
     assert.equal(imb.getHash(), 'super-secret-random');
   });
+
+  it('should be possible to change hash without data loss', async () => {
+    const object = {};
+    const imbInstance = new InMemoryBacked();
+    imbInstance.initialize();
+    imbInstance.bindProperties({
+      fields: {
+        one: {},
+      },
+    }, object);
+    object.one = 'two';
+    const originalHash = imbInstance.getHash();
+    const storedData = storageInstance.get(originalHash);
+    assert.equal(storedData.one, await object.one);
+    imbInstance.changeHashTo('something-else');
+    assert.equal(imbInstance.getHash(), 'something-else');
+    assert.equal(storageInstance.get(imbInstance.getHash()).one, await object.one);
+    assert.equal(storageInstance.get(originalHash).one, await object.one);
+  });
 });

@@ -1,7 +1,9 @@
 import _ from 'lodash';
+import sinon from 'sinon';
 import { assert } from 'chai';
 import FullJsonDataModel from '../../../src/data-model/full-json';
 import dataSource from '../../utils/data/network.json';
+import jsonWallet from '../../utils/test-wallet';
 
 // cloneDeep to ensure data isolation
 function getFreshDataSource () {
@@ -144,6 +146,39 @@ describe('WTLibs.data-model.full-json', () => {
         assert.isDefined(hotels);
         assert.equal(hotels.length, 0);
       });
+    });
+  });
+
+  describe('Wallet', () => {
+    let dataModel, wallet, dataSource;
+
+    beforeEach(async () => {
+      dataSource = getFreshDataSource();
+      dataModel = FullJsonDataModel.createInstance({ source: dataSource });
+      wallet = await dataModel.createWallet(jsonWallet);
+    });
+
+    it('should create a wallet', () => {
+      assert.isDefined(wallet);
+      assert.isDefined(wallet.unlock);
+      assert.isDefined(wallet.signAndSendTransaction);
+    });
+
+    it('should always return the same tx hash', async () => {
+      assert.equal(await wallet.signAndSendTransaction({}), 'tx-hash-signed-by-fake-wallet');
+      assert.equal(await wallet.signAndSendTransaction({ from: 'random', to: 'random' }), 'tx-hash-signed-by-fake-wallet');
+      assert.equal(await wallet.signAndSendTransaction({ from: 'random', to: 'random' }, sinon.stub().returns('onReceipt')), 'tx-hash-signed-by-fake-wallet');
+    });
+
+    it('should call the onReceipt callback', async () => {
+      let callback = sinon.stub().returns('onReceipt');
+      assert.equal(await wallet.signAndSendTransaction({ from: 'random', to: 'random' }, callback), 'tx-hash-signed-by-fake-wallet');
+      assert.equal(callback.callCount, 1);
+      assert.equal(callback.firstCall.args[0].transactionHash, 'tx-hash-signed-by-fake-wallet');
+    });
+
+    it('should keep the associated address', () => {
+      assert.equal(wallet.getAddress().toLowerCase(), '0x' + jsonWallet.address);
     });
   });
 });

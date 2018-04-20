@@ -3,7 +3,7 @@
 import Web3 from 'web3';
 import Utils from '../../common-web3/utils';
 import Contracts from '../../common-web3/contracts';
-import type { DataModelAccessorInterface, AdaptedTxResultInterface, AdaptedTxResultsInterface, WalletInterface } from '../../interfaces';
+import type { DataModelAccessorInterface, AdaptedTxResultInterface, AdaptedTxResultsInterface, KeystoreV3Interface } from '../../interfaces';
 import Web3JsonWTIndexDataProvider from './wt-index';
 import Web3JsonWTWallet from './wallet';
 import { storageInstance } from '../../dataset/in-memory-backed';
@@ -117,7 +117,10 @@ class Web3JsonDataModel implements DataModelAccessorInterface {
     };
   }
 
-  async createWallet (jsonWallet: Object): Promise<WalletInterface> {
+  /**
+   * Returns a wallet implementation for given keystore.
+   */
+  async createWallet (jsonWallet: KeystoreV3Interface): Promise<Web3JsonWTWallet> {
     const wallet = Web3JsonWTWallet.createInstance(jsonWallet);
     wallet.setWeb3(this.web3Instance);
     return Promise.resolve(wallet);

@@ -67,7 +67,7 @@ class Web3JsonHotelDataProvider extends EthBackedHotelProvider implements HotelI
   /**
    * Creates hotel on network while passing a current InMemoryBacked
    * storage hash as a data url. Calls EthBackedHotelProvider's `createOnNetwork`
-   * in the end
+   * in the end.
    */
   async createOnNetwork (wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>> {
     const dataUrl = this.inMemBackedData.getHash();

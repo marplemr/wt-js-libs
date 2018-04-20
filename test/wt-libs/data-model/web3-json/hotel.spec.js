@@ -6,6 +6,7 @@ import Web3JsonDataModel from '../../../../src/data-model/web3-json';
 import HotelDataProvider from '../../../../src/data-model/web3-json/hotel';
 
 describe('WTLibs.data-model.web3-json.hotel', () => {
+  const correctPassword = 'test123';
   let dataModel, indexDataProvider;
 
   beforeEach(async function () {
@@ -71,10 +72,9 @@ describe('WTLibs.data-model.web3-json.hotel', () => {
   });
 
   describe('write to network', () => {
-    // it should not update when data is not changed
     it('should update', async () => {
       let wallet = await dataModel.createWallet(jsonWallet);
-      await wallet.unlock('test123');
+      wallet.unlock(correctPassword);
       const result = await indexDataProvider.addHotel(wallet, {
         name: 'new hotel',
         description: 'some description',
@@ -94,6 +94,49 @@ describe('WTLibs.data-model.web3-json.hotel', () => {
       // And remove the hotel to keep the data consistent
       await indexDataProvider.removeHotel(wallet, freshHotelProvider);
       wallet.destroy();
+    });
+
+    it('should throw when creating a hotel that does not correspond to the wallet', async () => {
+      let wallet = await dataModel.createWallet(jsonWallet);
+      wallet.unlock(correctPassword);
+      try {
+        await indexDataProvider.addHotel(wallet, {
+          name: 'new hotel',
+          description: 'some description',
+          manager: '0x04e46f24307e4961157b986a0b653a0d88f9dbd6',
+        });
+        throw new Error('should not have been called');
+      } catch (e) {
+        assert.match(e.message, /cannot add hotel/i);
+        assert.match(e.message, /transaction originator does not match the wallet address/i);
+      }
+    });
+
+    it('should throw when updating a hotel that does not correspond to the wallet', async () => {
+      let wallet = await dataModel.createWallet(jsonWallet);
+      wallet.unlock(correctPassword);
+      try {
+        const hotel = await indexDataProvider.getHotel('0x4a763f50dfe5cf4468b4171539e021a26fcee0cc');
+        hotel.url = 'some-random-url';
+        await indexDataProvider.updateHotel(wallet, hotel);
+        throw new Error('should not have been called');
+      } catch (e) {
+        assert.match(e.message, /cannot update hotel/i);
+        assert.match(e.message, /transaction originator does not match the wallet address/i);
+      }
+    });
+
+    it('should throw when removing a hotel that does not correspond to the wallet', async () => {
+      let wallet = await dataModel.createWallet(jsonWallet);
+      wallet.unlock(correctPassword);
+      try {
+        const hotel = await indexDataProvider.getHotel('0x4a763f50dfe5cf4468b4171539e021a26fcee0cc');
+        await indexDataProvider.removeHotel(wallet, hotel);
+        throw new Error('should not have been called');
+      } catch (e) {
+        assert.match(e.message, /cannot remove hotel/i);
+        assert.match(e.message, /transaction originator does not match the wallet address/i);
+      }
     });
   });
 });
