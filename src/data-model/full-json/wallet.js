@@ -6,7 +6,7 @@ import type { WalletInterface, TxReceiptInterface, TransactionDataInterface, Key
  * Fake and dummy WalletInterface implementation that does nothing.
  */
 class JSONWTWallet implements WalletInterface {
-  address: string;
+  address: ?string;
   /**
    * Returns a fresh instance of an empty object that does nothing
    */
@@ -44,7 +44,7 @@ class JSONWTWallet implements WalletInterface {
         blockNumber: 0,
         blockHash: 'random-block-hash',
         transactionIndex: 0,
-        from: 'TODO fix with getAssociatedAddress',
+        from: this.getAddress(),
         to: transactionData.to,
         logs: [],
         contractAddress: null,
@@ -67,8 +67,8 @@ class JSONWTWallet implements WalletInterface {
    * Does nothing
    */
   destroy () {
-    wallet.address = null;
-    delete wallet.address;
+    this.address = null;
+    delete this.address;
   }
 }
 
