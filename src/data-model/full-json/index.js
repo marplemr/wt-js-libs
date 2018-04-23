@@ -62,7 +62,16 @@ class FullJsonDataModel implements DataModelAccessorInterface {
     const processed = txHashes.filter((a) => a.match(/tx-(add|remove|update)-/));
     let results = {};
     for (let hash of processed) {
-      results[hash] = { status: 1 };
+      results[hash] = {
+        transactionHash: hash,
+        from: 'some-address',
+        to: 'some-address',
+        blockAge: 0,
+        decodedLogs: [],
+        raw: {
+          status: 1,
+        },
+      };
     }
     return {
       meta: {

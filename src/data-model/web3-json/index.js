@@ -82,25 +82,32 @@ class Web3JsonDataModel implements DataModelAccessorInterface {
    * metrics.
    */
   async getTransactionsStatus (txHashes: Array<string>): Promise<AdaptedTxResultsInterface> {
-    let promises = [];
+    let receiptsPromises = [];
+    let txDataPromises = [];
     for (let hash of txHashes) {
-      promises.push(this.web3Utils.getTransactionReceipt(hash));
+      receiptsPromises.push(this.web3Utils.getTransactionReceipt(hash));
+      txDataPromises.push(this.web3Utils.getTransaction(hash));
     }
     const currentBlockNumber = await this.web3Utils.getCurrentBlockNumber();
-    const receipts = await Promise.all(promises);
-    
+    const receipts = await Promise.all(receiptsPromises);
+    const txData = await Promise.all(txDataPromises);
+
     let results = {};
     for (let receipt of receipts) {
       if (!receipt) { continue; }
       let decodedLogs = this.web3Contracts.decodeLogs(receipt.logs);
+      let originalTxData = txData.find((tx) => tx.hash === receipt.transactionHash);
       for (let logRecord of decodedLogs) {
         // events is a really stupid name, so renaming
         logRecord.attributes = logRecord.events;
         delete logRecord.events;
       }
       results[receipt.transactionHash] = {
+        transactionHash: receipt.transactionHash,
         blockAge: currentBlockNumber - receipt.blockNumber,
         decodedLogs: decodedLogs,
+        from: originalTxData && originalTxData.from,
+        to: originalTxData && originalTxData.to,
         raw: receipt,
       };
     }
@@ -111,7 +118,9 @@ class Web3JsonDataModel implements DataModelAccessorInterface {
         processed: resultsValues.length,
         minBlockAge: Math.min(...(resultsValues.map((a) => a.blockAge))),
         maxBlockAge: Math.max(...(resultsValues.map((a) => a.blockAge))),
-        allPassed: Math.min(...(resultsValues.map((a) => a.raw.status))) === 1 && txHashes.length === resultsValues.length,
+        // TODO Possibly improve error codes
+        // https://ethereum.stackexchange.com/questions/28077/how-do-i-detect-a-failed-transaction-after-the-byzantium-fork-as-the-revert-opco
+        allPassed: Math.min(...(resultsValues.map((a) => parseInt(a.raw.status)))) === 1 && txHashes.length === resultsValues.length,
       },
       results: results,
     };

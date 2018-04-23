@@ -1,6 +1,6 @@
 // @flow
 
-import type { TxReceiptInterface } from '../interfaces';
+import type { TxReceiptInterface, TxInterface } from '../interfaces';
 import Web3 from 'web3';
 import BigNumber from 'bignumber.js';
 import ethJsUtil from 'ethereumjs-util';
@@ -108,6 +108,13 @@ class Utils {
    */
   async getTransactionReceipt (txHash: string): Promise<TxReceiptInterface> {
     return this.web3.eth.getTransactionReceipt(txHash);
+  }
+
+  /**
+   * Proxy method for `web3.eth.getTransaction`
+   */
+  async getTransaction (txHash: string): Promise<TxInterface> {
+    return this.web3.eth.getTransaction(txHash);
   }
 }
 

@@ -199,6 +199,12 @@ describe('WTLibs usage', () => {
       assert.equal(result.meta.allPassed, true);
       for (let hash of minedTxHashes) {
         assert.isDefined(result.results[hash]);
+        assert.isDefined(result.results[hash].transactionHash);
+        assert.isDefined(result.results[hash].from);
+        assert.isDefined(result.results[hash].to);
+        assert.isDefined(result.results[hash].blockAge);
+        assert.isDefined(result.results[hash].decodedLogs);
+        assert.isDefined(result.results[hash].raw);
       }
     });
 

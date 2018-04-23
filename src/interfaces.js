@@ -95,7 +95,7 @@ export interface DecodedLogRecordInterface {
 }
 
 /**
- * Ethereum transaction data, see for example
+ * Ethereum transaction data used when creating transaction, see for example
  * https://web3js.readthedocs.io/en/1.0/web3-eth-accounts.html#signtransaction
  */
 export interface TransactionDataInterface {
@@ -107,6 +107,24 @@ export interface TransactionDataInterface {
   value?: string;
   gasPrice?: string;
   gas: string | number
+}
+
+/**
+ * Ethereum transaction data after TX was accepted by the network, see
+ * for example http://web3js.readthedocs.io/en/1.0/web3-eth.html#gettransaction
+ */
+export interface TxInterface {
+  hash?: string;
+  nonce?: string | number;
+  blockHash?: string;
+  blockNumber?: number;
+  transactionIndex?: number;
+  from?: string;
+  to?: string;
+  value?: string;
+  gasPrice?: string;
+  gas?: number;
+  input?: string
 }
 
 /**
