@@ -1,4 +1,3 @@
-import abiDecoder from 'abi-decoder';
 import WTIndexContractMetadata from '@windingtree/wt-contracts/build/contracts/WTIndex';
 import HotelContractMetadata from '@windingtree/wt-contracts/build/contracts/Hotel';
 
@@ -62,12 +61,23 @@ class Contracts {
     return this.__getInstance('hotel', HotelContractMetadata.abi, address);
   }
 
-  __initAbiDecoder () {
-    const existingAbis = abiDecoder.getABIs();
-    if (existingAbis.length === 0) {
-      abiDecoder.addABI(WTIndexContractMetadata.abi);
-      abiDecoder.addABI(HotelContractMetadata.abi);
+  __initEventRegistry () {
+    function generateEventSignatures (abi) {
+      const events = abi.filter((m) => m.type === 'event');
+      let indexedEvents = {};
+      for (let event of events) {
+        indexedEvents[event.signature] = event;
+      }
+      return indexedEvents;
     }
+    if (!this.eventRegistry) {
+      this.eventRegistry = Object.assign(
+        {},
+        generateEventSignatures(WTIndexContractMetadata.abi),
+        generateEventSignatures(HotelContractMetadata.abi)
+      );
+    }
+    return this.eventRegistry;
   }
 
   /**
@@ -78,8 +88,32 @@ class Contracts {
    * @return {Array<DecodedLogRecordInterface>} Decoded logs
    */
   decodeLogs (logs) {
-    this.__initAbiDecoder();
-    return abiDecoder.decodeLogs(logs);
+    const result = [];
+    const eventRegistry = this.__initEventRegistry();
+    for (let log of logs) {
+      if (log.topics[0] && eventRegistry[log.topics[0]]) {
+        const eventAbi = eventRegistry[log.topics[0]];
+        let topics = log.topics;
+        // @see https://web3js.readthedocs.io/en/1.0/web3-eth-abi.html#id22
+        if (!eventAbi.anonymous) {
+          topics = log.topics.slice(1);
+        }
+        const decoded = this.web3.eth.abi.decodeLog(eventAbi.inputs, log.data, topics);
+        let parsedAttributes = eventAbi.inputs.map((input) => {
+          return {
+            name: input.name,
+            type: input.type,
+            value: decoded[input.name],
+          };
+        });
+        result.push({
+          event: eventAbi.name,
+          address: log.address,
+          attributes: parsedAttributes,
+        });
+      }
+    }
+    return result;
   }
 }
 export default Contracts;

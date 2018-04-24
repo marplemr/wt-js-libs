@@ -97,11 +97,6 @@ class Web3JsonDataModel implements DataModelAccessorInterface {
       if (!receipt) { continue; }
       let decodedLogs = this.web3Contracts.decodeLogs(receipt.logs);
       let originalTxData = txData.find((tx) => tx.hash === receipt.transactionHash);
-      for (let logRecord of decodedLogs) {
-        // events is a really stupid name, so renaming
-        logRecord.attributes = logRecord.events;
-        delete logRecord.events;
-      }
       results[receipt.transactionHash] = {
         transactionHash: receipt.transactionHash,
         blockAge: currentBlockNumber - receipt.blockNumber,
