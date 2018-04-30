@@ -142,7 +142,7 @@ class InMemoryBacked {
         get: async () => {
           // intentionally access storage every time
           const data = storageInstance.get(this.__hash);
-          return data[fieldName];
+          return data && data[fieldName];
         },
         set: (newValue) => {
           const data = storageInstance.get(this.__hash);

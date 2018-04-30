@@ -34,7 +34,8 @@ export interface HotelInterface {
   url: Promise<?string> | ?string;
   location: Promise<?LocationInterface> | ?LocationInterface;
   name: Promise<?string> | ?string;
-  description: Promise<?string> | ?string
+  description: Promise<?string> | ?string;
+  toPlainObject(): Promise<Object>
 }
 
 /**

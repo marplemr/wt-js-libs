@@ -42,7 +42,14 @@ class JsonWTIndexDataProvider implements WTIndexInterface {
       throw new Error('Cannot add hotel without manager');
     }
     const randomId = '0x000' + Object.keys(this.source.hotels).length;
-    this.source.hotels[randomId] = Object.assign(hotelData, { address: randomId });
+    hotelData = Object.assign(hotelData, { address: randomId });
+    // Workaround around flow limitations, @see https://github.com/facebook/flow/issues/1517#issuecomment-194538151
+    (hotelData: any).toPlainObject = () => { // eslint-disable-line flowtype/no-weak-types
+      const reducedHotelData = Object.assign({}, hotelData);
+      delete reducedHotelData.toPlainObject;
+      return Promise.resolve(reducedHotelData);
+    };
+    this.source.hotels[randomId] = hotelData;
     return {
       address: randomId,
       transactionIds: ['tx-add-' + randomId],
@@ -57,6 +64,13 @@ class JsonWTIndexDataProvider implements WTIndexInterface {
     let hotel = this.source.hotels[address];
     if (!hotel) {
       throw new Error('Cannot find hotel at ' + address);
+    }
+    if (!hotel.toPlainObject) {
+      (hotel: any).toPlainObject = () => { // eslint-disable-line flowtype/no-weak-types
+        const reducedHotelData = Object.assign({}, hotel);
+        delete reducedHotelData.toPlainObject;
+        return Promise.resolve(reducedHotelData);
+      };
     }
     return hotel;
   }
@@ -101,7 +115,17 @@ class JsonWTIndexDataProvider implements WTIndexInterface {
    * Returns all hotels.
    */
   async getAllHotels (): Promise<Array<HotelInterface>> {
-    const hotels: Array<HotelInterface> = (Object.values(this.source.hotels): any); // eslint-disable-line flowtype/no-weak-types
+    let hotels: Array<HotelInterface> = (Object.values(this.source.hotels): any); // eslint-disable-line flowtype/no-weak-types
+    hotels.map((hotel) => {
+      if (!hotel.toPlainObject) {
+        // Workaround around flow limitations, @see https://github.com/facebook/flow/issues/1517#issuecomment-194538151
+        (hotel: any).toPlainObject = () => { // eslint-disable-line flowtype/no-weak-types
+          const reducedHotelData = Object.assign({}, hotel);
+          delete reducedHotelData.toPlainObject;
+          return Promise.resolve(reducedHotelData);
+        };
+      }
+    });
     return hotels;
   }
 }

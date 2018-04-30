@@ -74,6 +74,16 @@ class Web3JsonHotelDataProvider extends EthBackedHotelProvider implements HotelI
     return super.createOnNetwork(wallet, transactionOptions, dataUrl);
   }
 
+  async toPlainObject (): Promise<Object> {
+    return {
+      address: await this.address,
+      name: await this.name,
+      description: await this.description,
+      manager: await this.manager,
+      location: await this.location,
+    };
+  }
+
   /**
    * Updates hotel data. If the url has changed, the InMemoryBacked dataset
    * is copied over into the new location. EthBackedHotelProvider's `updateOnNetwork`

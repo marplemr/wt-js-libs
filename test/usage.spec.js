@@ -39,6 +39,9 @@ describe('WTLibs usage', () => {
 
       // We should then get the hotel at the resulting address
       const hotel = await index.getHotel(result.address);
+      assert.isDefined(hotel.toPlainObject);
+      const plainHotel = await hotel.toPlainObject();
+      assert.equal(plainHotel.name, await hotel.name);
       assert.equal(await hotel.name, 'new hotel');
       assert.equal(await hotel.description, 'some description');
       assert.deepEqual(await hotel.location, { latitude: 50.0754789, longitude: 14.4225864 });
@@ -104,6 +107,16 @@ describe('WTLibs usage', () => {
       assert.isNotNull(hotel);
       assert.equal(await hotel.name, 'First hotel');
       assert.equal(await hotel.address, address);
+    });
+
+    it('should provide a toPlainObject method', async () => {
+      const hotel = await index.getHotel('0xbf18b616ac81830dd0c5d4b771f22fd8144fe769');
+      assert.isNotNull(hotel);
+      assert.isDefined(hotel.toPlainObject);
+      const plainHotel = await hotel.toPlainObject();
+      assert.isUndefined(plainHotel.toPlainObject);
+      assert.equal(plainHotel.address, await hotel.address);
+      assert.equal(plainHotel.name, await hotel.name);
     });
 
     it('should throw if no hotel is found on given address', async () => {
@@ -179,6 +192,12 @@ describe('WTLibs usage', () => {
     it('should get all hotels', async () => {
       const hotels = await index.getAllHotels();
       assert.equal(hotels.length, 2);
+      for (let hotel of hotels) {
+        assert.isDefined(hotel.toPlainObject);
+        const plainHotel = await hotel.toPlainObject();
+        assert.equal(plainHotel.address, await hotel.address);
+        assert.equal(plainHotel.name, await hotel.name);
+      }
     });
 
     it('should get empty list if no hotels are set', async () => {
