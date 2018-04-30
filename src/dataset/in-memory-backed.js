@@ -145,7 +145,7 @@ class InMemoryBacked {
           return data && data[fieldName];
         },
         set: (newValue) => {
-          const data = storageInstance.get(this.__hash);
+          const data = storageInstance.get(this.__hash) || {};
           data[fieldName] = newValue;
           storageInstance.update(this.__hash, data);
         },

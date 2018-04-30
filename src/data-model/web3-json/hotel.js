@@ -81,6 +81,7 @@ class Web3JsonHotelDataProvider extends EthBackedHotelProvider implements HotelI
       description: await this.description,
       manager: await this.manager,
       location: await this.location,
+      url: await this.url,
     };
   }
 
