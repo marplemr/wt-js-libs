@@ -1,35 +1,27 @@
 {
   "emptyIndex": {
-    "index": {}
+    "hotels": {}
   },
   "fullIndex": {
-    "index": {
-      "hotels": {
-        "0xbf18b616ac81830dd0c5d4b771f22fd8144fe769": {
-          "address": "0xbf18b616ac81830dd0c5d4b771f22fd8144fe769",
-          "name": "First hotel",
-          "description": "first description",
-          "manager": "0x87265a62c60247f862b9149423061b36b460f4bb",
-          "lineOne": "Address line one",
-          "lineTwo": "Address line two",
-          "zip": "150 00",
-          "country": "CZ",
-          "created": "2017-04-21T18:25:43-05:00",
-          "timezone": "Europe/Prague",
+    "hotels": {
+      "0xbf18b616ac81830dd0c5d4b771f22fd8144fe769": {
+        "address": "0xbf18b616ac81830dd0c5d4b771f22fd8144fe769",
+        "url": "urlone",
+        "name": "First hotel",
+        "description": "first description",
+        "manager": "0x87265a62c60247f862b9149423061b36b460f4bb",
+        "location": {
           "latitude": 14.422378,
           "longitude": 50.075604
-        },
-        "0x4a763f50dfe5cf4468b4171539e021a26fcee0cc": {
-          "address": "0x4a763f50dfe5cf4468b4171539e021a26fcee0cc",
-          "name": "Second hotel",
-          "description": "second description",
-          "manager": "0x87265a62c60247f862b9149423061b36b460f4bb",
-          "lineOne": "Address line 1",
-          "lineTwo": "Address line 2",
-          "zip": "160 00",
-          "country": "CZ",
-          "created": "2017-12-21T18:25:43-05:00",
-          "timezone": "Europe/Amsterdam",
+        }
+      },
+      "0x4a763f50dfe5cf4468b4171539e021a26fcee0cc": {
+        "address": "0x4a763f50dfe5cf4468b4171539e021a26fcee0cc",
+        "url": "urltwo",
+        "name": "Second hotel",
+        "description": "second description",
+        "manager": "0x87265a62c60247f862b9149423061b36b460f4bb",
+        "location": {
           "latitude": 14.422387,
           "longitude": 50.075640
         }

@@ -71,12 +71,18 @@ module.exports = {
       2,
       "comma"
     ],
-    "flowtype/require-parameter-type": 2,
+    "flowtype/require-parameter-type": [
+      2,
+      {
+        "excludeArrowFunctions": true
+      }
+    ],
     "flowtype/require-return-type": [
       2,
       "always",
       {
-        "annotateUndefined": "never"
+        "annotateUndefined": "never",
+        "excludeArrowFunctions": true
       }
     ],
     "flowtype/require-valid-file-annotation": 2,

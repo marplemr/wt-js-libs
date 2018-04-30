@@ -1,43 +1,43 @@
 import { assert } from 'chai';
 import sinon from 'sinon';
 import WTLibs from '../src/index';
-import Network from '../src/network';
-import testedNetwork from './utils/network-definition';
+import DataModel from '../src/data-model';
+import testedNetwork from './utils/data-model-definition';
 
 describe('WTLibs', () => {
   describe('createInstance', () => {
-    let createNetworkSpy;
+    let createDataModelSpy;
 
     beforeEach(() => {
-      createNetworkSpy = sinon.spy(Network, 'createInstance');
+      createDataModelSpy = sinon.spy(DataModel, 'createInstance');
     });
 
     afterEach(() => {
-      createNetworkSpy.restore();
+      createDataModelSpy.restore();
     });
 
-    it('should initialize network', () => {
-      const libs = WTLibs.createInstance({ networkConnectorType: testedNetwork.type });
-      assert.isDefined(libs.network);
-      assert.equal(createNetworkSpy.callCount, 1);
-      assert.equal(createNetworkSpy.firstCall.args[0], testedNetwork.type);
+    it('should initialize data model', () => {
+      const libs = WTLibs.createInstance({ dataModelType: testedNetwork.type });
+      assert.isDefined(libs.dataModel);
+      assert.equal(createDataModelSpy.callCount, 1);
+      assert.equal(createDataModelSpy.firstCall.args[0], testedNetwork.type);
     });
 
-    it('should pass network options', () => {
+    it('should pass data model options', () => {
       const libs = WTLibs.createInstance({
-        networkOptions: {
+        dataModelOptions: {
           random: {},
         },
       });
-      assert.isDefined(libs.network);
-      assert.isDefined(createNetworkSpy.firstCall.args[1].random);
+      assert.isDefined(libs.dataModel);
+      assert.isDefined(createDataModelSpy.firstCall.args[1].random);
     });
 
-    it('should fallback to web3 network if networkConnectorType is not specified', () => {
+    it('should fallback to web3-swarm data model if dataModelType is not specified', () => {
       const libs = WTLibs.createInstance();
-      assert.isDefined(libs.network);
-      assert.equal(createNetworkSpy.callCount, 1);
-      assert.equal(createNetworkSpy.firstCall.args[0], 'web3');
+      assert.isDefined(libs.dataModel);
+      assert.equal(createDataModelSpy.callCount, 1);
+      assert.equal(createDataModelSpy.firstCall.args[0], 'web3-swarm');
     });
   });
 });
