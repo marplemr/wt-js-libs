@@ -12,7 +12,6 @@ node_modules
 
 # Generated artifacts
 dist
-docs
 coverage
 .nyc_output
 .nyc_coverage
