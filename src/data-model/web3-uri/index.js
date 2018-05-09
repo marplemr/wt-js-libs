@@ -1,8 +1,8 @@
 // @flow
 
 import Web3 from 'web3';
-import Utils from '../../common-web3/utils';
-import Contracts from '../../common-web3/contracts';
+import Utils from './common/utils';
+import Contracts from './common/contracts';
 import type { DataModelAccessorInterface, AdaptedTxResultInterface, AdaptedTxResultsInterface, KeystoreV3Interface } from '../../interfaces';
 import Web3UriWTIndexDataProvider from './wt-index';
 import Web3WTWallet from './wallet';

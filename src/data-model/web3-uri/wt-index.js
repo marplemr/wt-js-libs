@@ -1,7 +1,7 @@
 // @flow
 import type { WTIndexInterface, HotelInterface, AddHotelResponseInterface, WalletInterface } from '../../interfaces';
-import Utils from '../../common-web3/utils';
-import Contracts from '../../common-web3/contracts';
+import Utils from './common/utils';
+import Contracts from './common/contracts';
 import Web3JsonHotelDataProvider from './hotel';
 
 /**

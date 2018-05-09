@@ -1,8 +1,8 @@
 import { assert } from 'chai';
 import sinon from 'sinon';
-import Utils from '../../../src/common-web3/utils';
+import Utils from '../../../../../src/data-model/web3-uri/common/utils';
 
-describe('WTLibs.common-web3.Utils', () => {
+describe('WTLibs.data-model.web3-uri.Utils', () => {
   let utils;
 
   beforeEach(() => {

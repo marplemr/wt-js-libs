@@ -1,8 +1,8 @@
 // @flow
 import type { HotelInterface, LocationInterface, WalletInterface } from '../../interfaces';
-import Utils from '../../common-web3/utils';
-import Contracts from '../../common-web3/contracts';
-import EthBackedHotelProvider from '../../common-web3/eth-backed-hotel-provider';
+import Utils from './common/utils';
+import Contracts from './common/contracts';
+import EthBackedHotelProvider from './common/eth-backed-hotel-provider';
 import InMemoryBacked from '../../dataset/in-memory-backed';
 
 /**

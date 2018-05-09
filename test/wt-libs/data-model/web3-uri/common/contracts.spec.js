@@ -1,11 +1,11 @@
 import { assert } from 'chai';
 import sinon from 'sinon';
 import Web3 from 'web3';
-import Contracts from '../../../src/common-web3/contracts';
+import Contracts from '../../../../../src/common-web3/contracts';
 
-describe('WTLibs.common-web3.Contracts', () => {
+describe('WTLibs.data-model.web3-uri.common.Contracts', () => {
   let contracts, getCodeStub, ContractStub;
-  
+
   beforeEach(() => {
     getCodeStub = sinon.stub().resolves('0x01');
     ContractStub = sinon.spy();

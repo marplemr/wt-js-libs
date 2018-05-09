@@ -1,9 +1,9 @@
 import { assert } from 'chai';
 import sinon from 'sinon';
-import helpers from '../../utils/helpers';
-import EthBackedHotelProvider from '../../../src/common-web3/eth-backed-hotel-provider';
+import helpers from '../../../../utils/helpers';
+import EthBackedHotelProvider from '../../../../../src/data-model/web3-uri/common/eth-backed-hotel-provider';
 
-describe('WTLibs.common-web3.EthBackedHotelProvider', () => {
+describe('WTLibs.data-model.web3-uri.EthBackedHotelProvider', () => {
   let contractsStub, utilsStub, indexContractStub, walletStub;
 
   beforeEach(() => {
