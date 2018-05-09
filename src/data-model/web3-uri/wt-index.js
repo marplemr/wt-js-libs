@@ -9,18 +9,18 @@ import Web3JsonHotelDataProvider from './hotel';
  * index wrapper. It currently works exclusively with Web3JsonHotelDataProvider
  * but it should be easily generalized to other Hotel implementations.
  */
-class Web3JsonWTIndexDataProvider implements WTIndexInterface {
+class Web3UriWTIndexDataProvider implements WTIndexInterface {
   address: string;
   web3Utils: Utils;
   web3Contracts: Contracts;
   deployedIndex: Object; // TODO get rid of Object type
 
   /**
-   * Returns a configured instance of Web3JsonWTIndexDataProvider
+   * Returns a configured instance of Web3UriWTIndexDataProvider
    * representing a Winding Tree index contract on a given `address`.
    */
-  static async createInstance (indexAddress: string, web3Utils: Utils, web3Contracts: Contracts): Promise<Web3JsonWTIndexDataProvider> {
-    return new Web3JsonWTIndexDataProvider(indexAddress, web3Utils, web3Contracts);
+  static async createInstance (indexAddress: string, web3Utils: Utils, web3Contracts: Contracts): Promise<Web3UriWTIndexDataProvider> {
+    return new Web3UriWTIndexDataProvider(indexAddress, web3Utils, web3Contracts);
   }
 
   constructor (indexAddress: string, web3Utils: Utils, web3Contracts: Contracts) {
@@ -155,4 +155,4 @@ class Web3JsonWTIndexDataProvider implements WTIndexInterface {
   }
 }
 
-export default Web3JsonWTIndexDataProvider;
+export default Web3UriWTIndexDataProvider;

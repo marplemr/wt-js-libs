@@ -2,25 +2,25 @@ import { assert } from 'chai';
 import sinon from 'sinon';
 import testedDataModel from '../../../utils/data-model-definition';
 import jsonWallet from '../../../utils/test-wallet';
-import Web3JsonDataModel from '../../../../src/data-model/web3-json';
-import HotelDataProvider from '../../../../src/data-model/web3-json/hotel';
+import Web3UriDataModel from '../../../../src/data-model/web3-uri';
+import HotelDataProvider from '../../../../src/data-model/web3-uri/hotel';
 
-describe('WTLibs.data-model.web3-json.hotel', () => {
+describe('WTLibs.data-model.web3-uri.hotel', () => {
   const correctPassword = 'test123';
   let dataModel, indexDataProvider;
 
   beforeEach(async function () {
-    if (process.env.TESTED_DATA_MODEL !== 'web3-json') {
+    if (process.env.TESTED_DATA_MODEL !== 'web3-uri') {
       this.skip();
     }
-    dataModel = Web3JsonDataModel.createInstance(testedDataModel.withDataSource().dataModelOptions);
+    dataModel = Web3UriDataModel.createInstance(testedDataModel.withDataSource().dataModelOptions);
     indexDataProvider = await dataModel.getWindingTreeIndex(testedDataModel.indexAddress);
   });
 
   describe('_getDeployedHotel', () => {
     let getHotelContractSpy;
     beforeEach(function () {
-      if (process.env.TESTED_DATA_MODEL !== 'web3-json') {
+      if (process.env.TESTED_DATA_MODEL !== 'web3-uri') {
         this.skip();
       }
       getHotelContractSpy = sinon.spy(indexDataProvider.web3Contracts, 'getHotelInstance');

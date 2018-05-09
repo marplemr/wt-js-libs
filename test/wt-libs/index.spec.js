@@ -58,15 +58,6 @@ describe('WTLibs.dataModel', () => {
         assert.match(e.message, /is not recognized as a valid/i);
       }
     });
-
-    it('should throw when dataModelAccessor type is not yet implemented', () => {
-      try {
-        const dataModel = DataModel.createInstance('web3-ipfs', {});
-        dataModel.__getDataModelAccessor();
-      } catch (e) {
-        assert.match(e.message, /data model is not yet implemented/i);
-      }
-    });
   });
 
   describe('getWindingTreeIndex', () => {

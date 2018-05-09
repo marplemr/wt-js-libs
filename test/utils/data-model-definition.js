@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import dataSource from './data/network.json';
 import FullJsonDataModel from '../../src/data-model/full-json';
-import Web3JsonDataModel from '../../src/data-model/web3-json';
+import Web3UriDataModel from '../../src/data-model/web3-uri';
 
 export const FullJsonBackedDataModel = {
   type: 'full-json',
@@ -30,12 +30,12 @@ function _computeInitialWeb3JsonData () {
   return data;
 }
 
-export const Web3JsonBackedDataModel = {
-  type: 'web3-json',
-  dataModelAccessor: Web3JsonDataModel,
+export const Web3UriBackedDataModel = {
+  type: 'web3-uri',
+  dataModelAccessor: Web3UriDataModel,
   emptyConfig: {},
   withDataSource: () => ({
-    dataModelType: 'web3-json',
+    dataModelType: 'web3-uri',
     dataModelOptions: {
       provider: 'http://localhost:8545',
       initialJsonData: _computeInitialWeb3JsonData(),
@@ -47,7 +47,7 @@ export const Web3JsonBackedDataModel = {
 
 const dataModels = [
   FullJsonBackedDataModel,
-  Web3JsonBackedDataModel,
+  Web3UriBackedDataModel,
 ];
 
 let chosenDataModel;

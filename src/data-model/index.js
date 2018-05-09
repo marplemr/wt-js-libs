@@ -3,19 +3,19 @@
 import { DataModelAccessorInterface, WTIndexInterface, AdaptedTxResultsInterface, WalletInterface, KeystoreV3Interface } from '../interfaces';
 import FullJsonDataModel from './full-json';
 import type { FullJsonDataModelOptionsType } from './full-json';
-import Web3JsonDataModel from './web3-json';
-import type { Web3JsonDataModelOptionsType } from './web3-json';
+import Web3UriDataModel from './web3-uri';
+import type { Web3UriDataModelOptionsType } from './web3-uri';
 
 /**
  * DataModelType is a chosen `data-model`. Not all options are implemented right now.
  * @enum {String}
  */
-export type DataModelType = 'full-web3' | 'full-json' | 'web3-json' | 'web3-ipfs' | 'web3-swarm';
+export type DataModelType = 'full-json' | 'web3-uri';
 /**
  * Combination of all implemented Data Model options.
  * @type {Object}
  */
-export type DataModelOptionsType = FullJsonDataModelOptionsType & Web3JsonDataModelOptionsType;
+export type DataModelOptionsType = FullJsonDataModelOptionsType & Web3UriDataModelOptionsType;
 
 /**
  * Representation of a current data model. You should use this factory
@@ -33,11 +33,8 @@ class DataModel {
    */
   static createInstance (dataModelType: DataModelType, options: DataModelOptionsType): DataModel {
     if (![
-      'full-web3',
       'full-json',
-      'web3-json',
-      'web3-ipfs',
-      'web3-swarm',
+      'web3-uri',
     ].includes(dataModelType)) {
       // TODO improve exception system
       throw new Error(dataModelType + ' is not recognized as a valid data model type');
@@ -56,12 +53,9 @@ class DataModel {
       case 'full-json':
         this._datamodel = FullJsonDataModel.createInstance(this.options);
         break;
-      case 'web3-json':
-        this._datamodel = Web3JsonDataModel.createInstance(this.options);
+      case 'web3-uri':
+        this._datamodel = Web3UriDataModel.createInstance(this.options);
         break;
-      case 'full-web3':
-      case 'web3-ipfs':
-      case 'web3-swarm':
       default:
         throw new Error(this.type + ' data model is not yet implemented');
       }
