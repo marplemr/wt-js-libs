@@ -1,14 +1,14 @@
 // @flow
-import type { HotelInterface, LocationInterface, WalletInterface } from '../../interfaces';
-import Utils from './common/utils';
-import Contracts from './common/contracts';
-import EthBackedHotelProvider from './common/eth-backed-hotel-provider';
-import InMemoryBacked from '../../dataset/in-memory-backed';
+import type { HotelInterface, LocationInterface, WalletInterface } from '../../../interfaces';
+import Utils from '../common/utils';
+import Contracts from '../common/contracts';
+import EthBackedHotelProvider from '../common/eth-backed-hotel-provider';
+import InMemoryBacked from '../../../dataset/in-memory-backed';
 
 /**
  * Ethereum based hotel with additional data stored in an in-memory JSON storage.
  */
-class Web3JsonHotelDataProvider extends EthBackedHotelProvider implements HotelInterface {
+class JsonHotelProvider extends EthBackedHotelProvider implements HotelInterface {
   description: Promise<?string> | ?string;
   name: Promise<?string> | ?string;
   location: Promise<?LocationInterface> | ?LocationInterface;
@@ -16,13 +16,13 @@ class Web3JsonHotelDataProvider extends EthBackedHotelProvider implements HotelI
   inMemBackedData: InMemoryBacked;
 
   /**
-   * Returns a configured instance of Web3JsonHotelDataProvider. Optionally
+   * Returns a configured instance of JsonHotelProvider. Optionally
    * may point to an existing Ethereum blockchain address with a hotel.
    *
    * Runs `initialize` before returning.
    */
-  static async createInstance (web3Utils: Utils, web3Contracts: Contracts, indexContract: Object, address?: string): Promise<Web3JsonHotelDataProvider> {
-    const hotel = new Web3JsonHotelDataProvider(web3Utils, web3Contracts, indexContract, address);
+  static async createInstance (web3Utils: Utils, web3Contracts: Contracts, indexContract: Object, address?: string): Promise<JsonHotelProvider> {
+    const hotel = new JsonHotelProvider(web3Utils, web3Contracts, indexContract, address);
     await hotel.initialize();
     return hotel;
   }
@@ -100,4 +100,4 @@ class Web3JsonHotelDataProvider extends EthBackedHotelProvider implements HotelI
   }
 }
 
-export default Web3JsonHotelDataProvider;
+export default JsonHotelProvider;

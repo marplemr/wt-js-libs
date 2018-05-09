@@ -2,11 +2,11 @@
 import type { WTIndexInterface, HotelInterface, AddHotelResponseInterface, WalletInterface } from '../../interfaces';
 import Utils from './common/utils';
 import Contracts from './common/contracts';
-import Web3JsonHotelDataProvider from './hotel';
+import JsonHotelProvider from './providers/json-hotel';
 
 /**
  * Ethereum smart contract backed implementation of Winding Tree
- * index wrapper. It currently works exclusively with Web3JsonHotelDataProvider
+ * index wrapper. It currently works exclusively with JsonHotelProvider
  * but it should be easily generalized to other Hotel implementations.
  */
 class Web3UriWTIndexDataProvider implements WTIndexInterface {
@@ -45,7 +45,7 @@ class Web3UriWTIndexDataProvider implements WTIndexInterface {
    */
   async addHotel (wallet: WalletInterface, hotelData: HotelInterface): Promise<AddHotelResponseInterface> {
     try {
-      const hotel = await Web3JsonHotelDataProvider.createInstance(this.web3Utils, this.web3Contracts, await this.__getDeployedIndex());
+      const hotel = await JsonHotelProvider.createInstance(this.web3Utils, this.web3Contracts, await this.__getDeployedIndex());
       hotel.setLocalData(hotelData);
       const transactionIds = await hotel.createOnNetwork(wallet, {
         from: hotelData.manager,
@@ -70,7 +70,7 @@ class Web3UriWTIndexDataProvider implements WTIndexInterface {
   async updateHotel (wallet: WalletInterface, hotel: HotelInterface): Promise<Array<string>> {
     try {
       // We need to separate calls to be able to properly catch exceptions
-      const updatedHotel = await ((hotel: any): Web3JsonHotelDataProvider).updateOnNetwork(wallet, { // eslint-disable-line flowtype/no-weak-types
+      const updatedHotel = await ((hotel: any): JsonHotelProvider).updateOnNetwork(wallet, { // eslint-disable-line flowtype/no-weak-types
         from: await hotel.manager,
         to: this.address,
       });
@@ -93,7 +93,7 @@ class Web3UriWTIndexDataProvider implements WTIndexInterface {
   async removeHotel (wallet: WalletInterface, hotel: HotelInterface): Promise<Array<string>> {
     try {
       // We need to separate calls to be able to properly catch exceptions
-      const result = await ((hotel: any): Web3JsonHotelDataProvider).removeFromNetwork(wallet, { // eslint-disable-line flowtype/no-weak-types
+      const result = await ((hotel: any): JsonHotelProvider).removeFromNetwork(wallet, { // eslint-disable-line flowtype/no-weak-types
         from: await hotel.manager,
         to: this.address,
       });
@@ -122,7 +122,7 @@ class Web3UriWTIndexDataProvider implements WTIndexInterface {
       if (!hotelIndex) {
         throw new Error('Not found in hotel list');
       } else {
-        return Web3JsonHotelDataProvider.createInstance(this.web3Utils, this.web3Contracts, index, address);
+        return JsonHotelProvider.createInstance(this.web3Utils, this.web3Contracts, index, address);
       }
     } catch (err) {
       throw new Error('Cannot find hotel at ' + address + ': ' + err.message);

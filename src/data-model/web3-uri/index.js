@@ -60,6 +60,7 @@ class Web3UriDataModel implements DataModelAccessorInterface {
     this.web3Utils = Utils.createInstance(this.options.gasCoefficient, this.web3Instance);
     this.web3Contracts = Contracts.createInstance(this.web3Instance);
 
+    // TODO move this up one level? Definitely somewhere else
     if (this.options.initialJsonData) {
       for (let key in this.options.initialJsonData) {
         storageInstance.update(key, this.options.initialJsonData[key]);
