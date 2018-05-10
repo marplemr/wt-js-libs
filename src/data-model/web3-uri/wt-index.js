@@ -18,19 +18,22 @@ class Web3UriWTIndexDataProvider implements WTIndexInterface {
   web3Utils: Utils;
   web3Contracts: Contracts;
   deployedIndex: Object; // TODO get rid of Object type
+  hotelProviderFactory: HotelProviderFactory;
 
   /**
    * Returns a configured instance of Web3UriWTIndexDataProvider
    * representing a Winding Tree index contract on a given `address`.
    */
+  // TODO pass defaultDataStorage from config
   static async createInstance (indexAddress: string, web3Utils: Utils, web3Contracts: Contracts): Promise<Web3UriWTIndexDataProvider> {
     return new Web3UriWTIndexDataProvider(indexAddress, web3Utils, web3Contracts);
   }
 
-  constructor (indexAddress: string, web3Utils: Utils, web3Contracts: Contracts) {
+  constructor (indexAddress: string, web3Utils: Utils, web3Contracts: Contracts, defaultDataStorage: string = 'json') {
     this.address = indexAddress;
     this.web3Utils = web3Utils;
     this.web3Contracts = web3Contracts;
+    this.hotelProviderFactory = HotelProviderFactory.createInstance(defaultDataStorage, this.web3Utils, this.web3Contracts);
   }
 
   async __getDeployedIndex (): Promise<Object> {
@@ -40,9 +43,8 @@ class Web3UriWTIndexDataProvider implements WTIndexInterface {
     return this.deployedIndex;
   }
 
-  async __createHotelInstance (index?: Object, address?: string): Promise<RemoteHotelInterface> {
-    index = index || await this.__getDeployedIndex();
-    return HotelProviderFactory.getInstance(this.web3Utils, this.web3Contracts, index, address);
+  async __createHotelInstance (address?: string): Promise<RemoteHotelInterface> {
+    return this.hotelProviderFactory.getHotelInstance(await this.__getDeployedIndex(), address);
   }
 
   /**
@@ -131,7 +133,7 @@ class Web3UriWTIndexDataProvider implements WTIndexInterface {
       if (!hotelIndex) {
         throw new Error('Not found in hotel list');
       } else {
-        return this.__createHotelInstance(index, address);
+        return this.__createHotelInstance(address);
       }
     } catch (err) {
       throw new Error('Cannot find hotel at ' + address + ': ' + err.message);

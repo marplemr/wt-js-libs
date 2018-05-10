@@ -47,10 +47,22 @@ class JsonHotelProvider extends EthBackedHotelProvider implements RemoteHotelInt
     if (this.address) {
       // pre-heat contract to prevent multiple contract inits
       await this.__getContractInstance();
-      this.inMemBackedData.setHash(await this.url);
+      const url = await this.url;
+      if (!url) {
+        throw new Error('Cannot initialize hotel data without url');
+      }
+      this.inMemBackedData.setHash(this.__stripSchemaFromUrl(url));
     } else {
       this.inMemBackedData.initialize();
     }
+  }
+
+  __stripSchemaFromUrl (url: string): string {
+    const matchedUrl = url.match(/\w+:\/\/(.+)/i);
+    if (!matchedUrl) {
+      throw new Error(`Cannot find schema in url ${url}`);
+    }
+    return matchedUrl[1];
   }
 
   /**
@@ -70,7 +82,7 @@ class JsonHotelProvider extends EthBackedHotelProvider implements RemoteHotelInt
    * in the end.
    */
   async createOnNetwork (wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>> {
-    const dataUrl = this.inMemBackedData.getHash();
+    const dataUrl = `json://${this.inMemBackedData.getHash()}`;
     return super.createOnNetwork(wallet, transactionOptions, dataUrl);
   }
 
@@ -92,9 +104,9 @@ class JsonHotelProvider extends EthBackedHotelProvider implements RemoteHotelInt
    */
   async updateOnNetwork (wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>> {
     // url might have changed - copy over current inmem data and point a new url at them
-    const currentUrl = await this.url;
+    const currentUrl: string = ((await this.url): any); // eslint-disable-line flowtype/no-weak-types
     if (currentUrl !== this.inMemBackedData.getHash()) {
-      this.inMemBackedData.changeHashTo(currentUrl);
+      this.inMemBackedData.changeHashTo(this.__stripSchemaFromUrl(currentUrl));
     }
     return super.updateOnNetwork(wallet, transactionOptions);
   }

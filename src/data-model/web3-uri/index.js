@@ -63,7 +63,14 @@ class Web3UriDataModel implements DataModelAccessorInterface {
     // TODO move this up one level? Definitely somewhere else
     if (this.options.initialJsonData) {
       for (let key in this.options.initialJsonData) {
-        storageInstance.update(key, this.options.initialJsonData[key]);
+        if (this.options.initialJsonData.hasOwnProperty(key)) {
+          const matchedKey = key.match(/\w+:\/\/(.+)/i);
+          if (!matchedKey) {
+            throw new Error(`Bad initial json data format, missing schema in ${key}!`);
+          }
+          // $FlowFixMe // Flow cannot detect we've already checked this and raises indexer property missing on undefined
+          storageInstance.update(matchedKey[1], this.options.initialJsonData[key]);
+        }
       }
     }
   }

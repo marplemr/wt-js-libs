@@ -117,7 +117,7 @@ describe('WTLibs.data-model.web3-uri.providers.json-hotel', () => {
       wallet.unlock(correctPassword);
       try {
         const hotel = await indexDataProvider.getHotel('0x4a763f50dfe5cf4468b4171539e021a26fcee0cc');
-        hotel.url = 'some-random-url';
+        hotel.url = 'json://some-random-url';
         await indexDataProvider.updateHotel(wallet, hotel);
         throw new Error('should not have been called');
       } catch (e) {
