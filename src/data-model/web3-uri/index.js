@@ -6,7 +6,6 @@ import Contracts from './common/contracts';
 import type { DataModelAccessorInterface, AdaptedTxResultInterface, AdaptedTxResultsInterface, KeystoreV3Interface } from '../../interfaces';
 import Web3UriWTIndexDataProvider from './wt-index';
 import Web3WTWallet from './wallet';
-import { storageInstance } from '../../dataset/in-memory-backed';
 
 /**
  * Web3UriDataModelOptionsType options. May look like this:
@@ -14,11 +13,7 @@ import { storageInstance } from '../../dataset/in-memory-backed';
  * ```
  * {
  *   "provider": 'http://localhost:8545',// or another Web3 provider
- *   "gasCoefficient": 2, // Optional, defaults to 2
- *   "initialJsonData": {
- *     "url1": {},
- *     "url2": {}
- *   }
+ *   "gasCoefficient": 2 // Optional, defaults to 2
  * }
  * ```
  */
@@ -27,9 +22,7 @@ export type Web3UriDataModelOptionsType = {
   provider?: string | Object,
   // Gas coefficient that is used as a multiplier when setting
   // a transaction gas
-  gasCoefficient?: number,
-  // Initial data for JSON storage, necessary for pre-existing data
-  initialJsonData?: Object
+  gasCoefficient?: number
 };
 
 /**
@@ -50,8 +43,7 @@ class Web3UriDataModel implements DataModelAccessorInterface {
 
   /**
    * Creates a new Web3 instance for given provider,
-   * sets up Utils and Contracts and prepares the
-   * InMemoryStorage
+   * sets up Utils and Contracts.
    */
   constructor (options: Web3UriDataModelOptionsType) {
     this.options = options;
@@ -59,20 +51,6 @@ class Web3UriDataModel implements DataModelAccessorInterface {
     this.web3Instance = new Web3(options.provider);
     this.web3Utils = Utils.createInstance(this.options.gasCoefficient, this.web3Instance);
     this.web3Contracts = Contracts.createInstance(this.web3Instance);
-
-    // TODO move this up one level? Definitely somewhere else
-    if (this.options.initialJsonData) {
-      for (let key in this.options.initialJsonData) {
-        if (this.options.initialJsonData.hasOwnProperty(key)) {
-          const matchedKey = key.match(/\w+:\/\/(.+)/i);
-          if (!matchedKey) {
-            throw new Error(`Bad initial json data format, missing schema in ${key}!`);
-          }
-          // $FlowFixMe // Flow cannot detect we've already checked this and raises indexer property missing on undefined
-          storageInstance.update(matchedKey[1], this.options.initialJsonData[key]);
-        }
-      }
-    }
   }
 
   /**

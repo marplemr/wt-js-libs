@@ -6,7 +6,7 @@
     "hotels": {
       "0xbf18b616ac81830dd0c5d4b771f22fd8144fe769": {
         "address": "0xbf18b616ac81830dd0c5d4b771f22fd8144fe769",
-        "url": "json://urlone",
+        "url": "urlone",
         "name": "First hotel",
         "description": "first description",
         "manager": "0x87265a62c60247f862b9149423061b36b460f4bb",
@@ -17,7 +17,7 @@
       },
       "0x4a763f50dfe5cf4468b4171539e021a26fcee0cc": {
         "address": "0x4a763f50dfe5cf4468b4171539e021a26fcee0cc",
-        "url": "json://urltwo",
+        "url": "urltwo",
         "name": "Second hotel",
         "description": "second description",
         "manager": "0x87265a62c60247f862b9149423061b36b460f4bb",

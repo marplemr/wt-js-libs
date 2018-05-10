@@ -22,7 +22,6 @@ class HotelProviderFactory {
   async getHotelInstance (index: Object, address?: string): Promise<RemoteHotelInterface> {
     let providerClass;
     if (!address) {
-      // use defaultDataStorage type
       providerClass = this.__getHotelProviderClass(this.defaultDataStorage);
     } else {
       const url = await (await this.__getHotelContractInstance(address)).methods.url().call();

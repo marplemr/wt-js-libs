@@ -5,6 +5,7 @@ import FullJsonDataModel from './full-json';
 import type { FullJsonDataModelOptionsType } from './full-json';
 import Web3UriDataModel from './web3-uri';
 import type { Web3UriDataModelOptionsType } from './web3-uri';
+import { storageInstance } from '../dataset/in-memory-backed';
 
 /**
  * DataModelType is a chosen `data-model`. Not all options are implemented right now.
@@ -13,9 +14,18 @@ import type { Web3UriDataModelOptionsType } from './web3-uri';
 export type DataModelType = 'full-json' | 'web3-uri';
 /**
  * Combination of all implemented Data Model options.
+ *
+ * "initialJsonData": {
+ *   "url1": {},
+ *   "url2": {}
+ * }
+ *
  * @type {Object}
  */
-export type DataModelOptionsType = FullJsonDataModelOptionsType & Web3UriDataModelOptionsType;
+export type DataModelOptionsType = FullJsonDataModelOptionsType & Web3UriDataModelOptionsType & {
+  // Initial data for JSON storage, necessary for pre-existing data
+  initialJsonData?: Object
+};
 
 /**
  * Representation of a current data model. You should use this factory
@@ -28,7 +38,8 @@ class DataModel {
   _datamodel: DataModelAccessorInterface;
 
   /**
-   * Returns a new configured instance.
+   * Returns a new configured instance. Fills InMemoryData storage
+   * with initial data if provided.
    * @type {DataModel}
    */
   static createInstance (dataModelType: DataModelType, options: DataModelOptionsType): DataModel {
@@ -39,6 +50,13 @@ class DataModel {
       // TODO improve exception system
       throw new Error(dataModelType + ' is not recognized as a valid data model type');
     }
+
+    if (options && options.initialJsonData) {
+      for (let key in options.initialJsonData) {
+        storageInstance.update(key, options.initialJsonData[key]);
+      }
+    }
+
     return new DataModel(dataModelType, options);
   }
 
