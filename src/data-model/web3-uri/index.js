@@ -18,11 +18,14 @@ import Web3WTWallet from './wallet';
  * ```
  */
 export type Web3UriDataModelOptionsType = {
-  // URL of currently used RPC provider
-  provider?: string | Object,
+  // URL of currently used RPC provider.
+  provider?: string | Object;
   // Gas coefficient that is used as a multiplier when setting
-  // a transaction gas
-  gasCoefficient?: number
+  // a transaction gas.
+  gasCoefficient?: number;
+  // Default data storage type - this determines where will off-chain
+  // hotel data get stored for every newly created hotel.
+  defaultDataStorage?: string
 };
 
 /**
@@ -57,7 +60,7 @@ class Web3UriDataModel implements DataModelAccessorInterface {
    * Returns a combined Ethereum and JSON backed Winding Tree index.
    */
   async getWindingTreeIndex (address: string): Promise<Web3UriWTIndexDataProvider> {
-    return Web3UriWTIndexDataProvider.createInstance(address, this.web3Utils, this.web3Contracts);
+    return Web3UriWTIndexDataProvider.createInstance(address, this.web3Utils, this.web3Contracts, this.options.defaultDataStorage);
   }
 
   /**

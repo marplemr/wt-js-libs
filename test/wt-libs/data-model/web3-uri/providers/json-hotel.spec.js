@@ -126,6 +126,20 @@ describe('WTLibs.data-model.web3-uri.providers.json-hotel', () => {
       }
     });
 
+    it('should throw when updating a hotel with url without schema', async () => {
+      let wallet = await dataModel.createWallet(jsonWallet);
+      wallet.unlock(correctPassword);
+      try {
+        const hotel = await indexDataProvider.getHotel('0x4a763f50dfe5cf4468b4171539e021a26fcee0cc');
+        hotel.url = 'some-random-url';
+        await indexDataProvider.updateHotel(wallet, hotel);
+        throw new Error('should not have been called');
+      } catch (e) {
+        assert.match(e.message, /cannot update hotel/i);
+        assert.match(e.message, /cannot find schema/i);
+      }
+    });
+
     it('should throw when removing a hotel that does not correspond to the wallet', async () => {
       let wallet = await dataModel.createWallet(jsonWallet);
       wallet.unlock(correctPassword);

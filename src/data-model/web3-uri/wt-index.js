@@ -24,12 +24,11 @@ class Web3UriWTIndexDataProvider implements WTIndexInterface {
    * Returns a configured instance of Web3UriWTIndexDataProvider
    * representing a Winding Tree index contract on a given `address`.
    */
-  // TODO pass defaultDataStorage from config
-  static async createInstance (indexAddress: string, web3Utils: Utils, web3Contracts: Contracts): Promise<Web3UriWTIndexDataProvider> {
-    return new Web3UriWTIndexDataProvider(indexAddress, web3Utils, web3Contracts);
+  static async createInstance (indexAddress: string, web3Utils: Utils, web3Contracts: Contracts, defaultDataStorage: string = 'json'): Promise<Web3UriWTIndexDataProvider> {
+    return new Web3UriWTIndexDataProvider(indexAddress, web3Utils, web3Contracts, defaultDataStorage);
   }
 
-  constructor (indexAddress: string, web3Utils: Utils, web3Contracts: Contracts, defaultDataStorage: string = 'json') {
+  constructor (indexAddress: string, web3Utils: Utils, web3Contracts: Contracts, defaultDataStorage: string) {
     this.address = indexAddress;
     this.web3Utils = web3Utils;
     this.web3Contracts = web3Contracts;

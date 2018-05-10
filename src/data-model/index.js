@@ -43,14 +43,6 @@ class DataModel {
    * @type {DataModel}
    */
   static createInstance (dataModelType: DataModelType, options: DataModelOptionsType): DataModel {
-    if (![
-      'full-json',
-      'web3-uri',
-    ].includes(dataModelType)) {
-      // TODO improve exception system
-      throw new Error(dataModelType + ' is not recognized as a valid data model type');
-    }
-
     if (options && options.initialJsonData) {
       for (let key in options.initialJsonData) {
         storageInstance.update(key, options.initialJsonData[key]);
@@ -75,7 +67,7 @@ class DataModel {
         this._datamodel = Web3UriDataModel.createInstance(this.options);
         break;
       default:
-        throw new Error(this.type + ' data model is not yet implemented');
+        throw new Error(this.type + ' data model is not implemented');
       }
     }
     return this._datamodel;

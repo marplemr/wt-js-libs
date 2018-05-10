@@ -44,6 +44,7 @@ class JsonHotelProvider extends EthBackedHotelProvider implements RemoteHotelInt
         location: {},
       },
     }, this);
+
     if (this.address) {
       // pre-heat contract to prevent multiple contract inits
       await this.__getContractInstance();

@@ -10,15 +10,6 @@ describe('WTLibs.dataModel', () => {
       assert.equal(dataModel.type, testedDataModel.type);
       assert.equal(dataModel.options.some, 'configoption');
     });
-
-    it('should throw on unknown type', () => {
-      try {
-        DataModel.createInstance('random', {});
-        throw new Error('should not have been called');
-      } catch (e) {
-        assert.match(e.message, /is not recognized as a valid data model type/i);
-      }
-    });
   });
 
   describe('__getDataModelAccessor', () => {
@@ -55,7 +46,7 @@ describe('WTLibs.dataModel', () => {
       try {
         DataModel.createInstance('random-type', {});
       } catch (e) {
-        assert.match(e.message, /is not recognized as a valid/i);
+        assert.match(e.message, /is not implemented/i);
       }
     });
   });

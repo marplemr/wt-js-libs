@@ -83,4 +83,19 @@ describe('WTLibs.dataset.InMemoryBacked', () => {
     assert.equal(storageInstance.get(imbInstance.getHash()).one, await object.one);
     assert.equal(storageInstance.get(originalHash).one, await object.one);
   });
+
+  it('should not panic when setting data to a non-existent hash', async () => {
+    const object = {};
+    const imbInstance = new InMemoryBacked();
+    imbInstance.initialize();
+    imbInstance.bindProperties({
+      fields: {
+        one: {},
+      },
+    }, object);
+    imbInstance.setHash('something-unused');
+    object.one = 'two';
+    const storedData = storageInstance.get('something-unused');
+    assert.equal(storedData.one, await object.one);
+  });
 });
