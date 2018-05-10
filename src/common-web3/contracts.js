@@ -62,19 +62,21 @@ class Contracts {
   }
 
   __initEventRegistry () {
-    function generateEventSignatures (abi) {
+    function generateEventSignatures (abi, web3) {
       const events = abi.filter((m) => m.type === 'event');
       let indexedEvents = {};
       for (let event of events) {
-        indexedEvents[event.signature] = event;
+        // kudos https://github.com/ConsenSys/abi-decoder/blob/master/index.js#L19
+        const signature = web3.utils.sha3(event.name + '(' + event.inputs.map(function (input) { return input.type; }).join(',') + ')');
+        indexedEvents[signature] = event;
       }
       return indexedEvents;
     }
     if (!this.eventRegistry) {
       this.eventRegistry = Object.assign(
         {},
-        generateEventSignatures(WTIndexContractMetadata.abi),
-        generateEventSignatures(HotelContractMetadata.abi)
+        generateEventSignatures(WTIndexContractMetadata.abi, this.web3),
+        generateEventSignatures(HotelContractMetadata.abi, this.web3)
       );
     }
     return this.eventRegistry;
@@ -91,7 +93,7 @@ class Contracts {
     const result = [];
     const eventRegistry = this.__initEventRegistry();
     for (let log of logs) {
-      if (log.topics[0] && eventRegistry[log.topics[0]]) {
+      if (log.topics && log.topics[0] && eventRegistry[log.topics[0]]) {
         const eventAbi = eventRegistry[log.topics[0]];
         let topics = log.topics;
         // @see https://web3js.readthedocs.io/en/1.0/web3-eth-abi.html#id22
