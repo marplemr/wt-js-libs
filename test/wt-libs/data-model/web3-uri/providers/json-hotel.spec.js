@@ -69,6 +69,26 @@ describe('WTLibs.data-model.web3-uri.providers.json-hotel', () => {
       await hotelProvider.__getContractInstance();
       assert.equal(getHotelContractSpy.callCount, 1);
     });
+
+    it('should not allow change of url schema', async () => {
+      const hotelProvider = await JsonHotelProvider.createInstance(dataModel.web3Utils, dataModel.web3Contracts, await indexDataProvider.__getDeployedIndex(), '0x4a763f50dfe5cf4468b4171539e021a26fcee0cc');
+      try {
+        await hotelProvider.setLocalData({ url: 'random://something-else' });
+        throw new Error('should not have been called');
+      } catch (e) {
+        assert.match(e.message, /cannot change schema for now/i);
+      }
+    });
+
+    it('should not allow change to a schema-less url', async () => {
+      const hotelProvider = await JsonHotelProvider.createInstance(dataModel.web3Utils, dataModel.web3Contracts, await indexDataProvider.__getDeployedIndex(), '0x4a763f50dfe5cf4468b4171539e021a26fcee0cc');
+      try {
+        await hotelProvider.setLocalData({ url: 'something-else' });
+        throw new Error('should not have been called');
+      } catch (e) {
+        assert.match(e.message, /cannot find schema/i);
+      }
+    });
   });
 
   describe('write to network', () => {

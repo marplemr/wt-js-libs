@@ -66,17 +66,17 @@ describe('WTLibs.data-model.web3-uri.EthBackedHotelProvider', () => {
   describe('setLocalData', () => {
     it('should set manager and url', async () => {
       const provider = new EthBackedHotelProvider(utilsStub, contractsStub, indexContractStub, 'fake-address');
-      provider.setLocalData({ url: 'new-url', manager: 'new-manager' });
+      await provider.setLocalData({ url: 'new-url', manager: 'new-manager' });
       assert.equal(await provider.url, 'new-url');
       assert.equal(await provider.manager, 'new-manager');
     });
 
     it('should never null manager', async () => {
       const provider = new EthBackedHotelProvider(utilsStub, contractsStub, indexContractStub, 'fake-address');
-      provider.setLocalData({ url: 'new-url', manager: 'new-manager' });
+      await provider.setLocalData({ url: 'new-url', manager: 'new-manager' });
       assert.equal(await provider.url, 'new-url');
       assert.equal(await provider.manager, 'new-manager');
-      provider.setLocalData({ url: 'another-url', manager: null });
+      await provider.setLocalData({ url: 'another-url', manager: null });
       assert.equal(await provider.url, 'another-url');
       assert.equal(await provider.manager, 'new-manager');
     });

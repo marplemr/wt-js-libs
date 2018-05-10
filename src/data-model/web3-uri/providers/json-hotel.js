@@ -66,12 +66,30 @@ class JsonHotelProvider extends EthBackedHotelProvider implements RemoteHotelInt
     return matchedUrl[1];
   }
 
+  __detectSchema (url: string): string {
+    const matchedUrl = url.match(/(\w+):\/\/.+/i);
+    if (!matchedUrl) {
+      throw new Error(`Cannot find schema in url ${url}`);
+    }
+    return matchedUrl[1];
+  }
+
   /**
    * Updates data locally, calls EthBackedHotelProvider's setLocalData
    * and sets `name`, `description` and `location`.
    */
-  setLocalData (newData: HotelInterface) {
-    super.setLocalData(newData);
+  async setLocalData (newData: HotelInterface): Promise<void> {
+    // Prevent schema change for now... This will have to be more flexible in the future
+    if (newData.url) {
+      const oldUrl = (await this.url) || '';
+      const newUrl = (await newData.url) || '';
+      const newSchema = this.__detectSchema(newUrl);
+      const oldSchema = this.__detectSchema(oldUrl);
+      if (newSchema !== oldSchema) {
+        throw new Error('Cannot change schema for now!');
+      }
+    }
+    await super.setLocalData(newData);
     this.name = newData.name;
     this.description = newData.description;
     this.location = newData.location;
@@ -106,8 +124,9 @@ class JsonHotelProvider extends EthBackedHotelProvider implements RemoteHotelInt
   async updateOnNetwork (wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>> {
     // url might have changed - copy over current inmem data and point a new url at them
     const currentUrl: string = ((await this.url): any); // eslint-disable-line flowtype/no-weak-types
-    if (currentUrl !== this.inMemBackedData.getHash()) {
-      this.inMemBackedData.changeHashTo(this.__stripSchemaFromUrl(currentUrl));
+    const strippedCurrentUrl = this.__stripSchemaFromUrl(currentUrl);
+    if (strippedCurrentUrl !== this.inMemBackedData.getHash()) {
+      this.inMemBackedData.changeHashTo(strippedCurrentUrl);
     }
     return super.updateOnNetwork(wallet, transactionOptions);
   }

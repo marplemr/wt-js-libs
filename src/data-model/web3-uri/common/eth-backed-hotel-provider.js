@@ -73,7 +73,7 @@ class EthBackedHotelProvider {
    * sets manager and url properties and none of them can be nulled.
    * @param {HotelInterface} newData
    */
-  setLocalData (newData: HotelInterface) {
+  async setLocalData (newData: HotelInterface): Promise<void> {
     if (newData.manager) {
       this.manager = newData.manager;
     }

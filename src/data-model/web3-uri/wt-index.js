@@ -6,12 +6,13 @@ import HotelProviderFactory from './hotel-provider-factory';
 
 /**
  * Ethereum smart contract backed implementation of Winding Tree
- * index wrapper. It can decide by itself where it should look for
- * hotel data based on the protocol in `url` field.
+ * index wrapper. It provides methods for working with hotel
+ * contracts. It cand decide by itself where it should look for
+ * off-chain hotel data based on the protocol in hotel's `url` field.
  *
  * Supported protocols:
  *
- *   - json: `json://some-hash` - Looks up hotel data in in-memory storage
+ *   - json: `json://some-hash` - Looks up hotel data in in-memory storage under some-hash key
  */
 class Web3UriWTIndexDataProvider implements WTIndexInterface {
   address: string;
@@ -49,14 +50,15 @@ class Web3UriWTIndexDataProvider implements WTIndexInterface {
   /**
    * Adds a totally new hotel on chain. Does not wait for the transactions
    * to be mined, but as fast as possible returns a list of transaction IDs
-   * and the new hotel on chain address.
+   * and the new hotel on chain address. The new hotel uses `defaultDataStorage`
+   * for storing information off-chain.
    *
    * @throws {Error} When anything goes wrong.
    */
   async addHotel (wallet: WalletInterface, hotelData: HotelInterface): Promise<AddHotelResponseInterface> {
     try {
       const hotel = await this.__createHotelInstance();
-      hotel.setLocalData(hotelData);
+      await hotel.setLocalData(hotelData);
       const transactionIds = await hotel.createOnNetwork(wallet, {
         from: hotelData.manager,
         to: this.address,
@@ -121,6 +123,7 @@ class Web3UriWTIndexDataProvider implements WTIndexInterface {
    * instance, the method throws immediately.
    *
    * @throws {Error} When hotel does not exist.
+   * @throws {Error} When schema cannot be detected from the hotel's `url` field.
    * @throws {Error} When something breaks in the network communication.
    */
   async getHotel (address: string): Promise<?HotelInterface> {

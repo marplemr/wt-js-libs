@@ -39,7 +39,7 @@ export interface HotelInterface {
 }
 
 export interface RemoteHotelInterface extends HotelInterface {
-  setLocalData(newData: HotelInterface): void;
+  setLocalData(newData: HotelInterface): Promise<void>;
   createOnNetwork(wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>>;
   updateOnNetwork(wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>>;
   removeFromNetwork(wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>>
