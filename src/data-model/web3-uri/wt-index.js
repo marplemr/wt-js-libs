@@ -1,13 +1,17 @@
 // @flow
-import type { WTIndexInterface, HotelInterface, AddHotelResponseInterface, WalletInterface } from '../../interfaces';
+import type { WTIndexInterface, HotelInterface, RemoteHotelInterface, AddHotelResponseInterface, WalletInterface } from '../../interfaces';
 import Utils from './common/utils';
 import Contracts from './common/contracts';
-import JsonHotelProvider from './providers/json-hotel';
+import HotelProviderFactory from './hotel-provider-factory';
 
 /**
  * Ethereum smart contract backed implementation of Winding Tree
- * index wrapper. It currently works exclusively with JsonHotelProvider
- * but it should be easily generalized to other Hotel implementations.
+ * index wrapper. It can decide by itself where it should look for
+ * hotel data based on the protocol in `url` field.
+ *
+ * Supported protocols:
+ *
+ *   - json: `json://some-hash` - Looks up hotel data in in-memory storage
  */
 class Web3UriWTIndexDataProvider implements WTIndexInterface {
   address: string;
@@ -36,6 +40,11 @@ class Web3UriWTIndexDataProvider implements WTIndexInterface {
     return this.deployedIndex;
   }
 
+  async __createHotelInstance (index?: Object, address?: string): Promise<RemoteHotelInterface> {
+    index = index || await this.__getDeployedIndex();
+    return HotelProviderFactory.getInstance(this.web3Utils, this.web3Contracts, index, address);
+  }
+
   /**
    * Adds a totally new hotel on chain. Does not wait for the transactions
    * to be mined, but as fast as possible returns a list of transaction IDs
@@ -45,7 +54,7 @@ class Web3UriWTIndexDataProvider implements WTIndexInterface {
    */
   async addHotel (wallet: WalletInterface, hotelData: HotelInterface): Promise<AddHotelResponseInterface> {
     try {
-      const hotel = await JsonHotelProvider.createInstance(this.web3Utils, this.web3Contracts, await this.__getDeployedIndex());
+      const hotel = await this.__createHotelInstance();
       hotel.setLocalData(hotelData);
       const transactionIds = await hotel.createOnNetwork(wallet, {
         from: hotelData.manager,
@@ -70,7 +79,7 @@ class Web3UriWTIndexDataProvider implements WTIndexInterface {
   async updateHotel (wallet: WalletInterface, hotel: HotelInterface): Promise<Array<string>> {
     try {
       // We need to separate calls to be able to properly catch exceptions
-      const updatedHotel = await ((hotel: any): JsonHotelProvider).updateOnNetwork(wallet, { // eslint-disable-line flowtype/no-weak-types
+      const updatedHotel = await ((hotel: any): RemoteHotelInterface).updateOnNetwork(wallet, { // eslint-disable-line flowtype/no-weak-types
         from: await hotel.manager,
         to: this.address,
       });
@@ -93,7 +102,7 @@ class Web3UriWTIndexDataProvider implements WTIndexInterface {
   async removeHotel (wallet: WalletInterface, hotel: HotelInterface): Promise<Array<string>> {
     try {
       // We need to separate calls to be able to properly catch exceptions
-      const result = await ((hotel: any): JsonHotelProvider).removeFromNetwork(wallet, { // eslint-disable-line flowtype/no-weak-types
+      const result = await ((hotel: any): RemoteHotelInterface).removeFromNetwork(wallet, { // eslint-disable-line flowtype/no-weak-types
         from: await hotel.manager,
         to: this.address,
       });
@@ -122,7 +131,7 @@ class Web3UriWTIndexDataProvider implements WTIndexInterface {
       if (!hotelIndex) {
         throw new Error('Not found in hotel list');
       } else {
-        return JsonHotelProvider.createInstance(this.web3Utils, this.web3Contracts, index, address);
+        return this.__createHotelInstance(index, address);
       }
     } catch (err) {
       throw new Error('Cannot find hotel at ' + address + ': ' + err.message);

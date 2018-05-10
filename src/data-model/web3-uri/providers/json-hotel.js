@@ -1,5 +1,5 @@
 // @flow
-import type { HotelInterface, LocationInterface, WalletInterface } from '../../../interfaces';
+import type { HotelInterface, RemoteHotelInterface, LocationInterface, WalletInterface } from '../../../interfaces';
 import Utils from '../common/utils';
 import Contracts from '../common/contracts';
 import EthBackedHotelProvider from '../common/eth-backed-hotel-provider';
@@ -8,7 +8,7 @@ import InMemoryBacked from '../../../dataset/in-memory-backed';
 /**
  * Ethereum based hotel with additional data stored in an in-memory JSON storage.
  */
-class JsonHotelProvider extends EthBackedHotelProvider implements HotelInterface {
+class JsonHotelProvider extends EthBackedHotelProvider implements RemoteHotelInterface {
   description: Promise<?string> | ?string;
   name: Promise<?string> | ?string;
   location: Promise<?LocationInterface> | ?LocationInterface;

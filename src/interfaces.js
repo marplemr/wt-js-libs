@@ -38,6 +38,13 @@ export interface HotelInterface {
   toPlainObject(): Promise<Object>
 }
 
+export interface RemoteHotelInterface extends HotelInterface {
+  setLocalData(newData: HotelInterface): void;
+  createOnNetwork(wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>>;
+  updateOnNetwork(wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>>;
+  removeFromNetwork(wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>>
+}
+
 /**
  * WindingTree index interface that provides all methods
  * necessary for interaction with the hotels. The real
