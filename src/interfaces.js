@@ -38,6 +38,9 @@ export interface HotelInterface {
   toPlainObject(): Promise<Object>
 }
 
+/**
+ * Adds network-related operations to a generic hotel data.
+ */
 export interface RemoteHotelInterface extends HotelInterface {
   setLocalData(newData: HotelInterface): Promise<void>;
   createOnNetwork(wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>>;

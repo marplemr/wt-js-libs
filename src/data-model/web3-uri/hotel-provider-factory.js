@@ -4,11 +4,21 @@ import Utils from './common/utils';
 import Contracts from './common/contracts';
 import JsonHotelProvider from './providers/json-hotel';
 
+/**
+ * HotelProviderFactory is used to instantiate
+ * various forms of Hotel representation.
+ */
 class HotelProviderFactory {
   defaultDataStorage: string;
   web3Utils: Utils;
   web3Contracts: Contracts;
 
+  /**
+   * Creates new instance of HotelProviderFactory.
+   * @param {string} defaultDataStorage is used every time a brand new hotel is created.
+   * @param {Utils}
+   * @param {Contracts}
+   */
   static createInstance (defaultDataStorage: string, web3Utils: Utils, web3Contracts: Contracts): HotelProviderFactory {
     return new HotelProviderFactory(defaultDataStorage, web3Utils, web3Contracts);
   }
@@ -19,6 +29,13 @@ class HotelProviderFactory {
     this.web3Contracts = web3Contracts;
   }
 
+  /**
+   * Returns a RemoteHotelInterface based on data storage. It either uses the default
+   * one or if an address is provided, it detects a storage type to be used
+   * by checking the url field on-chain on given address.
+   * @param {Object} Winding Tree index contract instance.
+   * @param {string} Optional hotel address
+   */
   async getHotelInstance (index: Object, address?: string): Promise<RemoteHotelInterface> {
     let providerClass;
     if (!address) {

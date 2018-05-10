@@ -32,7 +32,8 @@ class JsonHotelProvider extends EthBackedHotelProvider implements RemoteHotelInt
    * and sets up the additional InMemoryBacked dataset containing
    * `description`, `name` and `location`. If the address was provided,
    * an on-chain url pointer is used as an identifier for the InMemoryBacked
-   * dataset.
+   * dataset. InMemoryBacked pointers are schema-less, schema is stored only
+   * on-chain for now.
    */
   async initialize (): Promise<void> {
     super.initialize();
@@ -77,6 +78,8 @@ class JsonHotelProvider extends EthBackedHotelProvider implements RemoteHotelInt
   /**
    * Updates data locally, calls EthBackedHotelProvider's setLocalData
    * and sets `name`, `description` and `location`.
+   *
+   * @throws {Error} If url is updated and the schema is different than it used to be. Subject to change.
    */
   async setLocalData (newData: HotelInterface): Promise<void> {
     // Prevent schema change for now... This will have to be more flexible in the future
