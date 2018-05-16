@@ -1,26 +1,26 @@
 // @flow
-import type { RemoteHotelInterface } from '../../interfaces';
-import Utils from './common/utils';
-import Contracts from './common/contracts';
-import JsonHotelProvider from './providers/json-hotel';
+import type { HotelInterface } from '../../interfaces';
+import Utils from './utils';
+import Contracts from './contracts';
+import OnChainHotel from './on-chain-hotel';
 
 /**
- * HotelProviderFactory is used to instantiate
+ * HotelFactory is used to instantiate
  * various forms of Hotel representation.
  */
-class HotelProviderFactory {
+class HotelFactory {
   defaultDataStorage: string;
   web3Utils: Utils;
   web3Contracts: Contracts;
 
   /**
-   * Creates new instance of HotelProviderFactory.
+   * Creates new instance of HotelFactory.
    * @param {string} defaultDataStorage is used every time a brand new hotel is created.
    * @param {Utils}
    * @param {Contracts}
    */
-  static createInstance (defaultDataStorage: string, web3Utils: Utils, web3Contracts: Contracts): HotelProviderFactory {
-    return new HotelProviderFactory(defaultDataStorage, web3Utils, web3Contracts);
+  static createInstance (defaultDataStorage: string, web3Utils: Utils, web3Contracts: Contracts): HotelFactory {
+    return new HotelFactory(defaultDataStorage, web3Utils, web3Contracts);
   }
 
   constructor (defaultDataStorage: string, web3Utils: Utils, web3Contracts: Contracts) {
@@ -30,13 +30,13 @@ class HotelProviderFactory {
   }
 
   /**
-   * Returns a RemoteHotelInterface based on data storage. It either uses the default
+   * Returns a HotelInterface based on data storage. It either uses the default
    * one or if an address is provided, it detects a storage type to be used
    * by checking the url field on-chain on given address.
    * @param {Object} Winding Tree index contract instance.
    * @param {string} Optional hotel address
    */
-  async getHotelInstance (index: Object, address?: string): Promise<RemoteHotelInterface> {
+  async getHotelInstance (index: Object, address?: string): Promise<HotelInterface> {
     let providerClass;
     if (!address) {
       providerClass = this.__getHotelProviderClass(this.defaultDataStorage);
@@ -60,12 +60,12 @@ class HotelProviderFactory {
   // @see https://flow.org/en/docs/types/interfaces/#toc-interface-property-variance-read-only-and-write-only
   __getHotelProviderClass (dataStorageType: ?string): {+createInstance: any} { // eslint-disable-line flowtype/no-weak-types
     switch (dataStorageType) {
-    case 'json':
-      return JsonHotelProvider;
+    // case 'json':
     default:
-      throw new Error(`Unsupported data storage type: ${dataStorageType || 'null'}`);
+      return OnChainHotel;
+      // throw new Error(`Unsupported data storage type: ${dataStorageType || 'null'}`);
     }
   }
 }
 
-export default HotelProviderFactory;
+export default HotelFactory;

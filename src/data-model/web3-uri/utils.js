@@ -1,6 +1,6 @@
 // @flow
 
-import type { TxReceiptInterface, TxInterface } from '../../../interfaces';
+import type { TxReceiptInterface, TxInterface } from '../../interfaces';
 import Web3 from 'web3';
 import BigNumber from 'bignumber.js';
 import ethJsUtil from 'ethereumjs-util';

@@ -1,9 +1,9 @@
 import { assert } from 'chai';
 import sinon from 'sinon';
-import helpers from '../../../../utils/helpers';
-import EthBackedHotelProvider from '../../../../../src/data-model/web3-uri/common/eth-backed-hotel-provider';
+import helpers from '../../../utils/helpers';
+import OnChainHotel from '../../../../src/data-model/web3-uri/on-chain-hotel';
 
-describe('WTLibs.data-model.web3-uri.EthBackedHotelProvider', () => {
+describe('WTLibs.data-model.web3-uri.OnChainHotel', () => {
   let contractsStub, utilsStub, indexContractStub, walletStub;
 
   beforeEach(() => {
@@ -47,25 +47,25 @@ describe('WTLibs.data-model.web3-uri.EthBackedHotelProvider', () => {
 
   describe('initialize', () => {
     it('should setup url and manager fields', async () => {
-      const provider = new EthBackedHotelProvider(utilsStub, contractsStub, indexContractStub);
+      const provider = new OnChainHotel(utilsStub, contractsStub, indexContractStub);
       assert.isUndefined(provider.url);
       assert.isUndefined(provider.manager);
       await provider.initialize();
       assert.isDefined(provider.url);
       assert.isDefined(provider.manager);
-      assert.isFalse(provider.ethBackedDataset.isDeployed());
+      assert.isFalse(provider.onchainDataset.isDeployed());
     });
 
     it('should mark eth backed dataset as deployed if address is passed', async () => {
-      const provider = new EthBackedHotelProvider(utilsStub, contractsStub, indexContractStub, 'fake-address');
+      const provider = new OnChainHotel(utilsStub, contractsStub, indexContractStub, 'fake-address');
       await provider.initialize();
-      assert.isTrue(provider.ethBackedDataset.isDeployed());
+      assert.isTrue(provider.onchainDataset.isDeployed());
     });
   });
 
   describe('setLocalData', () => {
     it('should set manager and url', async () => {
-      const provider = new EthBackedHotelProvider(utilsStub, contractsStub, indexContractStub, 'fake-address');
+      const provider = new OnChainHotel(utilsStub, contractsStub, indexContractStub, 'fake-address');
       await provider.setLocalData({ url: 'new-url', manager: 'new-manager' });
       assert.equal(await provider.url, 'new-url');
       assert.equal(await provider.manager, 'new-manager');
@@ -79,7 +79,7 @@ describe('WTLibs.data-model.web3-uri.EthBackedHotelProvider', () => {
     });
 
     it('should never null manager', async () => {
-      const provider = new EthBackedHotelProvider(utilsStub, contractsStub, indexContractStub, 'fake-address');
+      const provider = new OnChainHotel(utilsStub, contractsStub, indexContractStub, 'fake-address');
       await provider.setLocalData({ url: 'new-url', manager: 'new-manager' });
       assert.equal(await provider.url, 'new-url');
       assert.equal(await provider.manager, 'new-manager');
@@ -89,14 +89,14 @@ describe('WTLibs.data-model.web3-uri.EthBackedHotelProvider', () => {
     });
   });
 
-  describe('createOnNetwork', () => {
+  describe('createOnChainData', () => {
     let provider;
     beforeEach(async () => {
-      provider = new EthBackedHotelProvider(utilsStub, contractsStub, indexContractStub);
+      provider = new OnChainHotel(utilsStub, contractsStub, indexContractStub);
       await provider.initialize();
     });
     it('should precompute address', async () => {
-      const result = await provider.createOnNetwork(walletStub, {}, 'data-url');
+      const result = await provider.createOnChainData(walletStub, {}, 'data-url');
       assert.deepEqual(result, ['tx-hash']);
       // index nonce + caller nonce
       assert.equal(utilsStub.determineCurrentAddressNonce.callCount, 2);
@@ -107,7 +107,7 @@ describe('WTLibs.data-model.web3-uri.EthBackedHotelProvider', () => {
     // TODO test cross hotel.manager vs. wallet.account
 
     it('should call registerHotel with applied gasCoefficient', async () => {
-      const result = await provider.createOnNetwork(walletStub, { from: 'xx' }, 'data-url');
+      const result = await provider.createOnChainData(walletStub, { from: 'xx' }, 'data-url');
       assert.deepEqual(result, ['tx-hash']);
       assert.equal(utilsStub.applyGasCoefficient.callCount, 1);
       assert.equal(indexContractStub.methods.registerHotel().estimateGas.callCount, 1);
@@ -118,15 +118,15 @@ describe('WTLibs.data-model.web3-uri.EthBackedHotelProvider', () => {
     });
 
     it('should mark dataset as deployed on success', async () => {
-      assert.isFalse(provider.ethBackedDataset.isDeployed());
-      await provider.createOnNetwork(walletStub, { from: 'xx' }, 'data-url');
-      assert.isTrue(provider.ethBackedDataset.isDeployed());
+      assert.isFalse(provider.onchainDataset.isDeployed());
+      await provider.createOnChainData(walletStub, { from: 'xx' }, 'data-url');
+      assert.isTrue(provider.onchainDataset.isDeployed());
     });
 
     it('should throw on transaction error', async () => {
       walletStub.signAndSendTransaction = sinon.stub().rejects(new Error('Cannot send signed transaction'));
       try {
-        await provider.createOnNetwork(walletStub, { from: 'xx' }, 'data-url');
+        await provider.createOnChainData(walletStub, { from: 'xx' }, 'data-url');
         throw new Error('should not have been called');
       } catch (e) {
         assert.match(e.message, /cannot create hotel/i);
@@ -134,19 +134,19 @@ describe('WTLibs.data-model.web3-uri.EthBackedHotelProvider', () => {
     });
   });
 
-  describe('updateOnNetwork', () => {
+  describe('updateOnChainData', () => {
     let provider;
     beforeEach(async () => {
-      provider = new EthBackedHotelProvider(utilsStub, contractsStub, indexContractStub, 'fake-address');
+      provider = new OnChainHotel(utilsStub, contractsStub, indexContractStub, 'fake-address');
       await provider.initialize();
       provider.url = 'something new';
     });
 
     it('should throw on an undeployed contract', async () => {
       try {
-        let provider = new EthBackedHotelProvider(utilsStub, contractsStub, indexContractStub);
+        let provider = new OnChainHotel(utilsStub, contractsStub, indexContractStub);
         await provider.initialize();
-        await provider.updateOnNetwork(walletStub, {});
+        await provider.updateOnChainData(walletStub, {});
         throw new Error('should not have been called');
       } catch (e) {
         assert.match(e.message, /cannot get hotel/i);
@@ -154,7 +154,7 @@ describe('WTLibs.data-model.web3-uri.EthBackedHotelProvider', () => {
     });
 
     it('should call callHotel with applied gasCoefficient', async () => {
-      const result = await provider.updateOnNetwork(walletStub, { from: 'xx' }, 'data-url');
+      const result = await provider.updateOnChainData(walletStub, { from: 'xx' }, 'data-url');
       assert.deepEqual(result, ['tx-hash']);
       assert.equal(utilsStub.applyGasCoefficient.callCount, 1);
       assert.equal(indexContractStub.methods.callHotel().estimateGas.callCount, 1);
@@ -167,7 +167,7 @@ describe('WTLibs.data-model.web3-uri.EthBackedHotelProvider', () => {
     it('should throw on error', async () => {
       walletStub.signAndSendTransaction = sinon.stub().rejects(new Error('Cannot send signed transaction'));
       try {
-        await provider.updateOnNetwork(walletStub, { from: 'xx' }, 'data-url');
+        await provider.updateOnChainData(walletStub, { from: 'xx' }, 'data-url');
         throw new Error('should not have been called');
       } catch (e) {
         assert.match(e.message, /cannot update hotel/i);
@@ -175,17 +175,17 @@ describe('WTLibs.data-model.web3-uri.EthBackedHotelProvider', () => {
     });
   });
 
-  describe('removeFromNetwork', () => {
+  describe('removeOnChainData', () => {
     let provider;
     beforeEach(async () => {
-      provider = new EthBackedHotelProvider(utilsStub, contractsStub, indexContractStub, 'fake-address');
+      provider = new OnChainHotel(utilsStub, contractsStub, indexContractStub, 'fake-address');
       await provider.initialize();
     });
 
     it('should throw on an undeployed contract', async () => {
       try {
-        provider.ethBackedDataset.__deployedFlag = false;
-        await provider.removeFromNetwork(walletStub, {});
+        provider.onchainDataset.__deployedFlag = false;
+        await provider.removeOnChainData(walletStub, {});
         throw new Error('should not have been called');
       } catch (e) {
         assert.match(e.message, /cannot remove hotel/i);
@@ -193,7 +193,7 @@ describe('WTLibs.data-model.web3-uri.EthBackedHotelProvider', () => {
     });
 
     it('should call deleteHotel with applied gasCoefficient', async () => {
-      const result = await provider.removeFromNetwork(walletStub, { from: 'xx' });
+      const result = await provider.removeOnChainData(walletStub, { from: 'xx' });
       assert.deepEqual(result, ['tx-hash']);
       assert.equal(utilsStub.applyGasCoefficient.callCount, 1);
       assert.equal(indexContractStub.methods.deleteHotel().estimateGas.callCount, 1);
@@ -204,15 +204,15 @@ describe('WTLibs.data-model.web3-uri.EthBackedHotelProvider', () => {
     });
 
     it('should mark dataset as obsolete on success', async () => {
-      assert.isFalse(provider.ethBackedDataset.isObsolete());
-      await provider.removeFromNetwork(walletStub, { from: 'xx' });
-      assert.isTrue(provider.ethBackedDataset.isObsolete());
+      assert.isFalse(provider.onchainDataset.isObsolete());
+      await provider.removeOnChainData(walletStub, { from: 'xx' });
+      assert.isTrue(provider.onchainDataset.isObsolete());
     });
 
     it('should throw on error', async () => {
       walletStub.signAndSendTransaction = sinon.stub().rejects(new Error('Cannot send signed transaction'));
       try {
-        await provider.removeFromNetwork(walletStub, { from: 'xx' });
+        await provider.removeOnChainData(walletStub, { from: 'xx' });
         throw new Error('should not have been called');
       } catch (e) {
         assert.match(e.message, /cannot remove hotel/i);

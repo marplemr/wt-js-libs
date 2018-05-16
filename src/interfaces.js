@@ -21,46 +21,53 @@ export interface LocationInterface {
   longitude?: ?number
 }
 
+export interface HotelDataIndex {
+  descriptionUrl: string;
+  // availabilityUrl: string;
+  // inventoryUrl: string;
+  description: HotelDescriptionInterface
+}
+
+export interface HotelDescriptionInterface {
+  location: Promise<?LocationInterface> | ?LocationInterface;
+  name: Promise<?string> | ?string;
+  description: Promise<?string> | ?string
+}
+
+export interface HotelOnChainDataInterface {
+  address: Promise<?string> | ?string;
+  manager: Promise<?string> | ?string;
+  url: Promise<?string> | ?string
+}
+
 /**
  * Contains hotel-related data.
  *
  * - `address` is the network address.
+ * - `manager` is the network address of hotel manager.
  * - `url` holds a pointer to the off-chain storage
  * that is used internally to store data.
  */
-export interface HotelInterface {
-  address: Promise<?string> | ?string;
-  manager: Promise<?string> | ?string;
-  url: Promise<?string> | ?string;
-  location: Promise<?LocationInterface> | ?LocationInterface;
-  name: Promise<?string> | ?string;
-  description: Promise<?string> | ?string;
-  toPlainObject(): Promise<Object>
-}
-
-/**
- * Adds network-related operations to a generic hotel data.
- */
-export interface RemoteHotelInterface extends HotelInterface {
-  setLocalData(newData: HotelInterface): Promise<void>;
-  createOnNetwork(wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>>;
-  updateOnNetwork(wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>>;
-  removeFromNetwork(wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>>
+export interface HotelInterface extends HotelOnChainDataInterface {
+  toPlainObject(): Promise<Object>;
+  setLocalData(newData: HotelOnChainDataInterface): Promise<void>;
+  createOnChainData(wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>>;
+  updateOnChainData(wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>>;
+  removeOnChainData(wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>>
 }
 
 /**
  * WindingTree index interface that provides all methods
  * necessary for interaction with the hotels. The real
- * implementation might differ in speed and asynchronicity
- * in various `data-model`s.
+ * implementation might differ in speed and asynchronicity.
  */
 export interface WTIndexInterface {
-  addHotel(wallet: WalletInterface, data: HotelInterface): Promise<AddHotelResponseInterface>;
+  addHotel(wallet: WalletInterface, hotel: HotelOnChainDataInterface): Promise<AddHotelResponseInterface>;
   getHotel(address: string): Promise<?HotelInterface>;
   getAllHotels(): Promise<Array<HotelInterface>>;
-  // It is possible that this operation generates multiple transactions
+  // It is possible that this operation generates multiple transactions in the future
   updateHotel(wallet: WalletInterface, hotel: HotelInterface): Promise<Array<string>>;
-  // It is possible that this operation generates multiple transactions
+  // It is possible that this operation generates multiple transactions in the future
   removeHotel(wallet: WalletInterface, hotel: HotelInterface): Promise<Array<string>>
 }
 

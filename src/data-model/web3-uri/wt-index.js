@@ -1,8 +1,8 @@
 // @flow
-import type { WTIndexInterface, HotelInterface, RemoteHotelInterface, AddHotelResponseInterface, WalletInterface } from '../../interfaces';
-import Utils from './common/utils';
-import Contracts from './common/contracts';
-import HotelProviderFactory from './hotel-provider-factory';
+import type { WTIndexInterface, HotelOnChainDataInterface, HotelInterface, AddHotelResponseInterface, WalletInterface } from '../../interfaces';
+import Utils from './utils';
+import Contracts from './contracts';
+import HotelFactory from './hotel-factory';
 
 /**
  * Ethereum smart contract backed implementation of Winding Tree
@@ -19,7 +19,7 @@ class Web3UriWTIndexDataProvider implements WTIndexInterface {
   web3Utils: Utils;
   web3Contracts: Contracts;
   deployedIndex: Object; // TODO get rid of Object type
-  hotelProviderFactory: HotelProviderFactory;
+  HotelFactory: HotelFactory;
 
   /**
    * Returns a configured instance of Web3UriWTIndexDataProvider
@@ -33,7 +33,7 @@ class Web3UriWTIndexDataProvider implements WTIndexInterface {
     this.address = indexAddress;
     this.web3Utils = web3Utils;
     this.web3Contracts = web3Contracts;
-    this.hotelProviderFactory = HotelProviderFactory.createInstance(defaultDataStorage, this.web3Utils, this.web3Contracts);
+    this.HotelFactory = HotelFactory.createInstance(defaultDataStorage, this.web3Utils, this.web3Contracts);
   }
 
   async __getDeployedIndex (): Promise<Object> {
@@ -43,8 +43,8 @@ class Web3UriWTIndexDataProvider implements WTIndexInterface {
     return this.deployedIndex;
   }
 
-  async __createHotelInstance (address?: string): Promise<RemoteHotelInterface> {
-    return this.hotelProviderFactory.getHotelInstance(await this.__getDeployedIndex(), address);
+  async __createHotelInstance (address?: string): Promise<HotelInterface> {
+    return this.HotelFactory.getHotelInstance(await this.__getDeployedIndex(), address);
   }
 
   /**
@@ -55,11 +55,11 @@ class Web3UriWTIndexDataProvider implements WTIndexInterface {
    *
    * @throws {Error} When anything goes wrong.
    */
-  async addHotel (wallet: WalletInterface, hotelData: HotelInterface): Promise<AddHotelResponseInterface> {
+  async addHotel (wallet: WalletInterface, hotelData: HotelOnChainDataInterface): Promise<AddHotelResponseInterface> {
     try {
       const hotel = await this.__createHotelInstance();
       await hotel.setLocalData(hotelData);
-      const transactionIds = await hotel.createOnNetwork(wallet, {
+      const transactionIds = await hotel.createOnChainData(wallet, {
         from: hotelData.manager,
         to: this.address,
       });
@@ -82,7 +82,7 @@ class Web3UriWTIndexDataProvider implements WTIndexInterface {
   async updateHotel (wallet: WalletInterface, hotel: HotelInterface): Promise<Array<string>> {
     try {
       // We need to separate calls to be able to properly catch exceptions
-      const updatedHotel = await ((hotel: any): RemoteHotelInterface).updateOnNetwork(wallet, { // eslint-disable-line flowtype/no-weak-types
+      const updatedHotel = await hotel.updateOnChainData(wallet, { // eslint-disable-line flowtype/no-weak-types
         from: await hotel.manager,
         to: this.address,
       });
@@ -105,7 +105,7 @@ class Web3UriWTIndexDataProvider implements WTIndexInterface {
   async removeHotel (wallet: WalletInterface, hotel: HotelInterface): Promise<Array<string>> {
     try {
       // We need to separate calls to be able to properly catch exceptions
-      const result = await ((hotel: any): RemoteHotelInterface).removeFromNetwork(wallet, { // eslint-disable-line flowtype/no-weak-types
+      const result = await hotel.removeOnChainData(wallet, { // eslint-disable-line flowtype/no-weak-types
         from: await hotel.manager,
         to: this.address,
       });

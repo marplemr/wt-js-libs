@@ -1,8 +1,8 @@
 // @flow
-import type { HotelInterface, WalletInterface } from '../../../interfaces';
+import type { HotelInterface, WalletInterface, HotelOnChainDataInterface } from '../../interfaces';
 import Utils from './utils';
 import Contracts from './contracts';
-import RemotelyBacked from '../../../dataset/remotely-backed';
+import RemotelyBacked from '../../dataset/remotely-backed';
 
 /**
  * Wrapper class for a hotel primarily backed by a smart
@@ -11,7 +11,7 @@ import RemotelyBacked from '../../../dataset/remotely-backed';
  * It can be extended to support data stored in another
  * form of remote storage.
  */
-class EthBackedHotelProvider {
+class OnChainHotel {
   address: Promise<?string> | ?string;
 
   // provided by eth backed dataset
@@ -22,7 +22,13 @@ class EthBackedHotelProvider {
   web3Contracts: Contracts;
   indexContract: Object;
   contractInstance: Object;
-  ethBackedDataset: RemotelyBacked;
+  onchainDataset: RemotelyBacked;
+
+  static async createInstance (web3Utils: Utils, web3Contracts: Contracts, indexContract: Object, address?: string): Promise<OnChainHotel> {
+    const hotel = new OnChainHotel(web3Utils, web3Contracts, indexContract, address);
+    await hotel.initialize();
+    return hotel;
+  }
 
   /**
    * Create new configured instance.
@@ -32,7 +38,7 @@ class EthBackedHotelProvider {
    * @param  {string} address is an optional pointer to Ethereum network where the hotel lives.
    * It is used as a reference for on-chain stored data. If it is not provided, a hotel has
    * to be created on chain to behave as expected.
-   * @return {EthBackedHotelProvider}
+   * @return {OnChainHotel}
    */
   constructor (web3Utils: Utils, web3Contracts: Contracts, indexContract: Object, address?: string) {
     this.address = address;
@@ -47,14 +53,14 @@ class EthBackedHotelProvider {
    * in the contsructor, the RemotelyBacked dataset is marked as deployed.
    */
   async initialize (): Promise<void> {
-    this.ethBackedDataset = new RemotelyBacked();
-    this.ethBackedDataset.bindProperties({
+    this.onchainDataset = new RemotelyBacked();
+    this.onchainDataset.bindProperties({
       fields: {
         url: {
           remoteGetter: async (): Promise<?string> => {
             return (await this.__getContractInstance()).methods.url().call();
           },
-          remoteSetter: this.__editInfo.bind(this),
+          remoteSetter: this.__editInfoOnChain.bind(this),
         },
         manager: {
           remoteGetter: async (): Promise<?string> => {
@@ -64,7 +70,7 @@ class EthBackedHotelProvider {
       },
     }, this);
     if (this.address) {
-      this.ethBackedDataset.markDeployed();
+      this.onchainDataset.markDeployed();
     }
   }
 
@@ -80,6 +86,14 @@ class EthBackedHotelProvider {
     if (newData.url) {
       this.url = newData.url;
     }
+  }
+
+  async toPlainObject (): Promise<HotelOnChainDataInterface> {
+    return {
+      manager: await this.manager,
+      url: await this.url,
+      address: this.address,
+    };
   }
 
   async __getContractInstance (): Promise<Object> {
@@ -99,7 +113,7 @@ class EthBackedHotelProvider {
    * @param {Object} transactionOptions usually contains from and to. Gas is automatically computed.
    * @return {Promise<string>} resulting transaction hash
    */
-  async __editInfo (wallet: WalletInterface, transactionOptions: Object): Promise<string> {
+  async __editInfoOnChain (wallet: WalletInterface, transactionOptions: Object): Promise<string> {
     const data = (await this.__getContractInstance()).methods.editInfo(await this.url).encodeABI();
     const estimate = await this.indexContract.methods.callHotel(this.address, data).estimateGas(transactionOptions);
     const txData = this.indexContract.methods.callHotel(this.address, data).encodeABI();
@@ -120,9 +134,6 @@ class EthBackedHotelProvider {
   }
 
   /**
-   * Creates a new hotel on chain with specified `url`. The idea is that
-   * a subclass of this handles the remote data storage and only after
-   * it knows the resulting url, creates the hotel on-chain.
    *
    * It also precomputes the deployed hotel on-chain address. So even if
    * the resulting transaction is not yet mined, the address is already known.
@@ -131,13 +142,14 @@ class EthBackedHotelProvider {
    * @param {Object} transactionOptions usually contains from and to. Gas is automatically computed.
    * @return {Promise<Array<string>>} list of resulting transaction hashes
    */
-  async createOnNetwork (wallet: WalletInterface, transactionOptions: Object, url: string): Promise<Array<string>> {
+  async createOnChainData (wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>> {
     // Pre-compute hotel address, we need to use index for it's creating the contract
     this.address = this.web3Utils.determineDeployedContractFutureAddress(
       this.indexContract.options.address,
       await this.web3Utils.determineCurrentAddressNonce(this.indexContract.options.address)
     );
     // Create hotel on-network
+    const url = await this.url;
     const estimate = await this.indexContract.methods.registerHotel(url).estimateGas(transactionOptions);
     const data = this.indexContract.methods.registerHotel(url).encodeABI();
     const transactionData = {
@@ -148,7 +160,7 @@ class EthBackedHotelProvider {
       gas: this.web3Utils.applyGasCoefficient(estimate),
     };
     return wallet.signAndSendTransaction(transactionData, () => {
-      this.ethBackedDataset.markDeployed();
+      this.onchainDataset.markDeployed();
     })
       .then((hash) => {
         return [hash];
@@ -167,12 +179,12 @@ class EthBackedHotelProvider {
    * @throws {Error} When the underlying contract is not yet deployed.
    * @return {Promise<Array<string>>} List of transaction hashes
    */
-  async updateOnNetwork (wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>> {
+  async updateOnChainData (wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>> {
     // pre-check if contract is available at all and fail fast
     await this.__getContractInstance();
     // We have to clone options for each dataset as they may get modified
     // along the way
-    return this.ethBackedDataset.updateRemoteData(wallet, Object.assign({}, transactionOptions));
+    return this.onchainDataset.updateRemoteData(wallet, Object.assign({}, transactionOptions));
   }
 
   /**
@@ -184,8 +196,8 @@ class EthBackedHotelProvider {
    * @throws {Error} When the underlying contract is not yet deployed.
    * @return {Promise<Array<string>>} List of transaction hashes
    */
-  async removeFromNetwork (wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>> {
-    if (!this.ethBackedDataset.isDeployed()) {
+  async removeOnChainData (wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>> {
+    if (!this.onchainDataset.isDeployed()) {
       throw new Error('Cannot remove hotel: not deployed');
     }
     const estimate = await this.indexContract.methods.deleteHotel(this.address).estimateGas(transactionOptions);
@@ -198,7 +210,7 @@ class EthBackedHotelProvider {
       gas: this.web3Utils.applyGasCoefficient(estimate),
     };
     return wallet.signAndSendTransaction(transactionData, () => {
-      this.ethBackedDataset.markObsolete();
+      this.onchainDataset.markObsolete();
     })
       .then((hash) => {
         return [hash];
@@ -209,4 +221,4 @@ class EthBackedHotelProvider {
   }
 }
 
-export default EthBackedHotelProvider;
+export default OnChainHotel;
