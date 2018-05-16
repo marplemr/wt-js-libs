@@ -74,7 +74,7 @@ class EthBackedHotelProvider {
    * @param {HotelInterface} newData
    */
   async setLocalData (newData: HotelInterface): Promise<void> {
-    if (newData.manager) {
+    if (newData.manager && ! this.address) {
       this.manager = newData.manager;
     }
     if (newData.url) {

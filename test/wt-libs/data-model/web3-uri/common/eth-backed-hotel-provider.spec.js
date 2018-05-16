@@ -71,6 +71,13 @@ describe('WTLibs.data-model.web3-uri.EthBackedHotelProvider', () => {
       assert.equal(await provider.manager, 'new-manager');
     });
 
+    it('should not set manager when hotel already has an address', async () => {
+      const provider = new EthBackedHotelProvider(utilsStub, contractsStub, indexContractStub, 'fake-address');
+      await provider.setLocalData({ url: 'new-url', manager: 'new-manager' });
+      assert.equal(await provider.url, 'new-url');
+      assert.equal(await provider.manager, 'some-remote-manager');
+    });
+
     it('should never null manager', async () => {
       const provider = new EthBackedHotelProvider(utilsStub, contractsStub, indexContractStub, 'fake-address');
       await provider.setLocalData({ url: 'new-url', manager: 'new-manager' });
