@@ -6,11 +6,6 @@ import type { Web3UriDataModelOptionsType } from './web3-uri';
 import { storageInstance } from '../dataset/in-memory-backed';
 
 /**
- * DataModelType is a chosen `data-model`. Not all options are implemented right now.
- * @enum {String}
- */
-export type DataModelType = 'web3-uri';
-/**
  * Combination of all implemented Data Model options.
  *
  * "initialJsonData": {
@@ -31,7 +26,6 @@ export type DataModelOptionsType = Web3UriDataModelOptionsType & {
  * from the desired data-model.
  */
 class DataModel {
-  type: string;
   options: DataModelOptionsType;
   _datamodel: DataModelAccessorInterface;
 
@@ -40,30 +34,23 @@ class DataModel {
    * with initial data if provided.
    * @type {DataModel}
    */
-  static createInstance (dataModelType: DataModelType, options: DataModelOptionsType): DataModel {
+  static createInstance (options: DataModelOptionsType): DataModel {
     if (options && options.initialJsonData) {
       for (let key in options.initialJsonData) {
         storageInstance.update(key, options.initialJsonData[key]);
       }
     }
 
-    return new DataModel(dataModelType, options);
+    return new DataModel(options);
   }
 
-  constructor (type: DataModelType, options: DataModelOptionsType) {
-    this.type = type;
+  constructor (options: DataModelOptionsType) {
     this.options = options || {};
   }
 
   __getDataModelAccessor (): DataModelAccessorInterface {
     if (!this._datamodel) {
-      switch (this.type) {
-      case 'web3-uri':
-        this._datamodel = Web3UriDataModel.createInstance(this.options);
-        break;
-      default:
-        throw new Error(this.type + ' data model is not implemented');
-      }
+      this._datamodel = Web3UriDataModel.createInstance(this.options);
     }
     return this._datamodel;
   }

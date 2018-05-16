@@ -19,7 +19,6 @@ export const Web3UriBackedDataModel = {
   dataModelAccessor: Web3UriDataModel,
   emptyConfig: {},
   withDataSource: () => ({
-    dataModelType: 'web3-uri',
     dataModelOptions: {
       provider: 'http://localhost:8545',
       initialJsonData: _computeInitialWeb3JsonData(),
