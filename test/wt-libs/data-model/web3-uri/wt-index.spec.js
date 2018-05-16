@@ -1,16 +1,16 @@
 import { assert } from 'chai';
-import WTIndexDataProvider from '../../../../src/data-model/web3-json/wt-index';
-import Web3JsonDataModel from '../../../../src/data-model/web3-json';
+import WTIndexDataProvider from '../../../../src/data-model/web3-uri/wt-index';
+import Web3UriDataModel from '../../../../src/data-model/web3-uri';
 import testedDataModel from '../../../utils/data-model-definition';
 
-describe('WTLibs.data-models.web3-json.WTIndexDataProvider', () => {
+describe('WTLibs.data-models.web3-uri.WTIndexDataProvider', () => {
   let dataModel, indexDataProvider;
 
   beforeEach(async function () {
-    if (process.env.TESTED_DATA_MODEL !== 'web3-json') {
+    if (process.env.TESTED_DATA_MODEL !== 'web3-uri') {
       this.skip();
     }
-    dataModel = Web3JsonDataModel.createInstance(testedDataModel.withDataSource().dataModelOptions);
+    dataModel = Web3UriDataModel.createInstance(testedDataModel.withDataSource().dataModelOptions);
     indexDataProvider = await dataModel.getWindingTreeIndex(testedDataModel.indexAddress);
   });
 

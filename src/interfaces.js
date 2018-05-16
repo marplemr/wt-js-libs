@@ -39,6 +39,16 @@ export interface HotelInterface {
 }
 
 /**
+ * Adds network-related operations to a generic hotel data.
+ */
+export interface RemoteHotelInterface extends HotelInterface {
+  setLocalData(newData: HotelInterface): Promise<void>;
+  createOnNetwork(wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>>;
+  updateOnNetwork(wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>>;
+  removeFromNetwork(wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>>
+}
+
+/**
  * WindingTree index interface that provides all methods
  * necessary for interaction with the hotels. The real
  * implementation might differ in speed and asynchronicity

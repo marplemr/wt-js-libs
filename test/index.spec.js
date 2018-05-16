@@ -33,11 +33,11 @@ describe('WTLibs', () => {
       assert.isDefined(createDataModelSpy.firstCall.args[1].random);
     });
 
-    it('should fallback to web3-swarm data model if dataModelType is not specified', () => {
+    it('should fallback to web3-uri data model if dataModelType is not specified', () => {
       const libs = WTLibs.createInstance();
       assert.isDefined(libs.dataModel);
       assert.equal(createDataModelSpy.callCount, 1);
-      assert.equal(createDataModelSpy.firstCall.args[0], 'web3-swarm');
+      assert.equal(createDataModelSpy.firstCall.args[0], 'web3-uri');
     });
   });
 });

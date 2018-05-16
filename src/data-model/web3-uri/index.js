@@ -1,77 +1,67 @@
 // @flow
 
 import Web3 from 'web3';
-import Utils from '../../common-web3/utils';
-import Contracts from '../../common-web3/contracts';
+import Utils from './common/utils';
+import Contracts from './common/contracts';
 import type { DataModelAccessorInterface, AdaptedTxResultInterface, AdaptedTxResultsInterface, KeystoreV3Interface } from '../../interfaces';
-import Web3JsonWTIndexDataProvider from './wt-index';
-import Web3JsonWTWallet from './wallet';
-import { storageInstance } from '../../dataset/in-memory-backed';
+import Web3UriWTIndexDataProvider from './wt-index';
+import Web3WTWallet from './wallet';
 
 /**
- * Web3JsonDataModelOptionsType options. May look like this:
+ * Web3UriDataModelOptionsType options. May look like this:
  *
  * ```
  * {
  *   "provider": 'http://localhost:8545',// or another Web3 provider
- *   "gasCoefficient": 2, // Optional, defaults to 2
- *   "initialJsonData": {
- *     "url1": {},
- *     "url2": {}
- *   }
+ *   "gasCoefficient": 2 // Optional, defaults to 2
+ *   "defaultDataStorage": "json" // Optional, defaults to json. This marks in which storage new hotel's data will be stored.
  * }
  * ```
  */
-export type Web3JsonDataModelOptionsType = {
-  // URL of currently used RPC provider
-  provider?: string | Object,
+export type Web3UriDataModelOptionsType = {
+  // URL of currently used RPC provider.
+  provider?: string | Object;
   // Gas coefficient that is used as a multiplier when setting
-  // a transaction gas
-  gasCoefficient?: number,
-  // Initial data for JSON storage, necessary for pre-existing data
-  initialJsonData?: Object
+  // a transaction gas.
+  gasCoefficient?: number;
+  // Default data storage type - this determines where will off-chain
+  // hotel data get stored for every newly created hotel.
+  defaultDataStorage?: string
 };
 
 /**
- * Web3JsonDataModel
+ * Web3UriDataModel
  */
-class Web3JsonDataModel implements DataModelAccessorInterface {
-  options: Web3JsonDataModelOptionsType;
+class Web3UriDataModel implements DataModelAccessorInterface {
+  options: Web3UriDataModelOptionsType;
   web3Instance: Web3;
   web3Utils: Utils;
   web3Contracts: Contracts;
 
   /**
-   * Creates a configured Web3JsonDataModel instance.
+   * Creates a configured Web3UriDataModel instance.
    */
-  static createInstance (options: Web3JsonDataModelOptionsType): Web3JsonDataModel {
-    return new Web3JsonDataModel(options);
+  static createInstance (options: Web3UriDataModelOptionsType): Web3UriDataModel {
+    return new Web3UriDataModel(options);
   }
 
   /**
    * Creates a new Web3 instance for given provider,
-   * sets up Utils and Contracts and prepares the
-   * InMemoryStorage
+   * sets up Utils and Contracts.
    */
-  constructor (options: Web3JsonDataModelOptionsType) {
+  constructor (options: Web3UriDataModelOptionsType) {
     this.options = options;
     this.options.gasCoefficient = this.options.gasCoefficient || 2;
     this.web3Instance = new Web3(options.provider);
     this.web3Utils = Utils.createInstance(this.options.gasCoefficient, this.web3Instance);
     this.web3Contracts = Contracts.createInstance(this.web3Instance);
-
-    if (this.options.initialJsonData) {
-      for (let key in this.options.initialJsonData) {
-        storageInstance.update(key, this.options.initialJsonData[key]);
-      }
-    }
   }
 
   /**
-   * Returns a combined Ethereum and JSON backed Winding Tree index.
+   * Returns a combined Ethereum and appropriate storage backed Winding Tree index.
    */
-  async getWindingTreeIndex (address: string): Promise<Web3JsonWTIndexDataProvider> {
-    return Web3JsonWTIndexDataProvider.createInstance(address, this.web3Utils, this.web3Contracts);
+  async getWindingTreeIndex (address: string): Promise<Web3UriWTIndexDataProvider> {
+    return Web3UriWTIndexDataProvider.createInstance(address, this.web3Utils, this.web3Contracts, this.options.defaultDataStorage);
   }
 
   /**
@@ -124,11 +114,11 @@ class Web3JsonDataModel implements DataModelAccessorInterface {
   /**
    * Returns a wallet implementation for given keystore.
    */
-  async createWallet (jsonWallet: KeystoreV3Interface): Promise<Web3JsonWTWallet> {
-    const wallet = Web3JsonWTWallet.createInstance(jsonWallet);
+  async createWallet (jsonWallet: KeystoreV3Interface): Promise<Web3WTWallet> {
+    const wallet = Web3WTWallet.createInstance(jsonWallet);
     wallet.setWeb3(this.web3Instance);
     return Promise.resolve(wallet);
   }
 };
 
-export default Web3JsonDataModel;
+export default Web3UriDataModel;

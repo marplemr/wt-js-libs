@@ -1,14 +1,14 @@
 // @flow
-import type { HotelInterface, LocationInterface, WalletInterface } from '../../interfaces';
-import Utils from '../../common-web3/utils';
-import Contracts from '../../common-web3/contracts';
-import EthBackedHotelProvider from '../../common-web3/eth-backed-hotel-provider';
-import InMemoryBacked from '../../dataset/in-memory-backed';
+import type { HotelInterface, RemoteHotelInterface, LocationInterface, WalletInterface } from '../../../interfaces';
+import Utils from '../common/utils';
+import Contracts from '../common/contracts';
+import EthBackedHotelProvider from '../common/eth-backed-hotel-provider';
+import InMemoryBacked from '../../../dataset/in-memory-backed';
 
 /**
  * Ethereum based hotel with additional data stored in an in-memory JSON storage.
  */
-class Web3JsonHotelDataProvider extends EthBackedHotelProvider implements HotelInterface {
+class JsonHotelProvider extends EthBackedHotelProvider implements RemoteHotelInterface {
   description: Promise<?string> | ?string;
   name: Promise<?string> | ?string;
   location: Promise<?LocationInterface> | ?LocationInterface;
@@ -16,13 +16,13 @@ class Web3JsonHotelDataProvider extends EthBackedHotelProvider implements HotelI
   inMemBackedData: InMemoryBacked;
 
   /**
-   * Returns a configured instance of Web3JsonHotelDataProvider. Optionally
+   * Returns a configured instance of JsonHotelProvider. Optionally
    * may point to an existing Ethereum blockchain address with a hotel.
    *
    * Runs `initialize` before returning.
    */
-  static async createInstance (web3Utils: Utils, web3Contracts: Contracts, indexContract: Object, address?: string): Promise<Web3JsonHotelDataProvider> {
-    const hotel = new Web3JsonHotelDataProvider(web3Utils, web3Contracts, indexContract, address);
+  static async createInstance (web3Utils: Utils, web3Contracts: Contracts, indexContract: Object, address?: string): Promise<JsonHotelProvider> {
+    const hotel = new JsonHotelProvider(web3Utils, web3Contracts, indexContract, address);
     await hotel.initialize();
     return hotel;
   }
@@ -32,7 +32,8 @@ class Web3JsonHotelDataProvider extends EthBackedHotelProvider implements HotelI
    * and sets up the additional InMemoryBacked dataset containing
    * `description`, `name` and `location`. If the address was provided,
    * an on-chain url pointer is used as an identifier for the InMemoryBacked
-   * dataset.
+   * dataset. InMemoryBacked pointers are schema-less, schema is stored only
+   * on-chain for now.
    */
   async initialize (): Promise<void> {
     super.initialize();
@@ -44,21 +45,54 @@ class Web3JsonHotelDataProvider extends EthBackedHotelProvider implements HotelI
         location: {},
       },
     }, this);
+
     if (this.address) {
       // pre-heat contract to prevent multiple contract inits
       await this.__getContractInstance();
-      this.inMemBackedData.setHash(await this.url);
+      const url = await this.url;
+      if (!url) {
+        throw new Error('Cannot initialize hotel data without url');
+      }
+      this.inMemBackedData.setHash(this.__stripSchemaFromUrl(url));
     } else {
       this.inMemBackedData.initialize();
     }
   }
 
+  __stripSchemaFromUrl (url: string): string {
+    const matchedUrl = url.match(/\w+:\/\/(.+)/i);
+    if (!matchedUrl) {
+      throw new Error(`Cannot find schema in url ${url}`);
+    }
+    return matchedUrl[1];
+  }
+
+  __detectSchema (url: string): string {
+    const matchedUrl = url.match(/(\w+):\/\/.+/i);
+    if (!matchedUrl) {
+      throw new Error(`Cannot find schema in url ${url}`);
+    }
+    return matchedUrl[1];
+  }
+
   /**
    * Updates data locally, calls EthBackedHotelProvider's setLocalData
    * and sets `name`, `description` and `location`.
+   *
+   * @throws {Error} If url is updated and the schema is different than it used to be. Subject to change.
    */
-  setLocalData (newData: HotelInterface) {
-    super.setLocalData(newData);
+  async setLocalData (newData: HotelInterface): Promise<void> {
+    // Prevent schema change for now... This will have to be more flexible in the future
+    if (newData.url) {
+      const oldUrl = (await this.url) || '';
+      const newUrl = (await newData.url) || '';
+      const newSchema = this.__detectSchema(newUrl);
+      const oldSchema = this.__detectSchema(oldUrl);
+      if (newSchema !== oldSchema) {
+        throw new Error('Cannot change schema for now!');
+      }
+    }
+    await super.setLocalData(newData);
     this.name = newData.name;
     this.description = newData.description;
     this.location = newData.location;
@@ -70,7 +104,7 @@ class Web3JsonHotelDataProvider extends EthBackedHotelProvider implements HotelI
    * in the end.
    */
   async createOnNetwork (wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>> {
-    const dataUrl = this.inMemBackedData.getHash();
+    const dataUrl = `json://${this.inMemBackedData.getHash()}`;
     return super.createOnNetwork(wallet, transactionOptions, dataUrl);
   }
 
@@ -92,12 +126,13 @@ class Web3JsonHotelDataProvider extends EthBackedHotelProvider implements HotelI
    */
   async updateOnNetwork (wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>> {
     // url might have changed - copy over current inmem data and point a new url at them
-    const currentUrl = await this.url;
-    if (currentUrl !== this.inMemBackedData.getHash()) {
-      this.inMemBackedData.changeHashTo(currentUrl);
+    const currentUrl: string = ((await this.url): any); // eslint-disable-line flowtype/no-weak-types
+    const strippedCurrentUrl = this.__stripSchemaFromUrl(currentUrl);
+    if (strippedCurrentUrl !== this.inMemBackedData.getHash()) {
+      this.inMemBackedData.changeHashTo(strippedCurrentUrl);
     }
     return super.updateOnNetwork(wallet, transactionOptions);
   }
 }
 
-export default Web3JsonHotelDataProvider;
+export default JsonHotelProvider;

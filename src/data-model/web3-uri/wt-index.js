@@ -1,32 +1,39 @@
 // @flow
-import type { WTIndexInterface, HotelInterface, AddHotelResponseInterface, WalletInterface } from '../../interfaces';
-import Utils from '../../common-web3/utils';
-import Contracts from '../../common-web3/contracts';
-import Web3JsonHotelDataProvider from './hotel';
+import type { WTIndexInterface, HotelInterface, RemoteHotelInterface, AddHotelResponseInterface, WalletInterface } from '../../interfaces';
+import Utils from './common/utils';
+import Contracts from './common/contracts';
+import HotelProviderFactory from './hotel-provider-factory';
 
 /**
  * Ethereum smart contract backed implementation of Winding Tree
- * index wrapper. It currently works exclusively with Web3JsonHotelDataProvider
- * but it should be easily generalized to other Hotel implementations.
+ * index wrapper. It provides methods for working with hotel
+ * contracts. It cand decide by itself where it should look for
+ * off-chain hotel data based on the protocol in hotel's `url` field.
+ *
+ * Supported protocols:
+ *
+ *   - json: `json://some-hash` - Looks up hotel data in in-memory storage under some-hash key
  */
-class Web3JsonWTIndexDataProvider implements WTIndexInterface {
+class Web3UriWTIndexDataProvider implements WTIndexInterface {
   address: string;
   web3Utils: Utils;
   web3Contracts: Contracts;
   deployedIndex: Object; // TODO get rid of Object type
+  hotelProviderFactory: HotelProviderFactory;
 
   /**
-   * Returns a configured instance of Web3JsonWTIndexDataProvider
+   * Returns a configured instance of Web3UriWTIndexDataProvider
    * representing a Winding Tree index contract on a given `address`.
    */
-  static async createInstance (indexAddress: string, web3Utils: Utils, web3Contracts: Contracts): Promise<Web3JsonWTIndexDataProvider> {
-    return new Web3JsonWTIndexDataProvider(indexAddress, web3Utils, web3Contracts);
+  static async createInstance (indexAddress: string, web3Utils: Utils, web3Contracts: Contracts, defaultDataStorage: string = 'json'): Promise<Web3UriWTIndexDataProvider> {
+    return new Web3UriWTIndexDataProvider(indexAddress, web3Utils, web3Contracts, defaultDataStorage);
   }
 
-  constructor (indexAddress: string, web3Utils: Utils, web3Contracts: Contracts) {
+  constructor (indexAddress: string, web3Utils: Utils, web3Contracts: Contracts, defaultDataStorage: string) {
     this.address = indexAddress;
     this.web3Utils = web3Utils;
     this.web3Contracts = web3Contracts;
+    this.hotelProviderFactory = HotelProviderFactory.createInstance(defaultDataStorage, this.web3Utils, this.web3Contracts);
   }
 
   async __getDeployedIndex (): Promise<Object> {
@@ -36,17 +43,22 @@ class Web3JsonWTIndexDataProvider implements WTIndexInterface {
     return this.deployedIndex;
   }
 
+  async __createHotelInstance (address?: string): Promise<RemoteHotelInterface> {
+    return this.hotelProviderFactory.getHotelInstance(await this.__getDeployedIndex(), address);
+  }
+
   /**
    * Adds a totally new hotel on chain. Does not wait for the transactions
    * to be mined, but as fast as possible returns a list of transaction IDs
-   * and the new hotel on chain address.
+   * and the new hotel on chain address. The new hotel uses `defaultDataStorage`
+   * for storing information off-chain.
    *
    * @throws {Error} When anything goes wrong.
    */
   async addHotel (wallet: WalletInterface, hotelData: HotelInterface): Promise<AddHotelResponseInterface> {
     try {
-      const hotel = await Web3JsonHotelDataProvider.createInstance(this.web3Utils, this.web3Contracts, await this.__getDeployedIndex());
-      hotel.setLocalData(hotelData);
+      const hotel = await this.__createHotelInstance();
+      await hotel.setLocalData(hotelData);
       const transactionIds = await hotel.createOnNetwork(wallet, {
         from: hotelData.manager,
         to: this.address,
@@ -70,7 +82,7 @@ class Web3JsonWTIndexDataProvider implements WTIndexInterface {
   async updateHotel (wallet: WalletInterface, hotel: HotelInterface): Promise<Array<string>> {
     try {
       // We need to separate calls to be able to properly catch exceptions
-      const updatedHotel = await ((hotel: any): Web3JsonHotelDataProvider).updateOnNetwork(wallet, { // eslint-disable-line flowtype/no-weak-types
+      const updatedHotel = await ((hotel: any): RemoteHotelInterface).updateOnNetwork(wallet, { // eslint-disable-line flowtype/no-weak-types
         from: await hotel.manager,
         to: this.address,
       });
@@ -93,7 +105,7 @@ class Web3JsonWTIndexDataProvider implements WTIndexInterface {
   async removeHotel (wallet: WalletInterface, hotel: HotelInterface): Promise<Array<string>> {
     try {
       // We need to separate calls to be able to properly catch exceptions
-      const result = await ((hotel: any): Web3JsonHotelDataProvider).removeFromNetwork(wallet, { // eslint-disable-line flowtype/no-weak-types
+      const result = await ((hotel: any): RemoteHotelInterface).removeFromNetwork(wallet, { // eslint-disable-line flowtype/no-weak-types
         from: await hotel.manager,
         to: this.address,
       });
@@ -111,6 +123,7 @@ class Web3JsonWTIndexDataProvider implements WTIndexInterface {
    * instance, the method throws immediately.
    *
    * @throws {Error} When hotel does not exist.
+   * @throws {Error} When schema cannot be detected from the hotel's `url` field.
    * @throws {Error} When something breaks in the network communication.
    */
   async getHotel (address: string): Promise<?HotelInterface> {
@@ -122,7 +135,7 @@ class Web3JsonWTIndexDataProvider implements WTIndexInterface {
       if (!hotelIndex) {
         throw new Error('Not found in hotel list');
       } else {
-        return Web3JsonHotelDataProvider.createInstance(this.web3Utils, this.web3Contracts, index, address);
+        return this.__createHotelInstance(address);
       }
     } catch (err) {
       throw new Error('Cannot find hotel at ' + address + ': ' + err.message);
@@ -155,4 +168,4 @@ class Web3JsonWTIndexDataProvider implements WTIndexInterface {
   }
 }
 
-export default Web3JsonWTIndexDataProvider;
+export default Web3UriWTIndexDataProvider;

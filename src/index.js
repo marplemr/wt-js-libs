@@ -34,7 +34,7 @@ class WTLibs {
 
   constructor (options: WtLibsOptionsType) {
     this.options = options || {};
-    this.options.dataModelType = this.options.dataModelType || 'web3-swarm';
+    this.options.dataModelType = this.options.dataModelType || 'web3-uri';
     this.dataModel = DataModel.createInstance(this.options.dataModelType, this.options.dataModelOptions);
   }
 

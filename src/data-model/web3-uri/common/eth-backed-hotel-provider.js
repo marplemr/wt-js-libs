@@ -1,8 +1,8 @@
 // @flow
-import type { HotelInterface, WalletInterface } from '../interfaces';
+import type { HotelInterface, WalletInterface } from '../../../interfaces';
 import Utils from './utils';
 import Contracts from './contracts';
-import RemotelyBacked from '../dataset/remotely-backed';
+import RemotelyBacked from '../../../dataset/remotely-backed';
 
 /**
  * Wrapper class for a hotel primarily backed by a smart
@@ -73,7 +73,7 @@ class EthBackedHotelProvider {
    * sets manager and url properties and none of them can be nulled.
    * @param {HotelInterface} newData
    */
-  setLocalData (newData: HotelInterface) {
+  async setLocalData (newData: HotelInterface): Promise<void> {
     if (newData.manager) {
       this.manager = newData.manager;
     }
