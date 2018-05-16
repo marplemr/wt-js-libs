@@ -1,6 +1,6 @@
 // @flow
 
-import type { DataModelType, DataModelOptionsType } from './data-model';
+import type { DataModelOptionsType } from './data-model';
 import type { WTIndexInterface, AdaptedTxResultsInterface, WalletInterface, KeystoreV3Interface } from './interfaces';
 import DataModel from './data-model';
 
@@ -11,7 +11,6 @@ import DataModel from './data-model';
  * @type WtLibsOptionsType
  */
 type WtLibsOptionsType = {
-  dataModelType: DataModelType,
   dataModelOptions: DataModelOptionsType
 };
 
@@ -23,8 +22,7 @@ class WTLibs {
   options: WtLibsOptionsType;
 
   /**
-   * Call this to create wt-libs-js instance. If `dataModelType` is not passed,
-   * `web3-swarm` is used as a default. That is subject to change.
+   * Call this to create wt-libs-js instance.
    * @param options
    * @return WTLibs
    */
@@ -34,8 +32,7 @@ class WTLibs {
 
   constructor (options: WtLibsOptionsType) {
     this.options = options || {};
-    this.options.dataModelType = this.options.dataModelType || 'web3-uri';
-    this.dataModel = DataModel.createInstance(this.options.dataModelType, this.options.dataModelOptions);
+    this.dataModel = DataModel.createInstance(this.options.dataModelOptions);
   }
 
   /**

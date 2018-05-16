@@ -10,9 +10,6 @@ describe('WTLibs.data-model.web3-uri.providers.json-hotel', () => {
   let dataModel, indexDataProvider;
 
   beforeEach(async function () {
-    if (process.env.TESTED_DATA_MODEL !== 'web3-uri') {
-      this.skip();
-    }
     dataModel = Web3UriDataModel.createInstance(testedDataModel.withDataSource().dataModelOptions);
     indexDataProvider = await dataModel.getWindingTreeIndex(testedDataModel.indexAddress);
   });
@@ -20,9 +17,6 @@ describe('WTLibs.data-model.web3-uri.providers.json-hotel', () => {
   describe('_getDeployedHotel', () => {
     let getHotelContractSpy;
     beforeEach(function () {
-      if (process.env.TESTED_DATA_MODEL !== 'web3-uri') {
-        this.skip();
-      }
       getHotelContractSpy = sinon.spy(indexDataProvider.web3Contracts, 'getHotelInstance');
     });
 

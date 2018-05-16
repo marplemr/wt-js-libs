@@ -7,9 +7,6 @@ describe('WTLibs.data-models.web3-uri.WTIndexDataProvider', () => {
   let dataModel, indexDataProvider;
 
   beforeEach(async function () {
-    if (process.env.TESTED_DATA_MODEL !== 'web3-uri') {
-      this.skip();
-    }
     dataModel = Web3UriDataModel.createInstance(testedDataModel.withDataSource().dataModelOptions);
     indexDataProvider = await dataModel.getWindingTreeIndex(testedDataModel.indexAddress);
   });

@@ -8,9 +8,6 @@ describe('WTLibs.data-model.web3-uri.hotel-data-provider', () => {
   let dataModel, hotelProvider;
 
   beforeEach(async function () {
-    if (process.env.TESTED_DATA_MODEL !== 'web3-uri') {
-      this.skip();
-    }
     dataModel = Web3UriDataModel.createInstance(testedDataModel.withDataSource().dataModelOptions);
     hotelProvider = HotelProviderFactory.createInstance('json', dataModel.web3Utils, dataModel.web3Contracts);
   });

@@ -1,17 +1,10 @@
 // @flow
 
 import { DataModelAccessorInterface, WTIndexInterface, AdaptedTxResultsInterface, WalletInterface, KeystoreV3Interface } from '../interfaces';
-import FullJsonDataModel from './full-json';
-import type { FullJsonDataModelOptionsType } from './full-json';
 import Web3UriDataModel from './web3-uri';
 import type { Web3UriDataModelOptionsType } from './web3-uri';
 import { storageInstance } from '../dataset/in-memory-backed';
 
-/**
- * DataModelType is a chosen `data-model`. Not all options are implemented right now.
- * @enum {String}
- */
-export type DataModelType = 'full-json' | 'web3-uri';
 /**
  * Combination of all implemented Data Model options.
  *
@@ -22,7 +15,7 @@ export type DataModelType = 'full-json' | 'web3-uri';
  *
  * @type {Object}
  */
-export type DataModelOptionsType = FullJsonDataModelOptionsType & Web3UriDataModelOptionsType & {
+export type DataModelOptionsType = Web3UriDataModelOptionsType & {
   // Initial data for JSON storage, necessary for pre-existing data
   initialJsonData?: Object
 };
@@ -33,7 +26,6 @@ export type DataModelOptionsType = FullJsonDataModelOptionsType & Web3UriDataMod
  * from the desired data-model.
  */
 class DataModel {
-  type: string;
   options: DataModelOptionsType;
   _datamodel: DataModelAccessorInterface;
 
@@ -42,33 +34,23 @@ class DataModel {
    * with initial data if provided.
    * @type {DataModel}
    */
-  static createInstance (dataModelType: DataModelType, options: DataModelOptionsType): DataModel {
+  static createInstance (options: DataModelOptionsType): DataModel {
     if (options && options.initialJsonData) {
       for (let key in options.initialJsonData) {
         storageInstance.update(key, options.initialJsonData[key]);
       }
     }
 
-    return new DataModel(dataModelType, options);
+    return new DataModel(options);
   }
 
-  constructor (type: DataModelType, options: DataModelOptionsType) {
-    this.type = type;
+  constructor (options: DataModelOptionsType) {
     this.options = options || {};
   }
 
   __getDataModelAccessor (): DataModelAccessorInterface {
     if (!this._datamodel) {
-      switch (this.type) {
-      case 'full-json':
-        this._datamodel = FullJsonDataModel.createInstance(this.options);
-        break;
-      case 'web3-uri':
-        this._datamodel = Web3UriDataModel.createInstance(this.options);
-        break;
-      default:
-        throw new Error(this.type + ' data model is not implemented');
-      }
+      this._datamodel = Web3UriDataModel.createInstance(this.options);
     }
     return this._datamodel;
   }
