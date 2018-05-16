@@ -1,8 +1,6 @@
 // @flow
 
 import { DataModelAccessorInterface, WTIndexInterface, AdaptedTxResultsInterface, WalletInterface, KeystoreV3Interface } from '../interfaces';
-import FullJsonDataModel from './full-json';
-import type { FullJsonDataModelOptionsType } from './full-json';
 import Web3UriDataModel from './web3-uri';
 import type { Web3UriDataModelOptionsType } from './web3-uri';
 import { storageInstance } from '../dataset/in-memory-backed';
@@ -11,7 +9,7 @@ import { storageInstance } from '../dataset/in-memory-backed';
  * DataModelType is a chosen `data-model`. Not all options are implemented right now.
  * @enum {String}
  */
-export type DataModelType = 'full-json' | 'web3-uri';
+export type DataModelType = 'web3-uri';
 /**
  * Combination of all implemented Data Model options.
  *
@@ -22,7 +20,7 @@ export type DataModelType = 'full-json' | 'web3-uri';
  *
  * @type {Object}
  */
-export type DataModelOptionsType = FullJsonDataModelOptionsType & Web3UriDataModelOptionsType & {
+export type DataModelOptionsType = Web3UriDataModelOptionsType & {
   // Initial data for JSON storage, necessary for pre-existing data
   initialJsonData?: Object
 };
@@ -60,9 +58,6 @@ class DataModel {
   __getDataModelAccessor (): DataModelAccessorInterface {
     if (!this._datamodel) {
       switch (this.type) {
-      case 'full-json':
-        this._datamodel = FullJsonDataModel.createInstance(this.options);
-        break;
       case 'web3-uri':
         this._datamodel = Web3UriDataModel.createInstance(this.options);
         break;

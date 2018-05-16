@@ -10,9 +10,6 @@ describe('WTLibs.data-model.web3-uri.wallet', () => {
   let dataModel;
   const correctPassword = 'test123';
   beforeEach(async function () {
-    if (process.env.TESTED_DATA_MODEL !== 'web3-uri') {
-      this.skip();
-    }
     dataModel = Web3UriDataModel.createInstance(testedDataModel.withDataSource().dataModelOptions);
   });
 
@@ -119,9 +116,6 @@ describe('WTLibs.data-model.web3-uri.wallet', () => {
     let wallet;
 
     beforeEach(async function () {
-      if (process.env.TESTED_DATA_MODEL !== 'web3-uri') {
-        this.skip();
-      }
       wallet = await dataModel.createWallet(jsonWallet);
     });
 
@@ -153,9 +147,6 @@ describe('WTLibs.data-model.web3-uri.wallet', () => {
   describe('signAndSendTransaction', () => {
     let wallet;
     beforeEach(async function () {
-      if (process.env.TESTED_DATA_MODEL !== 'web3-uri') {
-        this.skip();
-      }
       wallet = await dataModel.createWallet(jsonWallet);
       sinon.stub(wallet.web3.eth, 'sendSignedTransaction').returns(helpers.stubPromiEvent());
     });

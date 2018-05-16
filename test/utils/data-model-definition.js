@@ -1,21 +1,5 @@
-import _ from 'lodash';
 import dataSource from './data/network.json';
-import FullJsonDataModel from '../../src/data-model/full-json';
 import Web3UriDataModel from '../../src/data-model/web3-uri';
-
-export const FullJsonBackedDataModel = {
-  type: 'full-json',
-  dataModelAccessor: FullJsonDataModel,
-  emptyConfig: {},
-  withDataSource: () => {
-    return {
-      dataModelType: 'full-json',
-      dataModelOptions: { source: _.cloneDeep(dataSource) },
-    };
-  },
-  indexAddress: 'fullIndex',
-  emptyIndexAddress: 'emptyIndex',
-};
 
 function _computeInitialWeb3JsonData () {
   let data = {};
@@ -45,19 +29,4 @@ export const Web3UriBackedDataModel = {
   emptyIndexAddress: '0x994afd347b160be3973b41f0a144819496d175e9',
 };
 
-const dataModels = [
-  FullJsonBackedDataModel,
-  Web3UriBackedDataModel,
-];
-
-let chosenDataModel;
-
-if (process.env.TESTED_DATA_MODEL) {
-  chosenDataModel = _.find(dataModels, (model) => model.type === process.env.TESTED_DATA_MODEL);
-  if (!chosenDataModel) {
-    throw new Error('Unknown data model');
-  }
-} else {
-  chosenDataModel = FullJsonBackedDataModel;
-}
-export default chosenDataModel;
+export default Web3UriBackedDataModel;
