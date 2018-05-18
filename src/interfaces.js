@@ -22,10 +22,9 @@ export interface LocationInterface {
 }
 
 export interface HotelDataIndex {
-  descriptionUrl: string;
-  // availabilityUrl: string;
-  // inventoryUrl: string;
-  description: HotelDescriptionInterface
+  descriptionUrl: string
+  // availabilityUrl: string; // TBD
+  // inventoryUrl: string; // TBD
 }
 
 export interface HotelDescriptionInterface {
@@ -50,6 +49,7 @@ export interface HotelOnChainDataInterface {
  */
 export interface HotelInterface extends HotelOnChainDataInterface {
   toPlainObject(): Promise<Object>;
+  initializeStoragePointers(): Promise<void>;
   setLocalData(newData: HotelOnChainDataInterface): Promise<void>;
   createOnChainData(wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>>;
   updateOnChainData(wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>>;

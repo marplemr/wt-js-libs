@@ -93,6 +93,9 @@ describe('WTLibs usage', () => {
     it('should get hotel', async () => {
       const address = '0xbf18b616ac81830dd0c5d4b771f22fd8144fe769';
       const hotel = await index.getHotel(address);
+      // TOOD improve tests for data pointers
+      console.log(await (await hotel.dataIndex.contents.description).contents.name);
+      console.log(await (await hotel.dataIndex.contents.description).ref);
       assert.isNotNull(hotel);
       assert.equal(await hotel.url, 'json://urlone');
       assert.equal(await hotel.address, address);

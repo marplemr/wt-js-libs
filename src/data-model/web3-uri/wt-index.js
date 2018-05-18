@@ -2,7 +2,7 @@
 import type { WTIndexInterface, HotelOnChainDataInterface, HotelInterface, AddHotelResponseInterface, WalletInterface } from '../../interfaces';
 import Utils from './utils';
 import Contracts from './contracts';
-import HotelFactory from './hotel-factory';
+import OnChainHotel from './on-chain-hotel';
 
 /**
  * Ethereum smart contract backed implementation of Winding Tree
@@ -19,21 +19,19 @@ class Web3UriWTIndexDataProvider implements WTIndexInterface {
   web3Utils: Utils;
   web3Contracts: Contracts;
   deployedIndex: Object; // TODO get rid of Object type
-  HotelFactory: HotelFactory;
 
   /**
    * Returns a configured instance of Web3UriWTIndexDataProvider
    * representing a Winding Tree index contract on a given `address`.
    */
-  static async createInstance (indexAddress: string, web3Utils: Utils, web3Contracts: Contracts, defaultDataStorage: string = 'json'): Promise<Web3UriWTIndexDataProvider> {
-    return new Web3UriWTIndexDataProvider(indexAddress, web3Utils, web3Contracts, defaultDataStorage);
+  static async createInstance (indexAddress: string, web3Utils: Utils, web3Contracts: Contracts): Promise<Web3UriWTIndexDataProvider> {
+    return new Web3UriWTIndexDataProvider(indexAddress, web3Utils, web3Contracts);
   }
 
-  constructor (indexAddress: string, web3Utils: Utils, web3Contracts: Contracts, defaultDataStorage: string) {
+  constructor (indexAddress: string, web3Utils: Utils, web3Contracts: Contracts) {
     this.address = indexAddress;
     this.web3Utils = web3Utils;
     this.web3Contracts = web3Contracts;
-    this.HotelFactory = HotelFactory.createInstance(defaultDataStorage, this.web3Utils, this.web3Contracts);
   }
 
   async __getDeployedIndex (): Promise<Object> {
@@ -44,7 +42,7 @@ class Web3UriWTIndexDataProvider implements WTIndexInterface {
   }
 
   async __createHotelInstance (address?: string): Promise<HotelInterface> {
-    return this.HotelFactory.getHotelInstance(await this.__getDeployedIndex(), address);
+    return OnChainHotel.createInstance(this.web3Utils, this.web3Contracts, await this.__getDeployedIndex(), address);
   }
 
   /**
@@ -56,6 +54,9 @@ class Web3UriWTIndexDataProvider implements WTIndexInterface {
    * @throws {Error} When anything goes wrong.
    */
   async addHotel (wallet: WalletInterface, hotelData: HotelOnChainDataInterface): Promise<AddHotelResponseInterface> {
+    if (!hotelData.url) {
+      throw new Error('Cannot add hotel: Missing url');
+    }
     try {
       const hotel = await this.__createHotelInstance();
       await hotel.setLocalData(hotelData);
@@ -135,7 +136,9 @@ class Web3UriWTIndexDataProvider implements WTIndexInterface {
       if (!hotelIndex) {
         throw new Error('Not found in hotel list');
       } else {
-        return this.__createHotelInstance(address);
+        const hotel = await this.__createHotelInstance(address);
+        await hotel.initializeStoragePointers();
+        return hotel;
       }
     } catch (err) {
       throw new Error('Cannot find hotel at ' + address + ': ' + err.message);

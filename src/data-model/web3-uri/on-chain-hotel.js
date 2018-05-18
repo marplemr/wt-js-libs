@@ -1,8 +1,9 @@
 // @flow
-import type { HotelInterface, WalletInterface, HotelOnChainDataInterface } from '../../interfaces';
+import type { WalletInterface, HotelOnChainDataInterface } from '../../interfaces';
 import Utils from './utils';
 import Contracts from './contracts';
 import RemotelyBacked from '../../dataset/remotely-backed';
+import StoragePointer from './storage-pointers/index';
 
 /**
  * Wrapper class for a hotel primarily backed by a smart
@@ -23,6 +24,9 @@ class OnChainHotel {
   indexContract: Object;
   contractInstance: Object;
   onchainDataset: RemotelyBacked;
+
+  dataIndex: Object;
+  _dataIndexPointer: StoragePointer;
 
   static async createInstance (web3Utils: Utils, web3Contracts: Contracts, indexContract: Object, address?: string): Promise<OnChainHotel> {
     const hotel = new OnChainHotel(web3Utils, web3Contracts, indexContract, address);
@@ -74,13 +78,23 @@ class OnChainHotel {
     }
   }
 
+  async initializeStoragePointers (): Promise<void> {
+    this.dataIndex = new StoragePointer(await this.url, [
+      {
+        name: 'description',
+        isStorageInstance: true,
+        fields: ['name', 'description', 'location'],
+      },
+    ]);
+  }
+
   /**
    * Update multiple data fields at once. This part
    * sets manager and url properties and none of them can be nulled.
-   * @param {HotelInterface} newData
+   * @param {HotelOnChainDataInterface} newData
    */
-  async setLocalData (newData: HotelInterface): Promise<void> {
-    if (newData.manager && ! this.address) {
+  async setLocalData (newData: HotelOnChainDataInterface): Promise<void> {
+    if (newData.manager && !this.address) {
       this.manager = newData.manager;
     }
     if (newData.url) {

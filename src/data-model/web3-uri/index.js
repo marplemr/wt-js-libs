@@ -14,7 +14,6 @@ import Web3WTWallet from './wallet';
  * {
  *   "provider": 'http://localhost:8545',// or another Web3 provider
  *   "gasCoefficient": 2 // Optional, defaults to 2
- *   "defaultDataStorage": "json" // Optional, defaults to json. This marks in which storage new hotel's data will be stored.
  * }
  * ```
  */
@@ -23,10 +22,7 @@ export type Web3UriDataModelOptionsType = {
   provider?: string | Object;
   // Gas coefficient that is used as a multiplier when setting
   // a transaction gas.
-  gasCoefficient?: number;
-  // Default data storage type - this determines where will off-chain
-  // hotel data get stored for every newly created hotel.
-  defaultDataStorage?: string
+  gasCoefficient?: number
 };
 
 /**
@@ -61,7 +57,7 @@ class Web3UriDataModel implements DataModelAccessorInterface {
    * Returns a combined Ethereum and appropriate storage backed Winding Tree index.
    */
   async getWindingTreeIndex (address: string): Promise<Web3UriWTIndexDataProvider> {
-    return Web3UriWTIndexDataProvider.createInstance(address, this.web3Utils, this.web3Contracts, this.options.defaultDataStorage);
+    return Web3UriWTIndexDataProvider.createInstance(address, this.web3Utils, this.web3Contracts);
   }
 
   /**
