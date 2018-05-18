@@ -25,8 +25,7 @@ class OnChainHotel {
   contractInstance: Object;
   onchainDataset: RemotelyBacked;
 
-  dataIndex: Object;
-  _dataIndexPointer: StoragePointer;
+  dataIndex: StoragePointer;
 
   static async createInstance (web3Utils: Utils, web3Contracts: Contracts, indexContract: Object, address?: string): Promise<OnChainHotel> {
     const hotel = new OnChainHotel(web3Utils, web3Contracts, indexContract, address);

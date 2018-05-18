@@ -3,22 +3,13 @@
 import { DataModelAccessorInterface, WTIndexInterface, AdaptedTxResultsInterface, WalletInterface, KeystoreV3Interface } from '../interfaces';
 import Web3UriDataModel from './web3-uri';
 import type { Web3UriDataModelOptionsType } from './web3-uri';
-import { storageInstance } from '../dataset/in-memory-backed';
 
 /**
  * Combination of all implemented Data Model options.
  *
- * "initialJsonData": {
- *   "url1": {},
- *   "url2": {}
- * }
- *
  * @type {Object}
  */
-export type DataModelOptionsType = Web3UriDataModelOptionsType & {
-  // Initial data for JSON storage, necessary for pre-existing data
-  initialJsonData?: Object
-};
+export type DataModelOptionsType = Web3UriDataModelOptionsType;
 
 /**
  * Representation of a current data model. You should use this factory
@@ -30,17 +21,10 @@ class DataModel {
   _datamodel: DataModelAccessorInterface;
 
   /**
-   * Returns a new configured instance. Fills InMemoryData storage
-   * with initial data if provided.
+   * Returns a new configured instance.
    * @type {DataModel}
    */
   static createInstance (options: DataModelOptionsType): DataModel {
-    if (options && options.initialJsonData) {
-      for (let key in options.initialJsonData) {
-        storageInstance.update(key, options.initialJsonData[key]);
-      }
-    }
-
     return new DataModel(options);
   }
 
