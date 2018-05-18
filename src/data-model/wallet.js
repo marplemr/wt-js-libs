@@ -1,7 +1,7 @@
 // @flow
 import Web3 from 'web3';
 import ethJsUtil from 'ethereumjs-util';
-import type { WalletInterface, TxReceiptInterface, KeystoreV3Interface, TransactionDataInterface } from '../../interfaces';
+import type { WalletInterface, TxReceiptInterface, KeystoreV3Interface, TransactionDataInterface } from '../interfaces';
 
 /**
  * Web3 based wallet implementation

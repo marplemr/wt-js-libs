@@ -1,8 +1,8 @@
 // @flow
-import type { WalletInterface, HotelOnChainDataInterface } from '../../interfaces';
+import type { WalletInterface, HotelOnChainDataInterface } from '../interfaces';
 import Utils from './utils';
 import Contracts from './contracts';
-import RemotelyBacked from '../../dataset/remotely-backed';
+import RemotelyBackedDataset from '../remotely-backed-dataset';
 import StoragePointer from './storage-pointers/index';
 
 /**
@@ -23,7 +23,7 @@ class OnChainHotel {
   web3Contracts: Contracts;
   indexContract: Object;
   contractInstance: Object;
-  onchainDataset: RemotelyBacked;
+  onchainDataset: RemotelyBackedDataset;
 
   dataIndex: StoragePointer;
 
@@ -51,12 +51,12 @@ class OnChainHotel {
   }
 
   /**
-   * Initializes the underlying RemotelyBacked dataset that actually
+   * Initializes the underlying RemotelyBackedDataset that actually
    * communicates with the on-chain stored data. If address was provided
-   * in the contsructor, the RemotelyBacked dataset is marked as deployed.
+   * in the contsructor, the RemotelyBackedDataset is marked as deployed.
    */
   async initialize (): Promise<void> {
-    this.onchainDataset = new RemotelyBacked();
+    this.onchainDataset = new RemotelyBackedDataset();
     this.onchainDataset.bindProperties({
       fields: {
         url: {
@@ -184,7 +184,7 @@ class OnChainHotel {
   }
 
   /**
-   * Updates all hotel-related data by calling `updateRemoteData` on a `RemotelyBacked`
+   * Updates all hotel-related data by calling `updateRemoteData` on a `RemotelyBackedDataset`
    * dataset.
    *
    * @param {WalletInterface} wallet that signs the transaction

@@ -24,7 +24,7 @@ import _ from 'lodash';
  * remote storage. These calls are deduplicated, so if a single call is used
  * to update multiple properties, only once call is done.
  */
-class RemotelyBacked {
+class RemotelyBackedDataset {
   constructor () {
     this.__obsoleteFlag = false;
     this.__deployedFlag = false;
@@ -235,4 +235,4 @@ class RemotelyBacked {
   }
 }
 
-export default RemotelyBacked;
+export default RemotelyBackedDataset;

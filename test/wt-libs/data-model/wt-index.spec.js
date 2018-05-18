@@ -1,9 +1,9 @@
 import { assert } from 'chai';
-import WTIndexDataProvider from '../../../../src/data-model/web3-uri/wt-index';
-import Web3UriDataModel from '../../../../src/data-model/web3-uri';
-import testedDataModel from '../../../utils/data-model-definition';
+import WTIndexDataProvider from '../../../src/data-model/wt-index';
+import Web3UriDataModel from '../../../src/data-model/';
+import testedDataModel from '../../utils/data-model-definition';
 
-describe('WTLibs.data-models.web3-uri.WTIndexDataProvider', () => {
+describe('WTLibs.data-models.WTIndexDataProvider', () => {
   let dataModel, indexDataProvider;
 
   beforeEach(async function () {

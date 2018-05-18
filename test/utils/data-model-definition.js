@@ -1,9 +1,7 @@
 import offChainData from './data/off-chain-data.json';
-import Web3UriDataModel from '../../src/data-model/web3-uri';
-import { storageInstance } from '../../src/data-model/web3-uri/storage-pointers/in-memory-json';
+import { storageInstance } from '../../src/data-model/storage-pointers/in-memory-json';
 
 export const Web3UriBackedDataModel = {
-  dataModelAccessor: Web3UriDataModel,
   emptyConfig: {},
   withDataSource: () => ({
     dataModelOptions: {

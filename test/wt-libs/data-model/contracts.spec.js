@@ -1,9 +1,9 @@
 import { assert } from 'chai';
 import sinon from 'sinon';
 import Web3 from 'web3';
-import Contracts from '../../../../src/data-model/web3-uri/contracts';
+import Contracts from '../../../src/data-model/contracts';
 
-describe('WTLibs.data-model.web3-uri.Contracts', () => {
+describe('WTLibs.data-model.Contracts', () => {
   let contracts, getCodeStub, ContractStub;
 
   beforeEach(() => {

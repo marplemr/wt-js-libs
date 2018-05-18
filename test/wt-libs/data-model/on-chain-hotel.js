@@ -1,9 +1,9 @@
 import { assert } from 'chai';
 import sinon from 'sinon';
-import helpers from '../../../utils/helpers';
-import OnChainHotel from '../../../../src/data-model/web3-uri/on-chain-hotel';
+import helpers from '../../utils/helpers';
+import OnChainHotel from '../../../src/data-model/on-chain-hotel';
 
-describe('WTLibs.data-model.web3-uri.OnChainHotel', () => {
+describe('WTLibs.data-model.OnChainHotel', () => {
   let contractsStub, utilsStub, indexContractStub, walletStub;
 
   beforeEach(() => {
