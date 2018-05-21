@@ -185,6 +185,18 @@ describe('WTLibs.data-model.web3-uri.wallet', () => {
       }
     });
 
+    it('should throw on a mismatch between tx originator and wallet owner', async () => {
+      wallet.unlock(correctPassword);
+      try {
+        await wallet.signAndSendTransaction({
+          from: '0xSomeRandomAddress'
+        });
+        throw new Error('should not have been called');
+      } catch (e) {
+        assert.match(e.message, /transaction originator does not match the wallet address/i);
+      }
+    });
+
     it('should sign and send a transaction', async () => {
       wallet.unlock(correctPassword);
       sinon.stub(wallet.__account, 'signTransaction').resolves({ rawTransaction: 'tx-bytecode' });
