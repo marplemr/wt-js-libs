@@ -150,9 +150,8 @@ class RemotelyBackedDataset {
     if (this.isObsolete()) {
       throw new Error('This object was destroyed in a remote storage!');
     }
-    // TODO what to do when setting over a property that is unsynced?
-    // we need to deal with an edge case with undefined
-    if (this.__localData[property] !== newValue) {
+    // Write local value every time, even when we have nothing to compare it to
+    if (this.__localData[property] !== newValue || this.__fieldStates[property] === 'unsynced') {
       this.__localData[property] = newValue;
       this.__fieldStates[property] = 'dirty';
     }
@@ -166,13 +165,18 @@ class RemotelyBackedDataset {
     for (let i = 0; i < this.__fieldKeys.length; i++) {
       const remoteGetter = this.__options.fields[this.__fieldKeys[i]].remoteGetter;
       if (remoteGetter && this.__fieldStates[this.__fieldKeys[i]] === 'unsynced') {
-        remoteGetters.push(remoteGetter());
+        remoteGetters.push({
+          field: this.__fieldKeys[i],
+          fn: remoteGetter(),
+        });
       }
     }
-    if (remoteGetters.length) {
-      const attributes = await (Promise.all(remoteGetters));
-      for (let i = 0; i < this.__fieldKeys.length; i++) {
-        this.__remoteData[this.__fieldKeys[i]] = attributes[i];
+    const remoteGetterFields = remoteGetters.map((x) => x.field);
+    const remoteGetterFns = remoteGetters.map((x) => x.fn);
+    if (remoteGetterFields.length) {
+      const attributes = await (Promise.all(remoteGetterFns));
+      for (let i = 0; i < remoteGetterFields.length; i++) {
+        this.__remoteData[remoteGetterFields[i]] = attributes[i];
       }
     }
     return this.__remoteData;

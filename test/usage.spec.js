@@ -199,11 +199,7 @@ describe('WTLibs usage', () => {
     it('should throw if hotel has no url', async () => {
       try {
         const hotel = await index.getHotel(hotelAddress);
-        // TODO temporary hack, we need to force-sync data from blockchain first
-        // This will be here until a strategy for resolving updated/nulled
-        // data before actually fetching them from blockchain is resolved
-        await hotel.url;
-        hotel.url = '';
+        hotel.url = undefined;
         await index.updateHotel(wallet, hotel);
         throw new Error('should not have been called');
       } catch (e) {

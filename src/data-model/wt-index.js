@@ -82,7 +82,7 @@ class Web3UriWTIndexDataProvider implements WTIndexInterface {
    */
   async updateHotel (wallet: WalletInterface, hotel: HotelInterface): Promise<Array<string>> {
     try {
-      if (!await hotel.manager) {
+      if (!(await hotel.manager)) {
         throw new Error('Cannot update hotel without manager.');
       }
       // We need to separate calls to be able to properly catch exceptions
