@@ -1,11 +1,11 @@
 // @flow
 
 import Web3 from 'web3';
-import Utils from './utils';
-import Contracts from './contracts';
-import type { DataModelAccessorInterface, AdaptedTxResultInterface, AdaptedTxResultsInterface, KeystoreV3Interface } from '../interfaces';
-import Web3UriWTIndexDataProvider from './wt-index';
-import Web3WTWallet from './wallet';
+import Utils from '../utils';
+import Contracts from '../contracts';
+import type { DataModelInterface, AdaptedTxResultInterface, AdaptedTxResultsInterface, KeystoreV3Interface } from '../interfaces';
+import WTIndexDataProvider from './wt-index';
+import Wallet from '../wallet';
 
 /**
  * DataModelOptionsType options. May look like this:
@@ -18,7 +18,7 @@ import Web3WTWallet from './wallet';
  * ```
  */
 export type DataModelOptionsType = {
-  // URL of currently used RPC provider.
+  // URL of currently used RPC provider for Web3.
   provider?: string | Object;
   // Gas coefficient that is used as a multiplier when setting
   // a transaction gas.
@@ -26,19 +26,19 @@ export type DataModelOptionsType = {
 };
 
 /**
- * Web3UriDataModel
+ * DataModel
  */
-class Web3UriDataModel implements DataModelAccessorInterface {
+class DataModel implements DataModelInterface {
   options: DataModelOptionsType;
   web3Instance: Web3;
   web3Utils: Utils;
   web3Contracts: Contracts;
 
   /**
-   * Creates a configured Web3UriDataModel instance.
+   * Creates a configured DataModel instance.
    */
-  static createInstance (options: DataModelOptionsType): Web3UriDataModel {
-    return new Web3UriDataModel(options);
+  static createInstance (options: DataModelOptionsType): DataModel {
+    return new DataModel(options);
   }
 
   /**
@@ -56,8 +56,8 @@ class Web3UriDataModel implements DataModelAccessorInterface {
   /**
    * Returns a combined Ethereum and appropriate storage backed Winding Tree index.
    */
-  async getWindingTreeIndex (address: string): Promise<Web3UriWTIndexDataProvider> {
-    return Web3UriWTIndexDataProvider.createInstance(address, this.web3Utils, this.web3Contracts);
+  async getWindingTreeIndex (address: string): Promise<WTIndexDataProvider> {
+    return WTIndexDataProvider.createInstance(address, this.web3Utils, this.web3Contracts);
   }
 
   /**
@@ -110,11 +110,11 @@ class Web3UriDataModel implements DataModelAccessorInterface {
   /**
    * Returns a wallet implementation for given keystore.
    */
-  async createWallet (jsonWallet: KeystoreV3Interface): Promise<Web3WTWallet> {
-    const wallet = Web3WTWallet.createInstance(jsonWallet);
+  async createWallet (jsonWallet: KeystoreV3Interface): Promise<Wallet> {
+    const wallet = Wallet.createInstance(jsonWallet);
     wallet.setWeb3(this.web3Instance);
     return Promise.resolve(wallet);
   }
 };
 
-export default Web3UriDataModel;
+export default DataModel;

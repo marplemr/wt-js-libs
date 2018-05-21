@@ -1,7 +1,7 @@
 // @flow
 import type { WTIndexInterface, HotelOnChainDataInterface, HotelInterface, AddHotelResponseInterface, WalletInterface } from '../interfaces';
-import Utils from './utils';
-import Contracts from './contracts';
+import Utils from '../utils';
+import Contracts from '../contracts';
 import OnChainHotel from './on-chain-hotel';
 
 /**
@@ -140,7 +140,6 @@ class Web3UriWTIndexDataProvider implements WTIndexInterface {
         throw new Error('Not found in hotel list');
       } else {
         const hotel = await this.__createHotelInstance(address);
-        await hotel.initializeStoragePointers();
         return hotel;
       }
     } catch (err) {

@@ -1,10 +1,10 @@
 import { assert } from 'chai';
 import sinon from 'sinon';
-import helpers from '../../utils/helpers';
-import testedDataModel from '../../utils/data-model-definition';
-import jsonWallet from '../../utils/test-wallet';
-import DataModel from '../../../src/data-model/';
-import Web3WTWallet from '../../../src/data-model/wallet';
+import helpers from '../utils/helpers';
+import testedDataModel from '../utils/data-model-definition';
+import jsonWallet from '../utils/test-wallet';
+import DataModel from '../../src/data-model/';
+import Web3WTWallet from '../../src/wallet';
 
 describe('WTLibs.data-model.wallet', () => {
   let dataModel;

@@ -53,13 +53,13 @@ describe('WTLibs.data-model.OnChainHotel', () => {
       await provider.initialize();
       assert.isDefined(provider.url);
       assert.isDefined(provider.manager);
-      assert.isFalse(provider.onchainDataset.isDeployed());
+      assert.isFalse(provider.onChainDataset.isDeployed());
     });
 
     it('should mark eth backed dataset as deployed if address is passed', async () => {
       const provider = new OnChainHotel(utilsStub, contractsStub, indexContractStub, 'fake-address');
       await provider.initialize();
-      assert.isTrue(provider.onchainDataset.isDeployed());
+      assert.isTrue(provider.onChainDataset.isDeployed());
     });
   });
 
@@ -118,9 +118,9 @@ describe('WTLibs.data-model.OnChainHotel', () => {
     });
 
     it('should mark dataset as deployed on success', async () => {
-      assert.isFalse(provider.onchainDataset.isDeployed());
+      assert.isFalse(provider.onChainDataset.isDeployed());
       await provider.createOnChainData(walletStub, { from: 'xx' }, 'data-url');
-      assert.isTrue(provider.onchainDataset.isDeployed());
+      assert.isTrue(provider.onChainDataset.isDeployed());
     });
 
     it('should throw on transaction error', async () => {
@@ -184,7 +184,7 @@ describe('WTLibs.data-model.OnChainHotel', () => {
 
     it('should throw on an undeployed contract', async () => {
       try {
-        provider.onchainDataset.__deployedFlag = false;
+        provider.onChainDataset.__deployedFlag = false;
         await provider.removeOnChainData(walletStub, {});
         throw new Error('should not have been called');
       } catch (e) {
@@ -204,9 +204,9 @@ describe('WTLibs.data-model.OnChainHotel', () => {
     });
 
     it('should mark dataset as obsolete on success', async () => {
-      assert.isFalse(provider.onchainDataset.isObsolete());
+      assert.isFalse(provider.onChainDataset.isObsolete());
       await provider.removeOnChainData(walletStub, { from: 'xx' });
-      assert.isTrue(provider.onchainDataset.isObsolete());
+      assert.isTrue(provider.onChainDataset.isObsolete());
     });
 
     it('should throw on error', async () => {

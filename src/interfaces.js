@@ -49,7 +49,6 @@ export interface HotelOnChainDataInterface {
  */
 export interface HotelInterface extends HotelOnChainDataInterface {
   toPlainObject(): Promise<Object>;
-  initializeStoragePointers(): Promise<void>;
   setLocalData(newData: HotelOnChainDataInterface): Promise<void>;
   createOnChainData(wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>>;
   updateOnChainData(wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>>;
@@ -75,7 +74,7 @@ export interface WTIndexInterface {
  * Every `data-model`'s main package should implement this interface
  * and provide the necessary methods.
  */
-export interface DataModelAccessorInterface {
+export interface DataModelInterface {
   getWindingTreeIndex(address: string): Promise<WTIndexInterface>;
   getTransactionsStatus (transactionHashes: Array<string>): Promise<AdaptedTxResultsInterface>;
   createWallet (jsonWallet: Object): Promise<WalletInterface>

@@ -1,7 +1,7 @@
 import { assert } from 'chai';
 import sinon from 'sinon';
 import Web3 from 'web3';
-import Contracts from '../../../src/data-model/contracts';
+import Contracts from '../../src/contracts';
 
 describe('WTLibs.data-model.Contracts', () => {
   let contracts, getCodeStub, ContractStub;

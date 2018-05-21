@@ -114,9 +114,10 @@ describe('WTLibs usage', () => {
       const address = '0xbf18b616ac81830dd0c5d4b771f22fd8144fe769';
       const hotel = await index.getHotel(address);
       assert.isNotNull(hotel);
-      assert.equal(hotel.dataIndex.ref, await hotel.url);
-      assert.isDefined(hotel.dataIndex.contents);
-      const descriptionContents = await hotel.dataIndex.contents.description;
+      const hotelDataIndex = await hotel.dataIndex;
+      assert.equal(hotelDataIndex.ref, await hotel.url);
+      assert.isDefined(hotelDataIndex.contents);
+      const descriptionContents = await hotelDataIndex.contents.description;
       assert.isDefined(descriptionContents.contents);
       assert.isDefined(descriptionContents.ref);
       assert.equal(await descriptionContents.contents.name, 'First hotel');
@@ -198,7 +199,11 @@ describe('WTLibs usage', () => {
     it('should throw if hotel has no url', async () => {
       try {
         const hotel = await index.getHotel(hotelAddress);
-        hotel.url = undefined;
+        // TODO temporary hack, we need to force-sync data from blockchain first
+        // This will be here until a strategy for resolving updated/nulled
+        // data before actually fetching them from blockchain is resolved
+        await hotel.url;
+        hotel.url = '';
         await index.updateHotel(wallet, hotel);
         throw new Error('should not have been called');
       } catch (e) {
@@ -227,7 +232,7 @@ describe('WTLibs usage', () => {
       assert.equal(hotels.length, 2);
       for (let hotel of hotels) {
         assert.isDefined(hotel.toPlainObject);
-        assert.isDefined(hotel.dataIndex.ref);
+        assert.isDefined((await hotel.dataIndex).ref);
         const plainHotel = await hotel.toPlainObject();
         assert.equal(plainHotel.address, await hotel.address);
         assert.equal(plainHotel.url, await hotel.url);

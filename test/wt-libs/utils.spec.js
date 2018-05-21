@@ -1,6 +1,6 @@
 import { assert } from 'chai';
 import sinon from 'sinon';
-import Utils from '../../../src/data-model/utils';
+import Utils from '../../src/utils';
 
 describe('WTLibs.data-model.Utils', () => {
   let utils;

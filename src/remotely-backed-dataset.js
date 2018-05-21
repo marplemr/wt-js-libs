@@ -150,6 +150,8 @@ class RemotelyBackedDataset {
     if (this.isObsolete()) {
       throw new Error('This object was destroyed in a remote storage!');
     }
+    // TODO what to do when setting over a property that is unsynced?
+    // we need to deal with an edge case with undefined
     if (this.__localData[property] !== newValue) {
       this.__localData[property] = newValue;
       this.__fieldStates[property] = 'dirty';

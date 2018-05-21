@@ -1,7 +1,7 @@
 // @flow
 import type { WalletInterface, HotelOnChainDataInterface } from '../interfaces';
-import Utils from './utils';
-import Contracts from './contracts';
+import Utils from '../utils';
+import Contracts from '../contracts';
 import RemotelyBackedDataset from '../remotely-backed-dataset';
 import StoragePointer from './storage-pointers/index';
 
@@ -23,9 +23,9 @@ class OnChainHotel {
   web3Contracts: Contracts;
   indexContract: Object;
   contractInstance: Object;
-  onchainDataset: RemotelyBackedDataset;
+  onChainDataset: RemotelyBackedDataset;
 
-  dataIndex: StoragePointer;
+  _dataIndex: StoragePointer;
 
   static async createInstance (web3Utils: Utils, web3Contracts: Contracts, indexContract: Object, address?: string): Promise<OnChainHotel> {
     const hotel = new OnChainHotel(web3Utils, web3Contracts, indexContract, address);
@@ -56,8 +56,8 @@ class OnChainHotel {
    * in the contsructor, the RemotelyBackedDataset is marked as deployed.
    */
   async initialize (): Promise<void> {
-    this.onchainDataset = new RemotelyBackedDataset();
-    this.onchainDataset.bindProperties({
+    this.onChainDataset = new RemotelyBackedDataset();
+    this.onChainDataset.bindProperties({
       fields: {
         url: {
           remoteGetter: async (): Promise<?string> => {
@@ -73,23 +73,29 @@ class OnChainHotel {
       },
     }, this);
     if (this.address) {
-      this.onchainDataset.markDeployed();
+      this.onChainDataset.markDeployed();
     }
   }
 
-  async initializeStoragePointers (): Promise<void> {
-    this.dataIndex = new StoragePointer(await this.url, [
-      {
-        name: 'description',
-        isStorageInstance: true,
-        fields: ['name', 'description', 'location'],
-      },
-    ]);
+  get dataIndex (): Promise<StoragePointer> {
+    return (async () => {
+      if (!this._dataIndex) {
+        this._dataIndex = new StoragePointer(await this.url, [
+          {
+            name: 'description',
+            isStorageInstance: true,
+            fields: ['name', 'description', 'location'],
+          },
+        ]);
+      }
+      return this._dataIndex;
+    })();
   }
 
   /**
    * Update multiple data fields at once. This part
    * sets manager and url properties and none of them can be nulled.
+   * Manager can be changed only for an un-deployed contract.
    * @param {HotelOnChainDataInterface} newData
    */
   async setLocalData (newData: HotelOnChainDataInterface): Promise<void> {
@@ -127,9 +133,6 @@ class OnChainHotel {
    * @return {Promise<string>} resulting transaction hash
    */
   async __editInfoOnChain (wallet: WalletInterface, transactionOptions: Object): Promise<string> {
-    if (!await this.url) {
-      throw new Error('Cannot set url when it is not provided');
-    }
     const data = (await this.__getContractInstance()).methods.editInfo(await this.url).encodeABI();
     const estimate = await this.indexContract.methods.callHotel(this.address, data).estimateGas(transactionOptions);
     const txData = this.indexContract.methods.callHotel(this.address, data).encodeABI();
@@ -176,7 +179,7 @@ class OnChainHotel {
       gas: this.web3Utils.applyGasCoefficient(estimate),
     };
     return wallet.signAndSendTransaction(transactionData, () => {
-      this.onchainDataset.markDeployed();
+      this.onChainDataset.markDeployed();
     })
       .then((hash) => {
         return [hash];
@@ -198,9 +201,12 @@ class OnChainHotel {
   async updateOnChainData (wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>> {
     // pre-check if contract is available at all and fail fast
     await this.__getContractInstance();
+    if (!await this.url) {
+      throw new Error('Cannot set url when it is not provided');
+    }
     // We have to clone options for each dataset as they may get modified
     // along the way
-    return this.onchainDataset.updateRemoteData(wallet, Object.assign({}, transactionOptions));
+    return this.onChainDataset.updateRemoteData(wallet, Object.assign({}, transactionOptions));
   }
 
   /**
@@ -213,7 +219,7 @@ class OnChainHotel {
    * @return {Promise<Array<string>>} List of transaction hashes
    */
   async removeOnChainData (wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>> {
-    if (!this.onchainDataset.isDeployed()) {
+    if (!this.onChainDataset.isDeployed()) {
       throw new Error('Cannot remove hotel: not deployed');
     }
     const estimate = await this.indexContract.methods.deleteHotel(this.address).estimateGas(transactionOptions);
@@ -226,7 +232,7 @@ class OnChainHotel {
       gas: this.web3Utils.applyGasCoefficient(estimate),
     };
     return wallet.signAndSendTransaction(transactionData, () => {
-      this.onchainDataset.markObsolete();
+      this.onChainDataset.markObsolete();
     })
       .then((hash) => {
         return [hash];
