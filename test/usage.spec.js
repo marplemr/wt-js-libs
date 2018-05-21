@@ -27,29 +27,37 @@ describe('WTLibs usage', () => {
       assert.isDefined(result);
       assert.isDefined(result.address);
       assert.isDefined(result.transactionIds);
-      // prepare getTransactionsStatus test
-      minedTxHashes.push(result.transactionIds[0]);
-      const txResults = await libs.getTransactionsStatus(result.transactionIds);
-      assert.equal(txResults.meta.allPassed, true);
 
+      // Prepare getTransactionsStatus test
+      minedTxHashes.push(result.transactionIds[0]);
       // We should then get the hotel at the resulting address
       const hotel = await index.getHotel(result.address);
-      assert.isDefined(hotel.toPlainObject);
       // Don't bother with checksummed address format
       assert.equal((await hotel.manager).toLowerCase(), '0xd39ca7d186a37bb6bf48ae8abfeb4c687dc8f906');
       assert.equal((await hotel.url).toLowerCase(), 'json://some-data-hash');
 
       // We're removing the hotel to ensure clean slate after this test is run.
-      // It is too expensive to re-set on-chain WTIndex after each test.
+      // It is too possibly expensive to re-set on-chain WTIndex after each test.
       const removalResult = await index.removeHotel(wallet, hotel);
-      const removelTxResults = await libs.getTransactionsStatus(removalResult);
-      assert.equal(removelTxResults.meta.allPassed, true);
+      const removalTxResults = await libs.getTransactionsStatus(removalResult);
+      assert.equal(removalTxResults.meta.allPassed, true);
     });
 
     it('should throw when hotel does not have a manager', async () => {
       try {
         await index.addHotel(wallet, {
           url: 'json://some-data-hash',
+        });
+        throw new Error('should not have been called');
+      } catch (e) {
+        assert.match(e.message, /cannot add hotel/i);
+      }
+    });
+
+    it('should throw when hotel does not have an url', async () => {
+      try {
+        await index.addHotel(wallet, {
+          manager: '0xd39ca7d186a37bb6bf48ae8abfeb4c687dc8f906',
         });
         throw new Error('should not have been called');
       } catch (e) {
@@ -66,14 +74,18 @@ describe('WTLibs usage', () => {
         manager: manager,
       });
       assert.isDefined(result.address);
+
+      // Verify that it has been added
       let list = (await index.getAllHotels());
       assert.equal(list.length, 3);
       assert.include(await Promise.all(list.map(async (a) => a.address)), result.address);
       const hotel = await index.getHotel(result.address);
+      // Remove
       const removalResult = await index.removeHotel(wallet, hotel);
       assert.isDefined(removalResult);
       // prepare getTransactionsStatus test
       minedTxHashes.push(...removalResult);
+      // Verify that it has been removed
       list = await index.getAllHotels();
       assert.equal(list.length, 2);
       assert.notInclude(list.map(async (a) => a.address), await hotel.address);
@@ -93,12 +105,22 @@ describe('WTLibs usage', () => {
     it('should get hotel', async () => {
       const address = '0xbf18b616ac81830dd0c5d4b771f22fd8144fe769';
       const hotel = await index.getHotel(address);
-      // TOOD improve tests for data pointers
-      console.log(await (await hotel.dataIndex.contents.description).contents.name);
-      console.log(await (await hotel.dataIndex.contents.description).ref);
       assert.isNotNull(hotel);
       assert.equal(await hotel.url, 'json://urlone');
       assert.equal(await hotel.address, address);
+    });
+
+    it('should provide an initialized dataIndex', async () => {
+      const address = '0xbf18b616ac81830dd0c5d4b771f22fd8144fe769';
+      const hotel = await index.getHotel(address);
+      assert.isNotNull(hotel);
+      assert.equal(hotel.dataIndex.ref, await hotel.url);
+      assert.isDefined(hotel.dataIndex.contents);
+      const descriptionContents = await hotel.dataIndex.contents.description;
+      assert.isDefined(descriptionContents.contents);
+      assert.isDefined(descriptionContents.ref);
+      assert.equal(await descriptionContents.contents.name, 'First hotel');
+      assert.equal(await descriptionContents.ref, 'json://descriptionone');
     });
 
     it('should provide a toPlainObject method', async () => {
@@ -130,14 +152,17 @@ describe('WTLibs usage', () => {
       const hotel = await index.getHotel(hotelAddress);
       const oldUrl = await hotel.url;
       hotel.url = newUrl;
+      // Change the data
       const updateResult = await index.updateHotel(wallet, hotel);
       assert.isDefined(updateResult);
+      // Verify
       const hotel2 = await index.getHotel(hotelAddress);
       assert.equal(await hotel2.url, newUrl);
       // Change it back to keep data in line
       hotel.url = oldUrl;
       const updateResult2 = await index.updateHotel(wallet, hotel);
       assert.isDefined(updateResult2);
+      // Verify it changed properly
       const hotel3 = await index.getHotel(hotelAddress);
       assert.equal(await hotel3.url, oldUrl);
     });
@@ -147,11 +172,38 @@ describe('WTLibs usage', () => {
         const newUrl = 'json://another-random-hash';
         const hotel = await index.getHotel(hotelAddress);
         hotel.address = undefined;
-        hotel.name = newUrl;
+        hotel.url = newUrl;
         await index.updateHotel(wallet, hotel);
         throw new Error('should not have been called');
       } catch (e) {
         assert.match(e.message, /cannot update hotel/i);
+        assert.match(e.message, /without address/i);
+      }
+    });
+
+    it('should throw if hotel has no manager', async () => {
+      try {
+        const newUrl = 'json://another-random-hash';
+        const hotel = await index.getHotel(hotelAddress);
+        hotel.manager = undefined;
+        hotel.url = newUrl;
+        await index.updateHotel(wallet, hotel);
+        throw new Error('should not have been called');
+      } catch (e) {
+        assert.match(e.message, /cannot update hotel/i);
+        assert.match(e.message, /without manager/i);
+      }
+    });
+
+    it('should throw if hotel has no url', async () => {
+      try {
+        const hotel = await index.getHotel(hotelAddress);
+        hotel.url = undefined;
+        await index.updateHotel(wallet, hotel);
+        throw new Error('should not have been called');
+      } catch (e) {
+        assert.match(e.message, /cannot update hotel/i);
+        assert.match(e.message, /cannot set url when it is not provided/i);
       }
     });
 
@@ -175,6 +227,7 @@ describe('WTLibs usage', () => {
       assert.equal(hotels.length, 2);
       for (let hotel of hotels) {
         assert.isDefined(hotel.toPlainObject);
+        assert.isDefined(hotel.dataIndex.ref);
         const plainHotel = await hotel.toPlainObject();
         assert.equal(plainHotel.address, await hotel.address);
         assert.equal(plainHotel.url, await hotel.url);

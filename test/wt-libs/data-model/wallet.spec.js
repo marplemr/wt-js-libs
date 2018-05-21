@@ -189,7 +189,7 @@ describe('WTLibs.data-model.wallet', () => {
       wallet.unlock(correctPassword);
       try {
         await wallet.signAndSendTransaction({
-          from: '0xSomeRandomAddress'
+          from: '0xSomeRandomAddress',
         });
         throw new Error('should not have been called');
       } catch (e) {

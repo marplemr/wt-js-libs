@@ -127,6 +127,9 @@ class OnChainHotel {
    * @return {Promise<string>} resulting transaction hash
    */
   async __editInfoOnChain (wallet: WalletInterface, transactionOptions: Object): Promise<string> {
+    if (!await this.url) {
+      throw new Error('Cannot set url when it is not provided');
+    }
     const data = (await this.__getContractInstance()).methods.editInfo(await this.url).encodeABI();
     const estimate = await this.indexContract.methods.callHotel(this.address, data).estimateGas(transactionOptions);
     const txData = this.indexContract.methods.callHotel(this.address, data).encodeABI();
