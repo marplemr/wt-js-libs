@@ -1,10 +1,14 @@
+// @flow
 import ethJsUtil from 'ethereumjs-util';
+import type { StoragePointerAccessor } from '../interfaces';
 
 /**
  * Simple in-memory key value store that creates
  * its keys with ethereum based sha3 hash function.
  */
 class InMemoryStorage {
+  _storage: Object;
+
   constructor () {
     this._storage = {};
   }
@@ -14,19 +18,19 @@ class InMemoryStorage {
    * Before hashing, data is JSON.stringified and a current
    * timestamp is prepended to prevent collisions.
    *
-   * @param  {any} data to be hashed
+   * @param  {Object} data to be hashed
    * @return {string} resulting sha3 hash
    */
-  _computeHash (data) {
+  _computeHash (data: Object): string {
     return ethJsUtil.bufferToHex(ethJsUtil.sha3(Date.now() + ':' + JSON.stringify(data)));
   }
 
   /**
    * Adds new data to the in-memory storage.
-   * @param  {any} data
+   * @param  {Object} data
    * @return {string} hash under which the data is stored
    */
-  create (data) {
+  create (data: Object): string {
     const keyHash = this._computeHash(data);
     this._storage[keyHash] = data;
     return keyHash;
@@ -35,18 +39,18 @@ class InMemoryStorage {
   /**
    * Update data under certain key
    * @param  {string} hash under which to store new data
-   * @param  {any} data
+   * @param  {Object} data
    */
-  update (hash, data) {
+  update (hash: string, data: Object) {
     this._storage[hash] = data;
   }
 
   /**
    * Retrieve data from a certain hash
    * @param  {string} hash under which is the desired data
-   * @return {any}
+   * @return {Object}
    */
-  get (hash) {
+  get (hash: string): Object {
     return this._storage[hash];
   }
 }
@@ -58,18 +62,28 @@ class InMemoryStorage {
  */
 export const storageInstance = new InMemoryStorage();
 
-class InMemoryJsonProvider {
-  constructor (url) {
+/**
+ * StoragePointerAccessor based on a simple in-memory key-value
+ * storage.
+ */
+class InMemoryJsonProvider implements StoragePointerAccessor {
+  url: string;
+  hash: string;
+
+  constructor (url: string) {
     this.url = url;
     this.hash = this._getHash(this.url);
   }
 
-  _getHash (url) {
+  _getHash (url: string): string {
     const matchResult = url.match(/\w+:\/\/(\w+)/i);
-    return matchResult ? matchResult[1] : null;
+    if (!matchResult || matchResult.length < 2) {
+      throw new Error(`Cannot use InMemoryJsonProvider with ${url}, no schema detected.`);
+    }
+    return matchResult[1];
   }
 
-  async download () {
+  async download (): Promise<?{[string]: Object}> {
     return storageInstance.get(this.hash);
   }
 }

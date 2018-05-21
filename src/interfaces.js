@@ -255,3 +255,10 @@ export interface KeystoreV3Interface {
     mac: string
   }
 }
+
+/**
+ * Interface for an off-chain storage access.
+ */
+export interface StoragePointerAccessor {
+  download(): Promise<?{[string]: Object}>
+}
