@@ -54,15 +54,15 @@ class DataModel implements DataModelInterface {
   }
 
   /**
-   * Returns a combined Ethereum and appropriate storage backed Winding Tree index.
+   * Returns an Ethereum backed Winding Tree index.
    */
   async getWindingTreeIndex (address: string): Promise<WTIndexDataProvider> {
     return WTIndexDataProvider.createInstance(address, this.web3Utils, this.web3Contracts);
   }
 
   /**
-   * Find out in what state are transactions. All logs
-   * are decoded along the way and some metrics such as blockAge
+   * Finds out in what state are Ethereum transactions. All logs
+   * are decoded along the way and some metrics such as min/max blockAge
    * are computed. If you pass all transactions related to a single
    * operation (such as updateHotel), you may benefit from the computed
    * metrics.
@@ -108,7 +108,7 @@ class DataModel implements DataModelInterface {
   }
 
   /**
-   * Returns a wallet implementation for given keystore.
+   * Returns a wallet instance for given JSON keystore.
    */
   async createWallet (jsonWallet: KeystoreV3Interface): Promise<Wallet> {
     const wallet = Wallet.createInstance(jsonWallet);

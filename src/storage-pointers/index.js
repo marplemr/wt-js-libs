@@ -1,6 +1,13 @@
 import InMemoryJsonProvider from './in-memory-json';
 
+/**
+ *
+ */
 class StoragePointer {
+  static createInstance (url, fields) {
+    return new StoragePointer(url, fields);
+  }
+
   constructor (url, fields) {
     this.ref = url;
     this.contents = {};
@@ -34,7 +41,7 @@ class StoragePointer {
       for (let i = 0; i < this.__fields.length; i++) {
         const fieldDef = this.__fields[i];
         if (fieldDef.isStorageInstance) {
-          this.__storagePointers[fieldDef.name] = new StoragePointer(this.__contents[fieldDef.name], fieldDef.fields);
+          this.__storagePointers[fieldDef.name] = StoragePointer.createInstance(this.__contents[fieldDef.name], fieldDef.fields);
         }
       }
     }

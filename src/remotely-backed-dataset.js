@@ -25,6 +25,13 @@ import _ from 'lodash';
  * to update multiple properties, only once call is done.
  */
 class RemotelyBackedDataset {
+  /**
+   * Generic factory method.
+   */
+  static createInstance () {
+    return new RemotelyBackedDataset();
+  }
+
   constructor () {
     this.__obsoleteFlag = false;
     this.__deployedFlag = false;

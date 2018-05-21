@@ -1,18 +1,21 @@
 // @flow
-import type { WalletInterface, HotelOnChainDataInterface } from '../interfaces';
+import type { WalletInterface, HotelInterface, HotelOnChainDataInterface } from '../interfaces';
 import Utils from '../utils';
 import Contracts from '../contracts';
 import RemotelyBackedDataset from '../remotely-backed-dataset';
-import StoragePointer from './storage-pointers/index';
+import StoragePointer from '../storage-pointers/index';
 
 /**
- * Wrapper class for a hotel primarily backed by a smart
- * contract on Ethereum that's holding `url` of its data.
+ * Wrapper class for a hotel backed by a smart contract on
+ * Ethereum that's holding `url` pointer to its data.
  *
- * It can be extended to support data stored in another
- * form of remote storage.
+ * It provides an accessor to such data in a form of
+ * `StoragePointer` instance under `dataIndex` property.
+ * Every schema-specific implementation details
+ * are dealt with in StoragePointer.
+ *
  */
-class OnChainHotel {
+class OnChainHotel implements HotelInterface {
   address: Promise<?string> | ?string;
 
   // provided by eth backed dataset
@@ -25,13 +28,8 @@ class OnChainHotel {
   contractInstance: Object;
   onChainDataset: RemotelyBackedDataset;
 
+  // Representation of data stored on url
   _dataIndex: StoragePointer;
-
-  static async createInstance (web3Utils: Utils, web3Contracts: Contracts, indexContract: Object, address?: string): Promise<OnChainHotel> {
-    const hotel = new OnChainHotel(web3Utils, web3Contracts, indexContract, address);
-    await hotel.initialize();
-    return hotel;
-  }
 
   /**
    * Create new configured instance.
@@ -43,6 +41,12 @@ class OnChainHotel {
    * to be created on chain to behave as expected.
    * @return {OnChainHotel}
    */
+  static async createInstance (web3Utils: Utils, web3Contracts: Contracts, indexContract: Object, address?: string): Promise<OnChainHotel> {
+    const hotel = new OnChainHotel(web3Utils, web3Contracts, indexContract, address);
+    await hotel.initialize();
+    return hotel;
+  }
+
   constructor (web3Utils: Utils, web3Contracts: Contracts, indexContract: Object, address?: string) {
     this.address = address;
     this.web3Utils = web3Utils;
@@ -53,10 +57,11 @@ class OnChainHotel {
   /**
    * Initializes the underlying RemotelyBackedDataset that actually
    * communicates with the on-chain stored data. If address was provided
-   * in the contsructor, the RemotelyBackedDataset is marked as deployed.
+   * in the contsructor, the RemotelyBackedDataset is marked as deployed
+   * and can be used instantly.
    */
   async initialize (): Promise<void> {
-    this.onChainDataset = new RemotelyBackedDataset();
+    this.onChainDataset = RemotelyBackedDataset.createInstance();
     this.onChainDataset.bindProperties({
       fields: {
         url: {
@@ -77,13 +82,23 @@ class OnChainHotel {
     }
   }
 
+  /**
+   * Async getter for `StoragePointer` instance.
+   * Since it has to eventually access the `url`
+   * field stored on-chain, it is lazy loaded.
+   * Any data structure that is accessed by StoragePointer
+   * instance has for now be known beforehand, thus the whole
+   * data format of hotel data on `url` is specified here.
+   *
+   */
   get dataIndex (): Promise<StoragePointer> {
     return (async () => {
       if (!this._dataIndex) {
-        this._dataIndex = new StoragePointer(await this.url, [
+        this._dataIndex = StoragePointer.createInstance(await this.url, [
           {
             name: 'description',
             isStorageInstance: true,
+            // This should always be in line with publicly declared HotelDescriptionInterface
             fields: ['name', 'description', 'location'],
           },
         ]);
@@ -93,9 +108,9 @@ class OnChainHotel {
   }
 
   /**
-   * Update multiple data fields at once. This part
-   * sets manager and url properties and none of them can be nulled.
-   * Manager can be changed only for an un-deployed contract.
+   * Update manager and url properties. Url can never be nulled. Manager
+   * can never be nulled. Manager can be changed only for an un-deployed
+   * contract (without address).
    * @param {HotelOnChainDataInterface} newData
    */
   async setLocalData (newData: HotelOnChainDataInterface): Promise<void> {
@@ -107,6 +122,13 @@ class OnChainHotel {
     }
   }
 
+  /**
+   * Helper method that returns a plain object only
+   * with properties with data.
+   *
+   * It is not recursive for now, i. e. all off-chain data
+   * has to be accessed separately. Subject to change.
+   */
   async toPlainObject (): Promise<HotelOnChainDataInterface> {
     return {
       manager: await this.manager,
@@ -153,9 +175,12 @@ class OnChainHotel {
   }
 
   /**
+   * Creates new hotel contract on-chain.
    *
-   * It also precomputes the deployed hotel on-chain address. So even if
+   * Precomputes the deployed hotel on-chain address, so even if
    * the resulting transaction is not yet mined, the address is already known.
+   *
+   * Returns once the transaction is signed and sent to network by `wallet`.
    *
    * @param {WalletInterface} wallet that signs the transaction
    * @param {Object} transactionOptions usually contains from and to. Gas is automatically computed.
@@ -196,12 +221,13 @@ class OnChainHotel {
    * @param {WalletInterface} wallet that signs the transaction
    * @param {Object} transactionOptions usually contains from and to. Gas is automatically computed.
    * @throws {Error} When the underlying contract is not yet deployed.
+   * @throws {Error} When url is empty.
    * @return {Promise<Array<string>>} List of transaction hashes
    */
   async updateOnChainData (wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>> {
     // pre-check if contract is available at all and fail fast
     await this.__getContractInstance();
-    if (!await this.url) {
+    if (!(await this.url)) {
       throw new Error('Cannot set url when it is not provided');
     }
     // We have to clone options for each dataset as they may get modified
@@ -211,7 +237,7 @@ class OnChainHotel {
 
   /**
    * Destroys the object on network, in this case, calls a `deleteHotel` on
-   * Winding Tree index.
+   * Winding Tree index contract.
    *
    * @param {WalletInterface} wallet that signs the transaction
    * @param {Object} transactionOptions usually contains from and to. Gas is automatically computed.

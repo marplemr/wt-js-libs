@@ -1,5 +1,7 @@
 // @flow
 
+import StoragePointer from './storage-pointers';
+
 /**
  * Response of the addHotel operation.
  *
@@ -21,18 +23,32 @@ export interface LocationInterface {
   longitude?: ?number
 }
 
+/**
+ * Index file for more data urls. This is the
+ * initial document that blockchain is pointing to.
+ */
 export interface HotelDataIndex {
   descriptionUrl: string
-  // availabilityUrl: string; // TBD
-  // inventoryUrl: string; // TBD
 }
 
+/**
+ * Description of additional hotel data.
+ */
 export interface HotelDescriptionInterface {
   location: Promise<?LocationInterface> | ?LocationInterface;
   name: Promise<?string> | ?string;
   description: Promise<?string> | ?string
 }
 
+/**
+ * Shape of data that is stored on-chain
+ * about every hotel.
+ *
+ * - `address` is the network address.
+ * - `manager` is the network address of hotel manager.
+ * - `url` holds a pointer to the off-chain storage
+ * that is used internally to store data.
+ */
 export interface HotelOnChainDataInterface {
   address: Promise<?string> | ?string;
   manager: Promise<?string> | ?string;
@@ -40,14 +56,15 @@ export interface HotelOnChainDataInterface {
 }
 
 /**
- * Contains hotel-related data.
+ * Represents a hotel instance that can
+ * communicate with on-chain hotel representation
+ * and provides an access to offChain data via `dataIndex`
+ * property.
  *
- * - `address` is the network address.
- * - `manager` is the network address of hotel manager.
- * - `url` holds a pointer to the off-chain storage
- * that is used internally to store data.
  */
 export interface HotelInterface extends HotelOnChainDataInterface {
+  +dataIndex: Promise<StoragePointer>;
+
   toPlainObject(): Promise<Object>;
   setLocalData(newData: HotelOnChainDataInterface): Promise<void>;
   createOnChainData(wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>>;
@@ -57,8 +74,7 @@ export interface HotelInterface extends HotelOnChainDataInterface {
 
 /**
  * WindingTree index interface that provides all methods
- * necessary for interaction with the hotels. The real
- * implementation might differ in speed and asynchronicity.
+ * necessary for interaction with the hotels.`
  */
 export interface WTIndexInterface {
   addHotel(wallet: WalletInterface, hotel: HotelOnChainDataInterface): Promise<AddHotelResponseInterface>;
@@ -71,8 +87,7 @@ export interface WTIndexInterface {
 }
 
 /**
- * Every `data-model`'s main package should implement this interface
- * and provide the necessary methods.
+ * Formalization of DataModel's public interface.
  */
 export interface DataModelInterface {
   getWindingTreeIndex(address: string): Promise<WTIndexInterface>;
