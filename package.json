@@ -14,7 +14,7 @@
     "coverage": "nyc report --reporter=text-lcov | coveralls",
     "clean": "rimraf dist && rimraf docs",
     "build": "webpack --config webpack.config.js --mode production",
-    "docs": "mkdir docs && documentation build src/** -f md -o docs/reference.md"
+    "docs": "rimraf docs && mkdir docs && documentation build src/** -f md -o docs/reference.md"
   },
   "publishConfig": {
     "access": "public",
