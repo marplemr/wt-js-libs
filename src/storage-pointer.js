@@ -1,6 +1,6 @@
 // @flow
-import InMemoryAccessor from './storage-pointers/in-memory';
-import type { StoragePointerAccessor } from './interfaces';
+import InMemoryAccessor from './off-chain-data-accessors/in-memory';
+import type { OffChainDataAccessor } from './interfaces';
 
 /**
  * Definition of a data field that is stored off-chain.
@@ -59,7 +59,7 @@ class StoragePointer {
   __downloaded: boolean;
   __data: ?{[string]: Object};
   __fields: Array<FieldDefType>;
-  __accessor: StoragePointerAccessor;
+  __accessor: OffChainDataAccessor;
 
   /**
    * Returns a new instance of StoragePointer.
@@ -92,7 +92,7 @@ class StoragePointer {
 
   /**
    * Detects schema from the url, based on that instantiates an appropriate
-   * `StoragePointerAccessor` implementation and sets up all data
+   * `OffChainDataAccessor` implementation and sets up all data
    * getters.
    *
    * @param  {string} url where to look for the data
@@ -105,7 +105,7 @@ class StoragePointer {
     this.__downloaded = false;
     this.__data = null;
     this.__fields = fields;
-    this.__accessor = this._getStoragePointerAccessor(this._detectSchema(this.ref));
+    this.__accessor = this._getOffChainDataAccessor(this._detectSchema(this.ref));
 
     for (let i = 0; i < this.__fields.length; i++) {
       let fieldDef = this.__fields[i];
@@ -160,12 +160,12 @@ class StoragePointer {
   }
 
   /**
-   * Returns appropriate implementation of `StoragePointerAccessor`
+   * Returns appropriate implementation of `OffChainDataAccessor`
    * based on schema. Now, the accessors are hardcoded here, but in
    * a future implementation it should be possible to configure
    * a list of available accessor implementations.
    */
-  _getStoragePointerAccessor (schema: ?string): StoragePointerAccessor {
+  _getOffChainDataAccessor (schema: ?string): OffChainDataAccessor {
     // TODO drop switch, use object with accessors passed from library config
     switch (schema) {
     case 'json':
@@ -176,7 +176,7 @@ class StoragePointer {
   }
 
   /**
-   * Gets the data document via `StoragePointerAccessor`.
+   * Gets the data document via `OffChainDataAccessor`.
    * If nothing is returned, might return an empty object.
    */
   async _downloadFromStorage (): Promise<{[string]: Object}> {

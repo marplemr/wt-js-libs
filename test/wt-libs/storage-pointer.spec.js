@@ -61,7 +61,7 @@ describe('WTLibs.StoragePointer', () => {
     assert.equal(dldSpy.callCount, 1);
   });
 
-  it('should properly instantiate StoragePointerAccessor', () => {
+  it('should properly instantiate OffChainDataAccessor', () => {
     const pointer = StoragePointer.createInstance('json://url', ['some', 'fields']);
     assert.equal(pointer.__accessor.constructor.name, 'InMemoryAccessor');
   });

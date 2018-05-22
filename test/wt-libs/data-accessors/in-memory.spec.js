@@ -1,8 +1,8 @@
 import { assert } from 'chai';
 import sinon from 'sinon';
-import InMemoryAccessor, { Storage, storageInstance } from '../../../src/storage-pointers/in-memory';
+import InMemoryAccessor, { Storage, storageInstance } from '../../../src/off-chain-data-accessors/in-memory';
 
-describe('WTLibs.storage-pointers.InMemory', () => {
+describe('WTLibs.off-chain-data-accessors.InMemory', () => {
   describe('Storage', () => {
     it('should initialize empty storage', () => {
       const storage = new Storage();

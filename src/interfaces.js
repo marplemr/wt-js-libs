@@ -87,12 +87,25 @@ export interface WTIndexInterface {
 }
 
 /**
+ * Interface for an off-chain storage read.
+ */
+export interface OffChainDataAccessor {
+  download(): Promise<?{[string]: Object}>
+}
+
+// TODO
+export interface OffChainDataWriterInterface {
+
+}
+
+/**
  * Formalization of DataModel's public interface.
  */
 export interface DataModelInterface {
   getWindingTreeIndex(address: string): Promise<WTIndexInterface>;
-  getTransactionsStatus (transactionHashes: Array<string>): Promise<AdaptedTxResultsInterface>;
-  createWallet (jsonWallet: Object): Promise<WalletInterface>
+  getTransactionsStatus(transactionHashes: Array<string>): Promise<AdaptedTxResultsInterface>;
+  createWallet(jsonWallet: Object): Promise<WalletInterface>
+  // getOffChainDataWriter(schema: string): Promise<OffChainDataWriterInterface>
 }
 
 /**
@@ -254,11 +267,4 @@ export interface KeystoreV3Interface {
     },
     mac: string
   }
-}
-
-/**
- * Interface for an off-chain storage access.
- */
-export interface StoragePointerAccessor {
-  download(): Promise<?{[string]: Object}>
 }

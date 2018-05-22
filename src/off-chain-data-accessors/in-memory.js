@@ -1,6 +1,6 @@
 // @flow
 import ethJsUtil from 'ethereumjs-util';
-import type { StoragePointerAccessor } from '../interfaces';
+import type { OffChainDataAccessor } from '../interfaces';
 
 /**
  * Simple in-memory key value store that creates
@@ -63,10 +63,10 @@ export class Storage {
 export const storageInstance = new Storage();
 
 /**
- * StoragePointerAccessor based on a simple in-memory key-value
+ * OffChainDataAccessor based on a simple in-memory key-value
  * storage.
  */
-class InMemoryAccessor implements StoragePointerAccessor {
+class InMemoryAccessor implements OffChainDataAccessor {
   url: string;
   hash: string;
 
