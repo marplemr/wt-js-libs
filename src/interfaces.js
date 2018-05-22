@@ -1,6 +1,6 @@
 // @flow
 
-import StoragePointer from './storage-pointers';
+import StoragePointer from './storage-pointer';
 
 /**
  * Response of the addHotel operation.

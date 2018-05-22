@@ -3,7 +3,7 @@ import type { WalletInterface, HotelInterface, HotelOnChainDataInterface } from 
 import Utils from '../utils';
 import Contracts from '../contracts';
 import RemotelyBackedDataset from '../remotely-backed-dataset';
-import StoragePointer from '../storage-pointers/index';
+import StoragePointer from '../storage-pointer';
 
 /**
  * Wrapper class for a hotel backed by a smart contract on

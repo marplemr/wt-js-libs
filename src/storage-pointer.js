@@ -1,6 +1,6 @@
 // @flow
-import InMemoryJsonProvider from './in-memory-json';
-import type { StoragePointerAccessor } from '../interfaces';
+import InMemoryJsonProvider from './storage-pointers/in-memory-json';
+import type { StoragePointerAccessor } from './interfaces';
 
 /**
  * Definition of a data field that is stored off-chain.
