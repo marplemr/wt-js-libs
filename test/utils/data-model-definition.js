@@ -1,5 +1,5 @@
 import offChainData from './data/off-chain-data.json';
-import { storageInstance } from '../../src/storage-pointers/in-memory-json';
+import { storageInstance } from '../../src/storage-pointers/in-memory';
 
 export const Web3UriBackedDataModel = {
   emptyConfig: {},

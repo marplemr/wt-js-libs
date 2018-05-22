@@ -3,7 +3,7 @@ import sinon from 'sinon';
 import Web3 from 'web3';
 import Contracts from '../../src/contracts';
 
-describe('WTLibs.data-model.Contracts', () => {
+describe('WTLibs.Contracts', () => {
   let contracts, getCodeStub, ContractStub;
 
   beforeEach(() => {

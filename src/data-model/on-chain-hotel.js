@@ -97,7 +97,7 @@ class OnChainHotel implements HotelInterface {
         this._dataIndex = StoragePointer.createInstance(await this.url, [
           {
             name: 'description',
-            isStorageInstance: true,
+            isStoragePointer: true,
             // This should always be in line with publicly declared HotelDescriptionInterface
             fields: ['name', 'description', 'location'],
           },

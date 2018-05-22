@@ -6,7 +6,7 @@ import jsonWallet from '../utils/test-wallet';
 import DataModel from '../../src/data-model/';
 import Web3WTWallet from '../../src/wallet';
 
-describe('WTLibs.data-model.wallet', () => {
+describe('WTLibs.Wallet', () => {
   let dataModel;
   const correctPassword = 'test123';
   beforeEach(async function () {

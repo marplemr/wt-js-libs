@@ -2,7 +2,7 @@ import { assert } from 'chai';
 import sinon from 'sinon';
 import Utils from '../../src/utils';
 
-describe('WTLibs.data-model.Utils', () => {
+describe('WTLibs.Utils', () => {
   let utils;
 
   beforeEach(() => {

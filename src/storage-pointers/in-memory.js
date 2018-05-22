@@ -6,7 +6,7 @@ import type { StoragePointerAccessor } from '../interfaces';
  * Simple in-memory key value store that creates
  * its keys with ethereum based sha3 hash function.
  */
-class InMemoryStorage {
+export class Storage {
   _storage: Object;
 
   constructor () {
@@ -56,17 +56,17 @@ class InMemoryStorage {
 }
 
 /**
- * Single instance of InMemoryStorage that should be used
+ * Single instance of Storage that should be used
  * throughout the whole application.
- * @type {InMemoryStorage}
+ * @type {Storage}
  */
-export const storageInstance = new InMemoryStorage();
+export const storageInstance = new Storage();
 
 /**
  * StoragePointerAccessor based on a simple in-memory key-value
  * storage.
  */
-class InMemoryJsonProvider implements StoragePointerAccessor {
+class InMemoryAccessor implements StoragePointerAccessor {
   url: string;
   hash: string;
 
@@ -76,9 +76,9 @@ class InMemoryJsonProvider implements StoragePointerAccessor {
   }
 
   _getHash (url: string): string {
-    const matchResult = url.match(/\w+:\/\/(\w+)/i);
+    const matchResult = url.match(/\w+:\/\/(.+)/i);
     if (!matchResult || matchResult.length < 2) {
-      throw new Error(`Cannot use InMemoryJsonProvider with ${url}, no schema detected.`);
+      throw new Error(`Cannot use InMemoryAccessor with ${url}, no schema detected.`);
     }
     return matchResult[1];
   }
@@ -88,4 +88,4 @@ class InMemoryJsonProvider implements StoragePointerAccessor {
   }
 }
 
-export default InMemoryJsonProvider;
+export default InMemoryAccessor;

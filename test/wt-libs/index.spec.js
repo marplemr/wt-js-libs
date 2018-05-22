@@ -1,7 +1,7 @@
 import { assert } from 'chai';
 import sinon from 'sinon';
-import WTLibs from '../src/index';
-import DataModel from '../src/data-model';
+import WTLibs from '../../src/index';
+import DataModel from '../../src/data-model';
 
 describe('WTLibs', () => {
   describe('createInstance', () => {

@@ -1,5 +1,5 @@
 // @flow
-import InMemoryJsonProvider from './storage-pointers/in-memory-json';
+import InMemoryAccessor from './storage-pointers/in-memory';
 import type { StoragePointerAccessor } from './interfaces';
 
 /**
@@ -8,7 +8,7 @@ import type { StoragePointerAccessor } from './interfaces';
  */
 type FieldDefType = {
   name: string;
-  isStorageInstance?: boolean;
+  isStoragePointer?: boolean;
   fields?: Array<FieldDefType | string>
 };
 
@@ -37,7 +37,7 @@ type FieldDefType = {
  * const pointer = StoragePointer.createInstance('some://url', [
  *   {
  *     name: 'description',
- *     isStorageInstance: true,
+ *     isStoragePointer: true,
  *     fields: ['name', 'description', 'location'],
  *   },
  *   'signature'
@@ -71,11 +71,13 @@ class StoragePointer {
    * @param {Array<FieldDefType | string>} fields list of top-level fields in the referred document
    * @throw {Error} if url is not defined
    */
-  static createInstance (url: ?string, fields: Array<FieldDefType | string>): StoragePointer {
+  static createInstance (url: ?string, fields: ?Array<FieldDefType | string>): StoragePointer {
     if (!url) {
       throw new Error('Cannot instantiate StoragePointer without url');
     }
+    fields = fields || [];
     const normalizedFieldDef = [];
+    // TODO deal with field name uniqueness
     for (let fieldDef of fields) {
       if (typeof fieldDef === 'string') {
         normalizedFieldDef.push({
@@ -103,7 +105,7 @@ class StoragePointer {
     this.__downloaded = false;
     this.__data = null;
     this.__fields = fields;
-    this.__accessor = this._getStorageAccessor(this._detectschema(this.ref));
+    this.__accessor = this._getStoragePointerAccessor(this._detectSchema(this.ref));
 
     for (let i = 0; i < this.__fields.length; i++) {
       let fieldDef = this.__fields[i];
@@ -133,9 +135,10 @@ class StoragePointer {
       this.__data = await this._downloadFromStorage();
       for (let i = 0; i < this.__fields.length; i++) {
         const fieldDef = this.__fields[i];
-        if (fieldDef.isStorageInstance) {
+        if (fieldDef.isStoragePointer) {
           if (!this.__data[fieldDef.name] || typeof this.__data[fieldDef.name] !== 'string') {
-            throw new Error(`Cannot access ${fieldDef.name} under value ${(this.__data[fieldDef.name]).toString()} which does not appear to be a string.`);
+            const value = this.__data[fieldDef.name] ? (this.__data[fieldDef.name]).toString() : 'undefined';
+            throw new Error(`Cannot access ${fieldDef.name} under value ${value} which does not appear to be a valid reference.`);
           }
           this.__storagePointers[fieldDef.name] = StoragePointer.createInstance(this.__data[fieldDef.name], fieldDef.fields || []);
         }
@@ -151,7 +154,7 @@ class StoragePointer {
    * Detects schema from an url, i. e.
    * from `json://some-data`, detects `json`.
    */
-  _detectschema (url: string): ?string {
+  _detectSchema (url: string): ?string {
     const matchResult = url.match(/(\w+):\/\//i);
     return matchResult ? matchResult[1] : null;
   }
@@ -162,11 +165,11 @@ class StoragePointer {
    * a future implementation it should be possible to configure
    * a list of available accessor implementations.
    */
-  _getStorageAccessor (schema: ?string): StoragePointerAccessor {
+  _getStoragePointerAccessor (schema: ?string): StoragePointerAccessor {
     // TODO drop switch, use object with accessors passed from library config
     switch (schema) {
     case 'json':
-      return new InMemoryJsonProvider(this.ref);
+      return new InMemoryAccessor(this.ref);
     default:
       throw new Error(`Unsupported data storage type: ${schema || 'null'}`);
     }
@@ -179,7 +182,7 @@ class StoragePointer {
   async _downloadFromStorage (): Promise<{[string]: Object}> {
     const result = this.__accessor.download();
     this.__downloaded = true;
-    return result || {};
+    return (await result) || {};
   }
 }
 

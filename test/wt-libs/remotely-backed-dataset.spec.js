@@ -2,7 +2,7 @@ import { assert } from 'chai';
 import sinon from 'sinon';
 import RemotelyBackedDataset from '../../src/remotely-backed-dataset';
 
-describe('WTLibs.dataset.RemotelyBackedDataset', () => {
+describe('WTLibs.RemotelyBackedDataset', () => {
   let bbbInstance, remoteGetterStub, remoteSetterStub,
     remoteGetterStub2, remoteSetterStub2, commonRemoteSetterStub;
   beforeEach(() => {
@@ -93,6 +93,8 @@ describe('WTLibs.dataset.RemotelyBackedDataset', () => {
       }
     });
   });
+
+  // TODO dirty, unsynced, synced state transitions regarding updates
 
   describe('deployed state', () => {
     it('should not allow remote getting if object is not marked as deployed', async () => {
