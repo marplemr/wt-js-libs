@@ -1,8 +1,9 @@
 // @flow
 
 import type { DataModelOptionsType } from './data-model';
-import type { WTIndexInterface, AdaptedTxResultsInterface, WalletInterface, KeystoreV3Interface } from './interfaces';
+import type { WTIndexInterface, AdaptedTxResultsInterface, OffChainDataAccessorInterface, WalletInterface, KeystoreV3Interface } from './interfaces';
 import DataModel from './data-model';
+import OffChainDataClient from './off-chain-data-client';
 
 /**
  * General options for wt-libs-js. Holds all things necessary
@@ -54,6 +55,10 @@ class WTLibs {
 
   async createWallet (jsonWallet: KeystoreV3Interface): Promise<WalletInterface> {
     return this.dataModel.createWallet(jsonWallet);
+  }
+
+  async getOffChainDataClient (schema: string): Promise<OffChainDataAccessorInterface> {
+    return OffChainDataClient.getAccessor(schema);
   }
 }
 

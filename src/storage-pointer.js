@@ -1,6 +1,6 @@
 // @flow
-import InMemoryAccessor from './off-chain-data-accessors/in-memory';
-import type { OffChainDataAccessor } from './interfaces';
+import type { OffChainDataAccessorInterface } from './interfaces';
+import OffChainDataClient from './off-chain-data-client';
 
 /**
  * Definition of a data field that is stored off-chain.
@@ -59,7 +59,7 @@ class StoragePointer {
   __downloaded: boolean;
   __data: ?{[string]: Object};
   __fields: Array<FieldDefType>;
-  __accessor: OffChainDataAccessor;
+  __accessor: OffChainDataAccessorInterface;
 
   /**
    * Returns a new instance of StoragePointer.
@@ -92,7 +92,7 @@ class StoragePointer {
 
   /**
    * Detects schema from the url, based on that instantiates an appropriate
-   * `OffChainDataAccessor` implementation and sets up all data
+   * `OffChainDataAccessorInterface` implementation and sets up all data
    * getters.
    *
    * @param  {string} url where to look for the data
@@ -105,7 +105,6 @@ class StoragePointer {
     this.__downloaded = false;
     this.__data = null;
     this.__fields = fields;
-    this.__accessor = this._getOffChainDataAccessor(this._detectSchema(this.ref));
 
     for (let i = 0; i < this.__fields.length; i++) {
       let fieldDef = this.__fields[i];
@@ -160,29 +159,25 @@ class StoragePointer {
   }
 
   /**
-   * Returns appropriate implementation of `OffChainDataAccessor`
-   * based on schema. Now, the accessors are hardcoded here, but in
-   * a future implementation it should be possible to configure
-   * a list of available accessor implementations.
+   * Returns appropriate implementation of `OffChainDataAccessorInterface`
+   * based on schema. Uses `OffChainDataClient.getAccessor` factory method.
    */
-  _getOffChainDataAccessor (schema: ?string): OffChainDataAccessor {
-    // TODO drop switch, use object with accessors passed from library config
-    switch (schema) {
-    case 'json':
-      return new InMemoryAccessor(this.ref);
-    default:
-      throw new Error(`Unsupported data storage type: ${schema || 'null'}`);
+  async _getOffChainDataClient (): Promise<OffChainDataAccessorInterface> {
+    if (!this.__accessor) {
+      this.__accessor = await OffChainDataClient.getAccessor(this._detectSchema(this.ref));
     }
+    return this.__accessor;
   }
 
   /**
-   * Gets the data document via `OffChainDataAccessor`.
+   * Gets the data document via `OffChainDataAccessorInterface`.
    * If nothing is returned, might return an empty object.
    */
   async _downloadFromStorage (): Promise<{[string]: Object}> {
-    const result = this.__accessor.download();
+    const accessor = await this._getOffChainDataClient();
+    const result = await accessor.download(this.ref);
     this.__downloaded = true;
-    return (await result) || {};
+    return result || {};
   }
 }
 

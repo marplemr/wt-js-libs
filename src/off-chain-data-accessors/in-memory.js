@@ -1,6 +1,6 @@
 // @flow
 import ethJsUtil from 'ethereumjs-util';
-import type { OffChainDataAccessor } from '../interfaces';
+import type { OffChainDataAccessorInterface } from '../interfaces';
 
 /**
  * Simple in-memory key value store that creates
@@ -63,18 +63,10 @@ export class Storage {
 export const storageInstance = new Storage();
 
 /**
- * OffChainDataAccessor based on a simple in-memory key-value
+ * OffChainDataAccessorInterface based on a simple in-memory key-value
  * storage.
  */
-class InMemoryAccessor implements OffChainDataAccessor {
-  url: string;
-  hash: string;
-
-  constructor (url: string) {
-    this.url = url;
-    this.hash = this._getHash(this.url);
-  }
-
+class InMemoryAccessor implements OffChainDataAccessorInterface {
   _getHash (url: string): string {
     const matchResult = url.match(/\w+:\/\/(.+)/i);
     if (!matchResult || matchResult.length < 2) {
@@ -83,8 +75,19 @@ class InMemoryAccessor implements OffChainDataAccessor {
     return matchResult[1];
   }
 
-  async download (): Promise<?{[string]: Object}> {
-    return storageInstance.get(this.hash);
+  async download (url: string): Promise<?{[string]: Object}> {
+    const hash = this._getHash(url);
+    return storageInstance.get(hash);
+  }
+
+  async upload (data: {[string]: Object}): Promise<string> {
+    return 'json://' + storageInstance.create(data);
+  }
+  
+  async update (url: string, data: {[string]: Object}): Promise<string> {
+    const hash = this._getHash(url);
+    storageInstance.update(hash, data);
+    return url;
   }
 }
 

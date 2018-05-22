@@ -1,6 +1,7 @@
 import { assert } from 'chai';
 import sinon from 'sinon';
 import StoragePointer from '../../src/storage-pointer';
+import OffChainDataClient from '../../src/off-chain-data-client';
 
 describe('WTLibs.StoragePointer', () => {
   it('should normalize fields option', () => {
@@ -61,14 +62,27 @@ describe('WTLibs.StoragePointer', () => {
     assert.equal(dldSpy.callCount, 1);
   });
 
-  it('should properly instantiate OffChainDataAccessor', () => {
+  it('should properly instantiate OffChainDataAccessor', async () => {
     const pointer = StoragePointer.createInstance('json://url', ['some', 'fields']);
+    assert.isUndefined(pointer.__accessor);
+    await pointer.contents.some;
     assert.equal(pointer.__accessor.constructor.name, 'InMemoryAccessor');
   });
 
-  it('should throw when an unsupported schema is encountered', () => {
+  it('should reuse OffChainDataAccessor instance', async () => {
+    const getAccessorSpy = sinon.spy(OffChainDataClient, 'getAccessor');
+    const pointer = StoragePointer.createInstance('json://url', ['some', 'fields']);
+    assert.equal(getAccessorSpy.callCount, 0);
+    await pointer.contents.some;
+    assert.equal(getAccessorSpy.callCount, 1);
+    await pointer._getOffChainDataClient();
+    assert.equal(getAccessorSpy.callCount, 1);
+  });
+
+  it('should throw when an unsupported schema is encountered', async () => {
     try {
-      StoragePointer.createInstance('random://url', ['some', 'fields']);
+      const pointer = StoragePointer.createInstance('random://url', ['some', 'fields']);
+      await pointer.contents.some;
       throw new Error('should have never been called');
     } catch (e) {
       assert.match(e.message, /unsupported data storage type/i);
@@ -81,8 +95,10 @@ describe('WTLibs.StoragePointer', () => {
       isStoragePointer: true,
       fields: ['some', 'fields'],
     }]);
-    sinon.stub(pointer.__accessor, 'download').returns({
-      'sp': 'json://point',
+    sinon.stub(pointer, '_getOffChainDataClient').resolves({
+      download: sinon.stub().returns({
+        'sp': 'json://point',
+      }),
     });
     assert.equal(pointer.ref, 'json://url');
     const recursivePointer = await pointer.contents.sp;
@@ -98,8 +114,10 @@ describe('WTLibs.StoragePointer', () => {
         name: 'sp',
         isStoragePointer: true,
       }]);
-      sinon.stub(pointer.__accessor, 'download').returns({
-        'sp': 'json://point',
+      sinon.stub(pointer, '_getOffChainDataClient').resolves({
+        download: sinon.stub().returns({
+          'sp': 'json://point',
+        }),
       });
       assert.equal(pointer.ref, 'json://url');
       await pointer.contents.sp;
@@ -129,10 +147,10 @@ describe('WTLibs.StoragePointer', () => {
         isStoragePointer: true,
         fields: ['some', 'fields'],
       }]);
-      sinon.stub(pointer.__accessor, 'download').returns({
-        'sp': {
-          some: 'field',
-        },
+      sinon.stub(pointer, '_getOffChainDataClient').resolves({
+        download: sinon.stub().returns({
+          'sp': { some: 'field' },
+        }),
       });
       await pointer.contents.sp;
       throw new Error('should have never been called');
@@ -148,11 +166,14 @@ describe('WTLibs.StoragePointer', () => {
         isStoragePointer: true,
         fields: ['some', 'fields'],
       }]);
-      sinon.stub(pointer.__accessor, 'download').returns({
-        'sp': 'random://point',
+      sinon.stub(pointer, '_getOffChainDataClient').resolves({
+        download: sinon.stub().returns({
+          'sp': 'random://point',
+        }),
       });
       assert.equal(pointer.ref, 'json://url');
-      await pointer.contents.sp;
+      const childPointer = await pointer.contents.sp;
+      await childPointer.contents.some;
       throw new Error('should have never been called');
     } catch (e) {
       assert.match(e.message, /unsupported data storage type/i);
@@ -161,11 +182,12 @@ describe('WTLibs.StoragePointer', () => {
 
   it('should throw if StoragePointer cannot be set up due to bad url format', async () => {
     try {
-      StoragePointer.createInstance('jsonxxurl', [{
+      const pointer = StoragePointer.createInstance('jsonxxurl', [{
         name: 'sp',
         isStoragePointer: true,
         fields: ['some', 'fields'],
       }]);
+      await pointer.contents.sp;
       throw new Error('should have never been called');
     } catch (e) {
       assert.match(e.message, /unsupported data storage type/i);

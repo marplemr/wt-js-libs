@@ -31,16 +31,18 @@ describe('WTLibs.off-chain-data-accessors.InMemory', () => {
   });
 
   describe('Accessor', () => {
-    it('should detect hash from url', () => {
-      const accessor = new InMemoryAccessor('some://form-of-hash');
-      assert.equal(accessor.hash, 'form-of-hash');
+    it('should detect hash from url', async () => {
+      const getSpy = sinon.spy(storageInstance, 'get');
+      const accessor = new InMemoryAccessor();
+      await accessor.download('some://form-of-hash');
+      assert.equal(getSpy.firstCall.args[0], 'form-of-hash');
+      getSpy.restore();
     });
 
-    it('should throw when hash cannot be detected', () => {
+    it('should throw when hash cannot be detected', async () => {
       try {
-        // This is here to make eslint happy
-        const accessor = new InMemoryAccessor('bad-link-format-withform-of-hash');
-        assert.isUndefined(accessor);
+        const accessor = new InMemoryAccessor();
+        await accessor.download('bad-link-format-withform-of-hash');
         throw new Error('should have never been called');
       } catch (e) {
         assert.match(e.message, /no schema detected/i);
@@ -49,10 +51,11 @@ describe('WTLibs.off-chain-data-accessors.InMemory', () => {
 
     it('should access storageInstance for download', async () => {
       const getSpy = sinon.spy(storageInstance, 'get');
-      const accessor = new InMemoryAccessor('some://form-of-hash');
+      const accessor = new InMemoryAccessor();
       assert.equal(getSpy.callCount, 0);
-      await accessor.download();
+      await accessor.download('some://form-of-hash');
       assert.equal(getSpy.callCount, 1);
+      getSpy.restore();
     });
   });
 });

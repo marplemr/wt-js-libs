@@ -89,13 +89,13 @@ export interface WTIndexInterface {
 /**
  * Interface for an off-chain storage read.
  */
-export interface OffChainDataAccessor {
-  download(): Promise<?{[string]: Object}>
-}
-
-// TODO
-export interface OffChainDataWriterInterface {
-
+export interface OffChainDataAccessorInterface {
+  // Upload new dataset to an off-chain storage
+  upload(data: {[string]: Object}): Promise<string>;
+  // Change data on given url
+  update(url: string, data: {[string]: Object}): Promise<string>;
+  // Download content from given url
+  download(url: string): Promise<?{[string]: Object}>
 }
 
 /**
@@ -105,7 +105,6 @@ export interface DataModelInterface {
   getWindingTreeIndex(address: string): Promise<WTIndexInterface>;
   getTransactionsStatus(transactionHashes: Array<string>): Promise<AdaptedTxResultsInterface>;
   createWallet(jsonWallet: Object): Promise<WalletInterface>
-  // getOffChainDataWriter(schema: string): Promise<OffChainDataWriterInterface>
 }
 
 /**
