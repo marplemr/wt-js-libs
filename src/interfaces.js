@@ -16,31 +16,6 @@ export interface AddHotelResponseInterface {
 }
 
 /**
- * Generic GPS location.
- */
-export interface LocationInterface {
-  latitude?: ?number;
-  longitude?: ?number
-}
-
-/**
- * Index file for more data urls. This is the
- * initial document that blockchain is pointing to.
- */
-export interface HotelDataIndex {
-  descriptionUrl: string
-}
-
-/**
- * Description of additional hotel data.
- */
-export interface HotelDescriptionInterface {
-  location: Promise<?LocationInterface> | ?LocationInterface;
-  name: Promise<?string> | ?string;
-  description: Promise<?string> | ?string
-}
-
-/**
  * Shape of data that is stored on-chain
  * about every hotel.
  *

@@ -99,7 +99,19 @@ class OnChainHotel implements HotelInterface {
             name: 'description',
             isStoragePointer: true,
             // This should always be in line with publicly declared HotelDescriptionInterface
-            fields: ['name', 'description', 'location'],
+            fields: [
+              'name',
+              'description',
+              'contacts',
+              'address',
+              'location',
+              'timezone',
+              'currency',
+              'images',
+              'amenities',
+              'created_at',
+              'updated_at',
+            ],
           },
         ]);
       }
