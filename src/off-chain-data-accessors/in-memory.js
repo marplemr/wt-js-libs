@@ -75,15 +75,27 @@ class InMemoryAccessor implements OffChainDataAccessorInterface {
     return matchResult[1];
   }
 
+  /**
+   * Retrieves data stored under a hash derived from url `json://<hash>`
+   * @throws {Error} When hash cannot be detected.
+   */
   async download (url: string): Promise<?{[string]: Object}> {
     const hash = this._getHash(url);
     return storageInstance.get(hash);
   }
 
+  /**
+   * Stores data under some hash.
+   * @return {string} Resulting url such as `json://<hash>`
+   */
   async upload (data: {[string]: Object}): Promise<string> {
     return 'json://' + storageInstance.create(data);
   }
   
+  /**
+   * Changes data stored under certain hash derived from url such as `json://<hash>`
+   * @return {string} url
+   */
   async update (url: string, data: {[string]: Object}): Promise<string> {
     const hash = this._getHash(url);
     storageInstance.update(hash, data);

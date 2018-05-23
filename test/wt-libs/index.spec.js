@@ -31,4 +31,16 @@ describe('WTLibs', () => {
       assert.equal(createDataModelSpy.firstCall.args[0].random, '1234');
     });
   });
+
+  describe('getOffChainDataClient', () => {
+    it('should return OffChainDataClient', async () => {
+      const libs = WTLibs.createInstance({
+        dataModelOptions: {
+          random: '1234',
+        },
+      });
+      const accessor = await libs.getOffChainDataClient('json');
+      assert.isDefined(accessor);
+    });
+  });
 });

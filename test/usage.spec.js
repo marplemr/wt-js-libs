@@ -20,9 +20,21 @@ describe('WTLibs usage', () => {
 
   describe('addHotel', () => {
     it('should add hotel', async () => {
+      const jsonClient = await libs.getOffChainDataClient('json');
+      const descUrl = await jsonClient.upload({
+        name: 'Premium hotel',
+        description: 'Great hotel',
+        location: {
+          latitude: 'lat',
+          longitude: 'long',
+        },
+      });
+      const url = await jsonClient.upload({
+        description: descUrl,
+      });
       const result = await index.addHotel(wallet, {
         manager: '0xd39ca7d186a37bb6bf48ae8abfeb4c687dc8f906',
-        url: 'json://some-data-hash',
+        url: url,
       });
       assert.isDefined(result);
       assert.isDefined(result.address);
@@ -34,7 +46,10 @@ describe('WTLibs usage', () => {
       const hotel = await index.getHotel(result.address);
       // Don't bother with checksummed address format
       assert.equal((await hotel.manager).toLowerCase(), '0xd39ca7d186a37bb6bf48ae8abfeb4c687dc8f906');
-      assert.equal((await hotel.url).toLowerCase(), 'json://some-data-hash');
+      assert.equal((await hotel.url).toLowerCase(), url);
+      const dataIndex = await hotel.dataIndex;
+      const description = await dataIndex.contents.description;
+      assert.equal(await description.contents.name, 'Premium hotel');
 
       // We're removing the hotel to ensure clean slate after this test is run.
       // It is too possibly expensive to re-set on-chain WTIndex after each test.
