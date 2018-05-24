@@ -1,16 +1,16 @@
 import { assert } from 'chai';
 import sinon from 'sinon';
-import helpers from '../../../utils/helpers';
-import testedDataModel from '../../../utils/data-model-definition';
-import jsonWallet from '../../../utils/test-wallet';
-import Web3UriDataModel from '../../../../src/data-model/web3-uri';
-import Web3WTWallet from '../../../../src/data-model/web3-uri/wallet';
+import helpers from '../utils/helpers';
+import testedDataModel from '../utils/data-model-definition';
+import jsonWallet from '../utils/test-wallet';
+import DataModel from '../../src/data-model/';
+import Web3WTWallet from '../../src/wallet';
 
-describe('WTLibs.data-model.web3-uri.wallet', () => {
+describe('WTLibs.Wallet', () => {
   let dataModel;
   const correctPassword = 'test123';
   beforeEach(async function () {
-    dataModel = Web3UriDataModel.createInstance(testedDataModel.withDataSource().dataModelOptions);
+    dataModel = DataModel.createInstance(testedDataModel.withDataSource().dataModelOptions);
   });
 
   describe('unlock', () => {
@@ -182,6 +182,18 @@ describe('WTLibs.data-model.web3-uri.wallet', () => {
         throw new Error('should not have been called');
       } catch (e) {
         assert.match(e.message, /cannot use wallet without web3 instance/i);
+      }
+    });
+
+    it('should throw on a mismatch between tx originator and wallet owner', async () => {
+      wallet.unlock(correctPassword);
+      try {
+        await wallet.signAndSendTransaction({
+          from: '0xSomeRandomAddress',
+        });
+        throw new Error('should not have been called');
+      } catch (e) {
+        assert.match(e.message, /transaction originator does not match the wallet address/i);
       }
     });
 

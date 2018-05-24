@@ -24,7 +24,14 @@ import _ from 'lodash';
  * remote storage. These calls are deduplicated, so if a single call is used
  * to update multiple properties, only once call is done.
  */
-class RemotelyBacked {
+class RemotelyBackedDataset {
+  /**
+   * Generic factory method.
+   */
+  static createInstance () {
+    return new RemotelyBackedDataset();
+  }
+
   constructor () {
     this.__obsoleteFlag = false;
     this.__deployedFlag = false;
@@ -150,7 +157,8 @@ class RemotelyBacked {
     if (this.isObsolete()) {
       throw new Error('This object was destroyed in a remote storage!');
     }
-    if (this.__localData[property] !== newValue) {
+    // Write local value every time, even when we have nothing to compare it to
+    if (this.__localData[property] !== newValue || this.__fieldStates[property] === 'unsynced') {
       this.__localData[property] = newValue;
       this.__fieldStates[property] = 'dirty';
     }
@@ -164,13 +172,18 @@ class RemotelyBacked {
     for (let i = 0; i < this.__fieldKeys.length; i++) {
       const remoteGetter = this.__options.fields[this.__fieldKeys[i]].remoteGetter;
       if (remoteGetter && this.__fieldStates[this.__fieldKeys[i]] === 'unsynced') {
-        remoteGetters.push(remoteGetter());
+        remoteGetters.push({
+          field: this.__fieldKeys[i],
+          fn: remoteGetter(),
+        });
       }
     }
-    if (remoteGetters.length) {
-      const attributes = await (Promise.all(remoteGetters));
-      for (let i = 0; i < this.__fieldKeys.length; i++) {
-        this.__remoteData[this.__fieldKeys[i]] = attributes[i];
+    const remoteGetterFields = remoteGetters.map((x) => x.field);
+    const remoteGetterFns = remoteGetters.map((x) => x.fn);
+    if (remoteGetterFields.length) {
+      const attributes = await (Promise.all(remoteGetterFns));
+      for (let i = 0; i < remoteGetterFields.length; i++) {
+        this.__remoteData[remoteGetterFields[i]] = attributes[i];
       }
     }
     return this.__remoteData;
@@ -235,4 +248,4 @@ class RemotelyBacked {
   }
 }
 
-export default RemotelyBacked;
+export default RemotelyBackedDataset;

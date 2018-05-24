@@ -1,9 +1,9 @@
 import { assert } from 'chai';
-import WTIndexDataProvider from '../../../../src/data-model/web3-uri/wt-index';
-import Web3UriDataModel from '../../../../src/data-model/web3-uri';
-import testedDataModel from '../../../utils/data-model-definition';
+import WTIndexDataProvider from '../../../src/data-model/wt-index';
+import Web3UriDataModel from '../../../src/data-model/';
+import testedDataModel from '../../utils/data-model-definition';
 
-describe('WTLibs.data-models.web3-uri.WTIndexDataProvider', () => {
+describe('WTLibs.data-models.WTIndexDataProvider', () => {
   let dataModel, indexDataProvider;
 
   beforeEach(async function () {
@@ -44,7 +44,7 @@ describe('WTLibs.data-models.web3-uri.WTIndexDataProvider', () => {
       // TODO this might probably be emulated in another way
       const myIndexDataProvider = await WTIndexDataProvider.createInstance('some-other-address', dataModel.web3Utils, dataModel.web3Contracts);
       try {
-        await myIndexDataProvider.addHotel({ manager: 'b' });
+        await myIndexDataProvider.addHotel({}, { manager: 'b' });
         throw new Error('should not have been called');
       } catch (e) {
         assert.match(e.message, /cannot add hotel/i);

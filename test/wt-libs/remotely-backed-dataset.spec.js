@@ -1,12 +1,12 @@
 import { assert } from 'chai';
 import sinon from 'sinon';
-import RemotelyBacked from '../../../src/dataset/remotely-backed';
+import RemotelyBackedDataset from '../../src/remotely-backed-dataset';
 
-describe('WTLibs.dataset.RemotelyBacked', () => {
+describe('WTLibs.RemotelyBackedDataset', () => {
   let bbbInstance, remoteGetterStub, remoteSetterStub,
     remoteGetterStub2, remoteSetterStub2, commonRemoteSetterStub;
   beforeEach(() => {
-    bbbInstance = new RemotelyBacked();
+    bbbInstance = new RemotelyBackedDataset();
     remoteGetterStub = sinon.stub().resolves('field name');
     remoteSetterStub = sinon.stub().resolves('setter1');
     remoteGetterStub2 = sinon.stub().resolves('field name');
@@ -74,7 +74,7 @@ describe('WTLibs.dataset.RemotelyBacked', () => {
     });
 
     it('should throw when something goes wrong during the remote sync', async () => {
-      const instance = new RemotelyBacked();
+      const instance = new RemotelyBackedDataset();
       const getterStub = sinon.stub().rejects(new Error('something went south'));
       instance.bindProperties({
         fields: {
@@ -93,6 +93,8 @@ describe('WTLibs.dataset.RemotelyBacked', () => {
       }
     });
   });
+
+  // TODO dirty, unsynced, synced state transitions regarding updates
 
   describe('deployed state', () => {
     it('should not allow remote getting if object is not marked as deployed', async () => {

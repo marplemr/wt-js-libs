@@ -2,397 +2,104 @@
 
 ### Table of Contents
 
--   [FullJsonDataModelOptionsType][1]
--   [FullJsonDataModel][2]
-    -   [getWindingTreeIndex][3]
-    -   [getTransactionsStatus][4]
-    -   [createWallet][5]
+-   [Contracts][1]
+    -   [\_\_getInstance][2]
+    -   [getIndexInstance][3]
+    -   [getHotelInstance][4]
+    -   [decodeLogs][5]
     -   [createInstance][6]
--   [JSONWTWallet][7]
-    -   [unlock][8]
-    -   [getAddress][9]
-    -   [signAndSendTransaction][10]
-    -   [lock][11]
-    -   [destroy][12]
-    -   [createInstance][13]
--   [JsonWTIndexDataProvider][14]
-    -   [addHotel][15]
-    -   [getHotel][16]
-    -   [updateHotel][17]
-    -   [removeHotel][18]
-    -   [getAllHotels][19]
-    -   [createInstance][20]
--   [DataModelType][21]
--   [DataModelOptionsType][22]
--   [DataModel][23]
-    -   [getWindingTreeIndex][24]
-    -   [getTransactionsStatus][25]
-    -   [createInstance][26]
--   [Contracts][27]
-    -   [\_\_getInstance][28]
-    -   [getIndexInstance][29]
-    -   [getHotelInstance][30]
-    -   [decodeLogs][31]
-    -   [createInstance][32]
--   [EthBackedHotelProvider][33]
-    -   [initialize][34]
-    -   [setLocalData][35]
-    -   [\_\_editInfo][36]
-    -   [createOnNetwork][37]
-    -   [updateOnNetwork][38]
-    -   [removeFromNetwork][39]
--   [Utils][40]
-    -   [isZeroAddress][41]
-    -   [applyGasCoefficient][42]
-    -   [determineDeployedContractFutureAddress][43]
-    -   [getCurrentWeb3Provider][44]
-    -   [getCurrentBlockNumber][45]
-    -   [determineCurrentAddressNonce][46]
-    -   [getTransactionReceipt][47]
-    -   [getTransaction][48]
-    -   [createInstance][49]
--   [HotelProviderFactory][50]
-    -   [getHotelInstance][51]
-    -   [createInstance][52]
--   [Web3UriDataModelOptionsType][53]
--   [Web3UriDataModel][54]
-    -   [getWindingTreeIndex][55]
-    -   [getTransactionsStatus][56]
-    -   [createWallet][57]
-    -   [createInstance][58]
--   [JsonHotelProvider][59]
-    -   [initialize][60]
-    -   [setLocalData][61]
-    -   [createOnNetwork][62]
-    -   [updateOnNetwork][63]
-    -   [createInstance][64]
--   [Web3WTWallet][65]
-    -   [setWeb3][66]
-    -   [isDestroyed][67]
-    -   [getAddress][68]
-    -   [unlock][69]
-    -   [signAndSendTransaction][70]
-    -   [lock][71]
-    -   [destroy][72]
-    -   [createInstance][73]
--   [Web3UriWTIndexDataProvider][74]
-    -   [addHotel][75]
-    -   [updateHotel][76]
-    -   [removeHotel][77]
-    -   [getHotel][78]
-    -   [getAllHotels][79]
-    -   [createInstance][80]
--   [InMemoryStorage][81]
-    -   [\_computeHash][82]
-    -   [create][83]
-    -   [update][84]
-    -   [get][85]
--   [storageInstance][86]
--   [InMemoryBacked][87]
-    -   [setHash][88]
-    -   [getHash][89]
-    -   [changeHashTo][90]
-    -   [initialize][91]
-    -   [bindProperties][92]
--   [RemotelyBacked][93]
-    -   [bindProperties][94]
-    -   [isObsolete][95]
-    -   [markObsolete][96]
-    -   [isDeployed][97]
-    -   [markDeployed][98]
-    -   [\_genericGetter][99]
-    -   [\_genericSetter][100]
-    -   [updateRemoteData][101]
--   [WtLibsOptionsType][102]
--   [WTLibs][103]
-    -   [getWTIndex][104]
-    -   [getTransactionsStatus][105]
-    -   [createInstance][106]
--   [AddHotelResponseInterface][107]
--   [LocationInterface][108]
--   [HotelInterface][109]
--   [RemoteHotelInterface][110]
--   [WTIndexInterface][111]
--   [DataModelAccessorInterface][112]
--   [RawLogRecordInterface][113]
--   [DecodedLogRecordInterface][114]
--   [TransactionDataInterface][115]
--   [TxInterface][116]
--   [TxReceiptInterface][117]
--   [AdaptedTxResultInterface][118]
--   [AdaptedTxResultsInterface][119]
--   [WalletInterface][120]
--   [KeystoreV3Interface][121]
-
-## FullJsonDataModelOptionsType
-
-FullJSonDataModel options. Contains only `source`
-JSON object from which the whole data-model is
-constructed. Every key in `source` object should
-represent a Winding Tree index address that contains
-a list of hotels such as:
-
-    {"index1": {
-        "hotels": {
-          "hotel1": {...data...}
-          "hotel2": {...data...}
-        }
-      }
-    }
-
-Type: [Object][122]
-
-**Properties**
-
--   `source` **[Object][122]?** 
-
-## FullJsonDataModel
-
-FullJsonDataModel
-
-**Parameters**
-
--   `options` **[FullJsonDataModelOptionsType][123]** 
-
-### getWindingTreeIndex
-
-Returns a JSON backed Winding Tree index.
-
-**Parameters**
-
--   `address` **[string][124]** 
-
-Returns **[Promise][125]&lt;[JsonWTIndexDataProvider][126]>** 
-
-### getTransactionsStatus
-
-Fakes a response for multiple transactions status.
-
-**Parameters**
-
--   `txHashes` **[Array][127]&lt;[string][124]>** 
-
-Returns **[Promise][125]&lt;[AdaptedTxResultsInterface][128]>** 
-
-### createWallet
-
-Returns a fake wallet implementation which actually does nothing.
-
-**Parameters**
-
--   `jsonWallet` **[KeystoreV3Interface][129]** 
-
-Returns **[Promise][125]&lt;[JSONWTWallet][130]>** 
-
-### createInstance
-
-Creates a configured FullJsonDataModel instance
-
-**Parameters**
-
--   `options` **[FullJsonDataModelOptionsType][123]** 
-
-Returns **[FullJsonDataModel][131]** 
-
-## JSONWTWallet
-
-Fake and dummy WalletInterface implementation that does nothing.
-
-### unlock
-
-Does nothing
-
-**Parameters**
-
--   `password` **[string][124]** 
-
-### getAddress
-
-Returns the address passed in `keystoreJsonV3`
-in a checksummed format, e.g. prefixed with 0x
-and case-sensitive.
-
-Returns **[string][124]** 
-
-### signAndSendTransaction
-
-Does nothing. Always returns `tx-hash-signed-by-fake-wallet`.
-`onReceipt` is always called with some fake data.
-
-**Parameters**
-
--   `transactionData` **[TransactionDataInterface][132]** 
--   `onReceipt` **function (receipt: [TxReceiptInterface][133]): void?** 
-
-Returns **[Promise][125]&lt;[string][124]>** 
-
-### lock
-
-Does nothing
-
-### destroy
-
-Does nothing
-
-### createInstance
-
-Returns a fresh instance of an empty object that does nothing
-
-**Parameters**
-
--   `keystoreJsonV3` **[KeystoreV3Interface][129]** 
-
-Returns **[JSONWTWallet][130]** 
-
-## JsonWTIndexDataProvider
-
-JSON backed implementation of Winding Tree index wrapper.
-
-**Parameters**
-
--   `source` **[Object][122]** 
-
-### addHotel
-
-Adds a new hotel to the JSON storage. Returns
-a fake address of newly added hotel and a fake list of
-transaction IDs. Even though they are fake, they can be used
-in further communication with this instance, i. e. there is a
-hotel on given address and `getTransactionsStatus` will respond
-meaningfully to these `transactionIds`.
-
-**Parameters**
-
--   `wallet` **[WalletInterface][134]** 
--   `hotelData` **[HotelInterface][135]** 
-
-
--   Throws **[Error][136]** When no manager is specified
-
-Returns **[Promise][125]&lt;[AddHotelResponseInterface][137]>** 
-
-### getHotel
-
-Get hotel on a given address.
-
-**Parameters**
-
--   `address` **[string][124]** 
-
-
--   Throws **[Error][136]** When no hotel is found.
-
-Returns **[Promise][125]&lt;[HotelInterface][135]>** 
-
-### updateHotel
-
-Updates a given hotel.
-
-**Parameters**
-
--   `wallet` **[WalletInterface][134]** 
--   `hotel` **[HotelInterface][135]** 
-
-
--   Throws **[Error][136]** When there is no hotel on a given address.
-
-Returns **[Promise][125]&lt;[Array][127]&lt;[string][124]>>** List of fake transaction IDs.
-
-### removeHotel
-
-Deletes a hotel.
-
-**Parameters**
-
--   `wallet` **[WalletInterface][134]** 
--   `hotel` **[HotelInterface][135]** 
-
-
--   Throws **[Error][136]** When hotel does not exist
--   Throws **[Error][136]** When there's another issue
-
-Returns **[Promise][125]&lt;[Array][127]&lt;[string][124]>>** List of fake transaction IDs.
-
-### getAllHotels
-
-Returns all hotels.
-
-Returns **[Promise][125]&lt;[Array][127]&lt;[HotelInterface][135]>>** 
-
-### createInstance
-
-Creates a new configured instance.
-
-**Parameters**
-
--   `source` **[Object][122]** of JSON data
-
-Returns **[Promise][125]&lt;[JsonWTIndexDataProvider][126]>** 
-
-## DataModelType
-
-DataModelType is a chosen `data-model`. Not all options are implemented right now.
-
-Type: (`"full-json"` \| `"web3-uri"`)
-
-## DataModelOptionsType
-
-Combination of all implemented Data Model options.
-
-"initialJsonData": {
-  "url1": {},
-  "url2": {}
-}
-
-Type: [Object][122]
-
-## DataModel
-
-Representation of a current data model. You should use this factory
-to obtain an implementation of Winding Tree index that serves data
-from the desired data-model.
-
-**Parameters**
-
--   `type` **[DataModelType][138]** 
--   `options` **[DataModelOptionsType][139]** 
-
-### getWindingTreeIndex
-
-Returns an instance of Winding Tree index backed by the previously
-chosen DataModel
-
-Type: [string][124]
-
-**Parameters**
-
--   `address` **[string][124]** 
-
-Returns **[Promise][125]&lt;[WTIndexInterface][140]>** 
-
-### getTransactionsStatus
-
-Returns transactions status from the previously chosen DataModel.
-
-**Parameters**
-
--   `transactionHashes` **[Array][127]&lt;[string][124]>** 
-
-Returns **[Promise][125]&lt;[AdaptedTxResultsInterface][128]>** 
-
-### createInstance
-
-Returns a new configured instance. Fills InMemoryData storage
-with initial data if provided.
-
-Type: [DataModel][141]
-
-**Parameters**
-
--   `dataModelType` **[DataModelType][138]** 
--   `options` **[DataModelOptionsType][139]** 
-
-Returns **[DataModel][141]** 
+-   [DataModelOptionsType][7]
+-   [DataModel][8]
+    -   [getWindingTreeIndex][9]
+    -   [getTransactionsStatus][10]
+    -   [createWallet][11]
+    -   [createInstance][12]
+-   [OnChainHotel][13]
+    -   [initialize][14]
+    -   [dataIndex][15]
+    -   [setLocalData][16]
+    -   [toPlainObject][17]
+    -   [\_\_editInfoOnChain][18]
+    -   [createOnChainData][19]
+    -   [updateOnChainData][20]
+    -   [removeOnChainData][21]
+    -   [createInstance][22]
+-   [WTIndex][23]
+    -   [addHotel][24]
+    -   [updateHotel][25]
+    -   [removeHotel][26]
+    -   [getHotel][27]
+    -   [getAllHotels][28]
+    -   [createInstance][29]
+-   [WtLibsOptionsType][30]
+-   [WTLibs][31]
+    -   [getWTIndex][32]
+    -   [getTransactionsStatus][33]
+    -   [createInstance][34]
+-   [AddHotelResponseInterface][35]
+-   [LocationInterface][36]
+-   [HotelDataIndex][37]
+-   [HotelDescriptionInterface][38]
+-   [HotelOnChainDataInterface][39]
+-   [HotelInterface][40]
+-   [WTIndexInterface][41]
+-   [OffChainDataAccessorInterface][42]
+-   [DataModelInterface][43]
+-   [RawLogRecordInterface][44]
+-   [DecodedLogRecordInterface][45]
+-   [TransactionDataInterface][46]
+-   [TxInterface][47]
+-   [TxReceiptInterface][48]
+-   [AdaptedTxResultInterface][49]
+-   [AdaptedTxResultsInterface][50]
+-   [WalletInterface][51]
+-   [KeystoreV3Interface][52]
+-   [Storage][53]
+    -   [\_computeHash][54]
+    -   [create][55]
+    -   [update][56]
+    -   [get][57]
+-   [storageInstance][58]
+-   [InMemoryAccessor][59]
+    -   [download][60]
+    -   [upload][61]
+    -   [update][62]
+-   [RemotelyBackedDataset][63]
+    -   [bindProperties][64]
+    -   [isObsolete][65]
+    -   [markObsolete][66]
+    -   [isDeployed][67]
+    -   [markDeployed][68]
+    -   [\_genericGetter][69]
+    -   [\_genericSetter][70]
+    -   [updateRemoteData][71]
+    -   [createInstance][72]
+-   [FieldDefType][73]
+-   [StoragePointer][74]
+    -   [\_genericGetter][75]
+    -   [\_detectSchema][76]
+    -   [\_getOffChainDataClient][77]
+    -   [\_downloadFromStorage][78]
+    -   [createInstance][79]
+-   [Utils][80]
+    -   [isZeroAddress][81]
+    -   [applyGasCoefficient][82]
+    -   [determineDeployedContractFutureAddress][83]
+    -   [getCurrentWeb3Provider][84]
+    -   [getCurrentBlockNumber][85]
+    -   [determineCurrentAddressNonce][86]
+    -   [getTransactionReceipt][87]
+    -   [getTransaction][88]
+    -   [createInstance][89]
+-   [Wallet][90]
+    -   [setWeb3][91]
+    -   [isDestroyed][92]
+    -   [getAddress][93]
+    -   [unlock][94]
+    -   [signAndSendTransaction][95]
+    -   [lock][96]
+    -   [destroy][97]
+    -   [createInstance][98]
 
 ## Contracts
 
@@ -409,13 +116,13 @@ Generic method for getting an instance of `web3.eth.Contract`
 
 **Parameters**
 
--   `name` **[string][124]** of contract, used in errors
--   `abi` **[Object][122]** specification of contract
--   `address` **[string][124]** on which we should look for the contract
+-   `name` **[string][99]** of contract, used in errors
+-   `abi` **[Object][100]** specification of contract
+-   `address` **[string][99]** on which we should look for the contract
 
 
--   Throws **[Error][136]** When address is invalid
--   Throws **[Error][136]** When no code is deployed on given address
+-   Throws **[Error][101]** When address is invalid
+-   Throws **[Error][101]** When no code is deployed on given address
 
 Returns **web3.eth.Contract** Resulting wrapper contract
 
@@ -425,7 +132,7 @@ Returns a representation of <a href="https://github.com/windingtree/wt-contracts
 
 **Parameters**
 
--   `address` **[string][124]** 
+-   `address` **[string][99]** 
 
 Returns **web3.eth.Contract** Instance of an Index
 
@@ -435,7 +142,7 @@ Returns a representation of <a href="https://github.com/windingtree/wt-contracts
 
 **Parameters**
 
--   `address` **[string][124]** 
+-   `address` **[string][99]** 
 
 Returns **web3.eth.Contract** Instance of a Hotel
 
@@ -446,9 +153,9 @@ events from Index and Hotel smart contracts.
 
 **Parameters**
 
--   `logs` **[Array][127]&lt;[RawLogRecordInterface][142]>** in a raw format
+-   `logs` **[Array][102]&lt;[RawLogRecordInterface][103]>** in a raw format
 
-Returns **[Array][127]&lt;[DecodedLogRecordInterface][143]>** Decoded logs
+Returns **[Array][102]&lt;[DecodedLogRecordInterface][104]>** Decoded logs
 
 ### createInstance
 
@@ -458,517 +165,236 @@ Returns an initialized instance
 
 -   `web3` **Web3** instance created by `new Web3(provider)`
 
-Returns **[Contracts][144]** 
+Returns **[Contracts][105]** 
 
-## EthBackedHotelProvider
+## DataModelOptionsType
 
-Wrapper class for a hotel primarily backed by a smart
-contract on Ethereum that's holding `url` of its data.
-
-It can be extended to support data stored in another
-form of remote storage.
-
-**Parameters**
-
--   `web3Utils` **[Utils][145]** 
--   `web3Contracts` **[Contracts][144]** 
--   `indexContract` **web3.eth.Contract** Representation of Winding Tree index
--   `address` **[string][124]** is an optional pointer to Ethereum network where the hotel lives.
-    It is used as a reference for on-chain stored data. If it is not provided, a hotel has
-    to be created on chain to behave as expected.
-
-### initialize
-
-Initializes the underlying RemotelyBacked dataset that actually
-communicates with the on-chain stored data. If address was provided
-in the contsructor, the RemotelyBacked dataset is marked as deployed.
-
-Returns **[Promise][125]&lt;void>** 
-
-### setLocalData
-
-Update multiple data fields at once. This part
-sets manager and url properties and none of them can be nulled.
-
-**Parameters**
-
--   `newData` **[HotelInterface][135]** 
-
-Returns **[Promise][125]&lt;void>** 
-
-### \_\_editInfo
-
-Updates url on-chain. Used internally as a remoteSetter for `url` property.
-
-**Parameters**
-
--   `wallet` **[WalletInterface][134]** that signs the transaction
--   `transactionOptions` **[Object][122]** usually contains from and to. Gas is automatically computed.
-
-Returns **[Promise][125]&lt;[string][124]>** resulting transaction hash
-
-### createOnNetwork
-
-Creates a new hotel on chain with specified `url`. The idea is that
-a subclass of this handles the remote data storage and only after
-it knows the resulting url, creates the hotel on-chain.
-
-It also precomputes the deployed hotel on-chain address. So even if
-the resulting transaction is not yet mined, the address is already known.
-
-**Parameters**
-
--   `wallet` **[WalletInterface][134]** that signs the transaction
--   `transactionOptions` **[Object][122]** usually contains from and to. Gas is automatically computed.
--   `url` **[string][124]** 
-
-Returns **[Promise][125]&lt;[Array][127]&lt;[string][124]>>** list of resulting transaction hashes
-
-### updateOnNetwork
-
-Updates all hotel-related data by calling `updateRemoteData` on a `RemotelyBacked`
-dataset.
-
-**Parameters**
-
--   `wallet` **[WalletInterface][134]** that signs the transaction
--   `transactionOptions` **[Object][122]** usually contains from and to. Gas is automatically computed.
-
-
--   Throws **[Error][136]** When the underlying contract is not yet deployed.
-
-Returns **[Promise][125]&lt;[Array][127]&lt;[string][124]>>** List of transaction hashes
-
-### removeFromNetwork
-
-Destroys the object on network, in this case, calls a `deleteHotel` on
-Winding Tree index.
-
-**Parameters**
-
--   `wallet` **[WalletInterface][134]** that signs the transaction
--   `transactionOptions` **[Object][122]** usually contains from and to. Gas is automatically computed.
-
-
--   Throws **[Error][136]** When the underlying contract is not yet deployed.
-
-Returns **[Promise][125]&lt;[Array][127]&lt;[string][124]>>** List of transaction hashes
-
-## Utils
-
-Collection of utility methods useful during
-communication with Ethereum network.
-
-**Parameters**
-
--   `gasCoefficient` **[number][146]** 
--   `web3` **Web3** 
-
-### isZeroAddress
-
-Is address a zero address? Uses a bignumber.js test
-
-**Parameters**
-
--   `address` **[string][124]** 
-
-Returns **[boolean][147]** 
-
-### applyGasCoefficient
-
-Multiplies the gas with a previously configured `gasCoefficient`
-
-**Parameters**
-
--   `gas` **[number][146]** 
-
-Returns **[number][146]** 
-
-### determineDeployedContractFutureAddress
-
-Determines the future address of a deployed contact if such
-contact is deployed in a transaction originating from `sender`
-with `nonce`. Uses `ethereumjs-util` implementation
-and always returns a checksum formatted Ethereum address.
-
-Type: [string][124]
-
-**Parameters**
-
--   `sender` **[string][124]** 
--   `nonce` **[number][146]** 
-
-Returns **[string][124]** 
-
-### getCurrentWeb3Provider
-
-Proxy method for `web3.currentProvider`
-
-Returns **[Object][122]** 
-
-### getCurrentBlockNumber
-
-Proxy method for `web3.eth.getBlockNumber`
-
-Returns **[Promise][125]&lt;[number][146]>** 
-
-### determineCurrentAddressNonce
-
-Returns current number of transactions mined for given
-Ethereum address
-
-**Parameters**
-
--   `address` **[string][124]** 
-
-Returns **[Promise][125]&lt;[number][146]>** number
-
-### getTransactionReceipt
-
-Proxy method for `web3.eth.getTransactionReceipt`
-
-**Parameters**
-
--   `txHash` **[string][124]** 
-
-Returns **[TxReceiptInterface][133]** 
-
-### getTransaction
-
-Proxy method for `web3.eth.getTransaction`
-
-**Parameters**
-
--   `txHash` **[string][124]** 
-
-Returns **[Promise][125]&lt;[TxInterface][148]>** 
-
-### createInstance
-
-Returns an initialized instance
-
-**Parameters**
-
--   `gasCoefficient` **[number][146]** 
--   `web3` **Web3** instance created by `new Web3(provider)`
-
-Returns **[Contracts][144]** 
-
-## HotelProviderFactory
-
-HotelProviderFactory is used to instantiate
-various forms of Hotel representation.
-
-**Parameters**
-
--   `defaultDataStorage` **[string][124]** 
--   `web3Utils` **[Utils][145]** 
--   `web3Contracts` **[Contracts][144]** 
-
-### getHotelInstance
-
-Returns a RemoteHotelInterface based on data storage. It either uses the default
-one or if an address is provided, it detects a storage type to be used
-by checking the url field on-chain on given address.
-
-**Parameters**
-
--   `index` **[Object][122]** 
--   `address` **[string][124]** 
--   `Winding` **[Object][122]** Tree index contract instance.
--   `Optional` **[string][124]** hotel address
-
-Returns **[Promise][125]&lt;[RemoteHotelInterface][149]>** 
-
-### createInstance
-
-Creates new instance of HotelProviderFactory.
-
-**Parameters**
-
--   `defaultDataStorage` **[string][124]** is used every time a brand new hotel is created.
--   `web3Utils` **[Utils][145]** 
--   `web3Contracts` **[Contracts][144]** 
--   `Utils`  
--   `Contracts`  
-
-Returns **[HotelProviderFactory][150]** 
-
-## Web3UriDataModelOptionsType
-
-Web3UriDataModelOptionsType options. May look like this:
+DataModelOptionsType options. May look like this:
 
     {
       "provider": 'http://localhost:8545',// or another Web3 provider
       "gasCoefficient": 2 // Optional, defaults to 2
-      "defaultDataStorage": "json" // Optional, defaults to json. This marks in which storage new hotel's data will be stored.
     }
 
-Type: {provider: ([string][124] \| [Object][122])?, gasCoefficient: [number][146]?, defaultDataStorage: [string][124]?}
+Type: {provider: ([string][99] \| [Object][100])?, gasCoefficient: [number][106]?}
 
 **Properties**
 
--   `provider` **([string][124] \| [Object][122])?** 
--   `gasCoefficient` **[number][146]?** 
--   `defaultDataStorage` **[string][124]?** 
+-   `provider` **([string][99] \| [Object][100])?** 
+-   `gasCoefficient` **[number][106]?** 
 
-## Web3UriDataModel
+## DataModel
 
-Web3UriDataModel
+DataModel
 
 **Parameters**
 
--   `options` **[Web3UriDataModelOptionsType][151]** 
+-   `options` **[DataModelOptionsType][107]** 
 
 ### getWindingTreeIndex
 
-Returns a combined Ethereum and appropriate storage backed Winding Tree index.
+Returns an Ethereum backed Winding Tree index.
 
 **Parameters**
 
--   `address` **[string][124]** 
+-   `address` **[string][99]** 
 
-Returns **[Promise][125]&lt;[Web3UriWTIndexDataProvider][152]>** 
+Returns **[Promise][108]&lt;WTIndexDataProvider>** 
 
 ### getTransactionsStatus
 
-Find out in what state are transactions. All logs
-are decoded along the way and some metrics such as blockAge
+Finds out in what state are Ethereum transactions. All logs
+are decoded along the way and some metrics such as min/max blockAge
 are computed. If you pass all transactions related to a single
 operation (such as updateHotel), you may benefit from the computed
 metrics.
 
 **Parameters**
 
--   `txHashes` **[Array][127]&lt;[string][124]>** 
+-   `txHashes` **[Array][102]&lt;[string][99]>** 
 
-Returns **[Promise][125]&lt;[AdaptedTxResultsInterface][128]>** 
+Returns **[Promise][108]&lt;[AdaptedTxResultsInterface][109]>** 
 
 ### createWallet
 
-Returns a wallet implementation for given keystore.
+Returns a wallet instance for given JSON keystore.
 
 **Parameters**
 
--   `jsonWallet` **[KeystoreV3Interface][129]** 
+-   `jsonWallet` **[KeystoreV3Interface][110]** 
 
-Returns **[Promise][125]&lt;[Web3WTWallet][153]>** 
+Returns **[Promise][108]&lt;[Wallet][111]>** 
 
 ### createInstance
 
-Creates a configured Web3UriDataModel instance.
+Creates a configured DataModel instance.
 
 **Parameters**
 
--   `options` **[Web3UriDataModelOptionsType][151]** 
+-   `options` **[DataModelOptionsType][107]** 
 
-Returns **[Web3UriDataModel][154]** 
+Returns **[DataModel][112]** 
 
-## JsonHotelProvider
+## OnChainHotel
 
-**Extends EthBackedHotelProvider**
+Wrapper class for a hotel backed by a smart contract on
+Ethereum that's holding `url` pointer to its data.
 
-Ethereum based hotel with additional data stored in an in-memory JSON storage.
+It provides an accessor to such data in a form of
+`StoragePointer` instance under `dataIndex` property.
+Every schema-specific implementation details
+are dealt with in StoragePointer.
+
+**Parameters**
+
+-   `web3Utils` **[Utils][113]** 
+-   `web3Contracts` **[Contracts][105]** 
+-   `indexContract` **[Object][100]** 
+-   `address` **[string][99]** 
 
 ### initialize
 
-Calls EthBackedHotelProvider's initialize
-and sets up the additional InMemoryBacked dataset containing
-`description`, `name` and `location`. If the address was provided,
-an on-chain url pointer is used as an identifier for the InMemoryBacked
-dataset. InMemoryBacked pointers are schema-less, schema is stored only
-on-chain for now.
+Initializes the underlying RemotelyBackedDataset that actually
+communicates with the on-chain stored data. If address was provided
+in the contsructor, the RemotelyBackedDataset is marked as deployed
+and can be used instantly.
 
-Returns **[Promise][125]&lt;void>** 
+Returns **[Promise][108]&lt;void>** 
+
+### dataIndex
+
+Async getter for `StoragePointer` instance.
+Since it has to eventually access the `url`
+field stored on-chain, it is lazy loaded.
+Any data structure that is accessed by StoragePointer
+instance has for now be known beforehand, thus the whole
+data format of hotel data on `url` is specified here.
+
+Returns **[Promise][108]&lt;[StoragePointer][114]>** 
 
 ### setLocalData
 
-Updates data locally, calls EthBackedHotelProvider's setLocalData
-and sets `name`, `description` and `location`.
+Update manager and url properties. Url can never be nulled. Manager
+can never be nulled. Manager can be changed only for an un-deployed
+contract (without address).
 
 **Parameters**
 
--   `newData` **[HotelInterface][135]** 
+-   `newData` **[HotelOnChainDataInterface][115]** 
 
+Returns **[Promise][108]&lt;void>** 
 
--   Throws **[Error][136]** If url is updated and the schema is different than it used to be. Subject to change.
+### toPlainObject
 
-Returns **[Promise][125]&lt;void>** 
+Helper method that returns a plain object only
+with properties with data.
 
-### createOnNetwork
+It is not recursive for now, i. e. all off-chain data
+has to be accessed separately. Subject to change.
 
-Creates hotel on network while passing a current InMemoryBacked
-storage hash as a data url. Calls EthBackedHotelProvider's `createOnNetwork`
-in the end.
+Returns **[Promise][108]&lt;[HotelOnChainDataInterface][115]>** 
 
-**Parameters**
+### \_\_editInfoOnChain
 
--   `wallet` **[WalletInterface][134]** 
--   `transactionOptions` **[Object][122]** 
-
-Returns **[Promise][125]&lt;[Array][127]&lt;[string][124]>>** 
-
-### updateOnNetwork
-
-Updates hotel data. If the url has changed, the InMemoryBacked dataset
-is copied over into the new location. EthBackedHotelProvider's `updateOnNetwork`
-is called aferwards.
+Updates url on-chain. Used internally as a remoteSetter for `url` property.
 
 **Parameters**
 
--   `wallet` **[WalletInterface][134]** 
--   `transactionOptions` **[Object][122]** 
+-   `wallet` **[WalletInterface][116]** that signs the transaction
+-   `transactionOptions` **[Object][100]** usually contains from and to. Gas is automatically computed.
 
-Returns **[Promise][125]&lt;[Array][127]&lt;[string][124]>>** 
+Returns **[Promise][108]&lt;[string][99]>** resulting transaction hash
+
+### createOnChainData
+
+Creates new hotel contract on-chain.
+
+Precomputes the deployed hotel on-chain address, so even if
+the resulting transaction is not yet mined, the address is already known.
+
+Returns once the transaction is signed and sent to network by `wallet`.
+
+**Parameters**
+
+-   `wallet` **[WalletInterface][116]** that signs the transaction
+-   `transactionOptions` **[Object][100]** usually contains from and to. Gas is automatically computed.
+
+Returns **[Promise][108]&lt;[Array][102]&lt;[string][99]>>** list of resulting transaction hashes
+
+### updateOnChainData
+
+Updates all hotel-related data by calling `updateRemoteData` on a `RemotelyBackedDataset`
+dataset.
+
+**Parameters**
+
+-   `wallet` **[WalletInterface][116]** that signs the transaction
+-   `transactionOptions` **[Object][100]** usually contains from and to. Gas is automatically computed.
+
+
+-   Throws **[Error][101]** When the underlying contract is not yet deployed.
+-   Throws **[Error][101]** When url is empty.
+
+Returns **[Promise][108]&lt;[Array][102]&lt;[string][99]>>** List of transaction hashes
+
+### removeOnChainData
+
+Destroys the object on network, in this case, calls a `deleteHotel` on
+Winding Tree index contract.
+
+**Parameters**
+
+-   `wallet` **[WalletInterface][116]** that signs the transaction
+-   `transactionOptions` **[Object][100]** usually contains from and to. Gas is automatically computed.
+
+
+-   Throws **[Error][101]** When the underlying contract is not yet deployed.
+
+Returns **[Promise][108]&lt;[Array][102]&lt;[string][99]>>** List of transaction hashes
 
 ### createInstance
 
-Returns a configured instance of JsonHotelProvider. Optionally
-may point to an existing Ethereum blockchain address with a hotel.
-
-Runs `initialize` before returning.
+Create new configured instance.
 
 **Parameters**
 
--   `web3Utils` **[Utils][145]** 
--   `web3Contracts` **[Contracts][144]** 
--   `indexContract` **[Object][122]** 
--   `address` **[string][124]** 
+-   `web3Utils` **[Utils][113]** 
+-   `web3Contracts` **[Contracts][105]** 
+-   `indexContract` **web3.eth.Contract** Representation of Winding Tree index
+-   `address` **[string][99]** is an optional pointer to Ethereum network where the hotel lives.
+    It is used as a reference for on-chain stored data. If it is not provided, a hotel has
+    to be created on chain to behave as expected.
 
-Returns **[Promise][125]&lt;[JsonHotelProvider][155]>** 
+Returns **[OnChainHotel][117]** 
 
-## Web3WTWallet
-
-Web3 based wallet implementation
-
-**Parameters**
-
--   `keystoreJsonV3` **[KeystoreV3Interface][129]** 
-
-### setWeb3
-
-Sets up an initialized Web3 instance for later use
-
-**Parameters**
-
--   `web3` **Web3** 
-
-### isDestroyed
-
-It is not possible to do any operations on a destroyed
-wallet. Wallet is destroyed by calling the `destroy()` method.
-
-Returns **[boolean][147]** 
-
-### getAddress
-
-Returns the address passed in `keystoreJsonV3`
-in a checksummed format, e.g. prefixed with 0x
-and case-sensitive.
-
--   Throws **[Error][136]** When wallet was destroyed.
--   Throws **[Error][136]** When there's no keystore
-
-Returns **[string][124]** 
-
-### unlock
-
-Unlocks/decrypts the JSON wallet keystore. <strong>From now on
-there is a readable privateKey stored in memory!</strong>
-
-**Parameters**
-
--   `password` **[string][124]** 
-
-
--   Throws **[Error][136]** When wallet was destroyed.
--   Throws **[Error][136]** When there is no web3 instance configured.
-
-### signAndSendTransaction
-
-Takes transaction data, signs them with an unlocked private key and sends them to
-the network. Resolves immediately after receiving a `transactionHash` event and optionally
-may run an `onReceipt` callback after receiving the `receipt` event.
-
-**Parameters**
-
--   `transactionData` **[TransactionDataInterface][132]** 
--   `onReceipt` **function (receipt: [TxReceiptInterface][133]): void?** 
-
-
--   Throws **[Error][136]** When wallet was destroyed.
--   Throws **[Error][136]** When there is no web3 instance configured.
--   Throws **[Error][136]** When wallet is not unlocked.
--   Throws **[Error][136]** When transaction.from does not match the wallet account.
-
-Returns **[Promise][125]&lt;[string][124]>** transaction hash
-
-### lock
-
-Locks the wallet, i. e. deletes the private key from memory.
-The original JSON keystore remains in the memory and can
-be unlocked again if necessary.
-
-This relies on the JS garbage collector, so please do not reference
-the internal variables of this class elsewhere.
-
--   Throws **[Error][136]** When wallet was destroyed.
-
-### destroy
-
-Destroys the wallet. It first locks it, thus deleting
-the private key from memory and then removes from
-memory the JSON file.
-
-This relies on the JS garbage collector, so please do not reference
-the internal variables of this class elsewhere.
-
--   Throws **[Error][136]** When wallet was destroyed.
-
-### createInstance
-
-Creates an initialized instance
-
-**Parameters**
-
--   `keystoreJsonV3` **[KeystoreV3Interface][129]** 
-
-Returns **[Web3WTWallet][153]** 
-
-## Web3UriWTIndexDataProvider
+## WTIndex
 
 Ethereum smart contract backed implementation of Winding Tree
 index wrapper. It provides methods for working with hotel
-contracts. It cand decide by itself where it should look for
-off-chain hotel data based on the protocol in hotel's `url` field.
-
-Supported protocols:
-
--   json: `json://some-hash` - Looks up hotel data in in-memory storage under some-hash key
+contracts.
 
 **Parameters**
 
--   `indexAddress` **[string][124]** 
--   `web3Utils` **[Utils][145]** 
--   `web3Contracts` **[Contracts][144]** 
--   `defaultDataStorage` **[string][124]** 
+-   `indexAddress` **[string][99]** 
+-   `web3Utils` **[Utils][113]** 
+-   `web3Contracts` **[Contracts][105]** 
 
 ### addHotel
 
 Adds a totally new hotel on chain. Does not wait for the transactions
 to be mined, but as fast as possible returns a list of transaction IDs
-and the new hotel on chain address. The new hotel uses `defaultDataStorage`
-for storing information off-chain.
+and the new hotel on chain address.
 
 **Parameters**
 
--   `wallet` **[WalletInterface][134]** 
--   `hotelData` **[HotelInterface][135]** 
+-   `wallet` **[WalletInterface][116]** 
+-   `hotelData` **[HotelOnChainDataInterface][115]** 
 
 
--   Throws **[Error][136]** When anything goes wrong.
+-   Throws **[Error][101]** When hotelData does not contain url property.
+-   Throws **[Error][101]** When anything goes wrong during communication with the network.
 
-Returns **[Promise][125]&lt;[AddHotelResponseInterface][137]>** 
+Returns **[Promise][108]&lt;[AddHotelResponseInterface][118]>** 
 
 ### updateHotel
 
@@ -978,31 +404,32 @@ IDs so you can keep track of the progress.
 
 **Parameters**
 
--   `wallet` **[WalletInterface][134]** 
--   `hotel` **[HotelInterface][135]** 
+-   `wallet` **[WalletInterface][116]** 
+-   `hotel` **[HotelInterface][119]** 
 
 
--   Throws **[Error][136]** When anything goes wrong.
+-   Throws **[Error][101]** When hotel does not have a manager field.
+-   Throws **[Error][101]** When anything goes wrong during communication with the network.
 
-Returns **[Promise][125]&lt;[Array][127]&lt;[string][124]>>** 
+Returns **[Promise][108]&lt;[Array][102]&lt;[string][99]>>** 
 
 ### removeHotel
 
-Removes the hotel from chain. Does not wait for the transaction
+Removes the hotel from chain. Does not wait for the transactions
 to be mined, but as fast as possible returns a list of transaction
 IDs so you can keep track of the progress.
 
 **Parameters**
 
--   `wallet` **[WalletInterface][134]** 
--   `hotel` **[HotelInterface][135]** 
+-   `wallet` **[WalletInterface][116]** 
+-   `hotel` **[HotelInterface][119]** 
 
 
--   Throws **[Error][136]** When anything goes wrong such as-   hotel does not exist
+-   Throws **[Error][101]** When anything goes wrong such as-   hotel does not exist
     -   hotel does not belong to the calling manager
     -   not enough gas
 
-Returns **[Promise][125]&lt;[Array][127]&lt;[string][124]>>** 
+Returns **[Promise][108]&lt;[Array][102]&lt;[string][99]>>** 
 
 ### getHotel
 
@@ -1012,37 +439,356 @@ instance, the method throws immediately.
 
 **Parameters**
 
--   `address` **[string][124]** 
+-   `address` **[string][99]** 
 
 
--   Throws **[Error][136]** When hotel does not exist.
--   Throws **[Error][136]** When schema cannot be detected from the hotel's `url` field.
--   Throws **[Error][136]** When something breaks in the network communication.
+-   Throws **[Error][101]** When hotel does not exist.
+-   Throws **[Error][101]** When something breaks in the network communication.
 
-Returns **[Promise][125]&lt;[HotelInterface][135]?>** 
+Returns **[Promise][108]&lt;[HotelInterface][119]?>** 
 
 ### getAllHotels
 
 Returns a list of all hotels. It will filter out
-all inaccessible hotels.
+every hotel that is inaccessible for any reason.
 
-Returns **[Promise][125]&lt;[Array][127]&lt;[HotelInterface][135]>>** 
+Currently does not provide any information on inaccessible
+hotels. Subject to change.
+
+Returns **[Promise][108]&lt;[Array][102]&lt;[HotelInterface][119]>>** 
 
 ### createInstance
 
-Returns a configured instance of Web3UriWTIndexDataProvider
-representing a Winding Tree index contract on a given `address`.
+Returns a configured instance of WTIndex
+representing a Winding Tree index contract on a given `indexAddress`.
 
 **Parameters**
 
--   `indexAddress` **[string][124]** 
--   `web3Utils` **[Utils][145]** 
--   `web3Contracts` **[Contracts][144]** 
--   `defaultDataStorage` **[string][124]**  (optional, default `'json'`)
+-   `indexAddress` **[string][99]** 
+-   `web3Utils` **[Utils][113]** 
+-   `web3Contracts` **[Contracts][105]** 
 
-Returns **[Promise][125]&lt;[Web3UriWTIndexDataProvider][152]>** 
+Returns **[Promise][108]&lt;[WTIndex][120]>** 
 
-## InMemoryStorage
+## WtLibsOptionsType
+
+General options for wt-libs-js. Holds all things necessary
+for successful setup of Winding Tree network.
+
+Type: {dataModelOptions: [DataModelOptionsType][107]}
+
+**Properties**
+
+-   `dataModelOptions` **[DataModelOptionsType][107]** 
+
+## WTLibs
+
+Main public interface of wt-libs-js.
+
+**Parameters**
+
+-   `options` **[WtLibsOptionsType][121]** 
+
+### getWTIndex
+
+Get an instance of Winding Tree index from the underlying `data-model`.
+
+**Parameters**
+
+-   `address` **[string][99]** of the Winding Tree index
+
+Returns **[Promise][108]&lt;[WTIndexInterface][122]>** 
+
+### getTransactionsStatus
+
+Get a transactions status from the underlying `data-model`
+
+**Parameters**
+
+-   `transactionHashes` **[Array][102]&lt;[string][99]>** 
+
+Returns **[Promise][108]&lt;[AdaptedTxResultsInterface][109]>** 
+
+### createInstance
+
+Call this to create wt-libs-js instance.
+
+**Parameters**
+
+-   `options` **[WtLibsOptionsType][121]** 
+
+Returns **[WTLibs][123]** WTLibs
+
+## AddHotelResponseInterface
+
+Response of the addHotel operation.
+
+-   `address` holds the projected address of newly created hotel.
+-   `transactionIds` contains an array of ids of related transactions
+    that had to be sent to the underlying networks. You can
+    use these ids to check on the asynchronous operation state.
+
+**Properties**
+
+-   `address` **[string][99]?** 
+-   `transactionIds` **[Array][102]&lt;[string][99]>** 
+
+## LocationInterface
+
+Generic GPS location.
+
+**Properties**
+
+-   `latitude` **[number][106]??** 
+-   `longitude` **[number][106]??** 
+
+## HotelDataIndex
+
+Index file for more data urls. This is the
+initial document that blockchain is pointing to.
+
+**Properties**
+
+-   `descriptionUrl` **[string][99]** 
+
+## HotelDescriptionInterface
+
+Description of additional hotel data.
+
+**Properties**
+
+-   `location` **([Promise][108]&lt;[LocationInterface][124]?> | [LocationInterface][124]?)** 
+-   `name` **([Promise][108]&lt;[string][99]?> | [string][99]?)** 
+-   `description` **([Promise][108]&lt;[string][99]?> | [string][99]?)** 
+
+## HotelOnChainDataInterface
+
+Shape of data that is stored on-chain
+about every hotel.
+
+-   `address` is the network address.
+-   `manager` is the network address of hotel manager.
+-   `url` holds a pointer to the off-chain storage
+    that is used internally to store data.
+
+**Properties**
+
+-   `address` **([Promise][108]&lt;[string][99]?> | [string][99]?)** 
+-   `manager` **([Promise][108]&lt;[string][99]?> | [string][99]?)** 
+-   `url` **([Promise][108]&lt;[string][99]?> | [string][99]?)** 
+
+## HotelInterface
+
+**Extends HotelOnChainDataInterface**
+
+Represents a hotel instance that can
+communicate with on-chain hotel representation
+and provides an access to offChain data via `dataIndex`
+property.
+
+**Properties**
+
+-   `dataIndex` **[Promise][108]&lt;[StoragePointer][114]>** 
+-   `toPlainObject` **function (): [Promise][108]&lt;[Object][100]>** 
+-   `setLocalData` **function (newData: [HotelOnChainDataInterface][115]): [Promise][108]&lt;void>** 
+-   `createOnChainData` **function (wallet: [WalletInterface][116], transactionOptions: [Object][100]): [Promise][108]&lt;[Array][102]&lt;[string][99]>>** 
+-   `updateOnChainData` **function (wallet: [WalletInterface][116], transactionOptions: [Object][100]): [Promise][108]&lt;[Array][102]&lt;[string][99]>>** 
+-   `removeOnChainData` **function (wallet: [WalletInterface][116], transactionOptions: [Object][100]): [Promise][108]&lt;[Array][102]&lt;[string][99]>>** 
+
+## WTIndexInterface
+
+WindingTree index interface that provides all methods
+necessary for interaction with the hotels.\`
+
+**Properties**
+
+-   `addHotel` **function (wallet: [WalletInterface][116], hotel: [HotelOnChainDataInterface][115]): [Promise][108]&lt;[AddHotelResponseInterface][118]>** 
+-   `getHotel` **function (address: [string][99]): [Promise][108]&lt;[HotelInterface][119]?>** 
+-   `getAllHotels` **function (): [Promise][108]&lt;[Array][102]&lt;[HotelInterface][119]>>** 
+-   `updateHotel` **function (wallet: [WalletInterface][116], hotel: [HotelInterface][119]): [Promise][108]&lt;[Array][102]&lt;[string][99]>>** 
+-   `removeHotel` **function (wallet: [WalletInterface][116], hotel: [HotelInterface][119]): [Promise][108]&lt;[Array][102]&lt;[string][99]>>** 
+
+## OffChainDataAccessorInterface
+
+Interface for an off-chain storage read.
+
+**Properties**
+
+-   `upload` **function (data: {}): [Promise][108]&lt;[string][99]>** 
+-   `update` **function (url: [string][99], data: {}): [Promise][108]&lt;[string][99]>** 
+-   `download` **function (url: [string][99]): [Promise][108]&lt;{}?>** 
+
+## DataModelInterface
+
+Formalization of DataModel's public interface.
+
+**Properties**
+
+-   `getWindingTreeIndex` **function (address: [string][99]): [Promise][108]&lt;[WTIndexInterface][122]>** 
+-   `getTransactionsStatus` **function (transactionHashes: [Array][102]&lt;[string][99]>): [Promise][108]&lt;[AdaptedTxResultsInterface][109]>** 
+-   `createWallet` **function (jsonWallet: [Object][100]): [Promise][108]&lt;[WalletInterface][116]>** 
+
+## RawLogRecordInterface
+
+This interface represents raw ethereum transaction log object
+as returned by <a href="http://web3js.readthedocs.io/en/1.0/web3-eth.html#eth-getpastlogs-return">getPastLogs</a>.
+Sometimes you might need the raw data to do some additional processing.
+
+**Properties**
+
+-   `address` **[string][99]** 
+-   `data` **[string][99]** 
+-   `topics` **[Array][102]&lt;[string][99]>** 
+-   `logIndex` **[number][106]** 
+-   `transactionIndex` **[number][106]** 
+-   `transactionHash` **[number][106]** 
+-   `blockHash` **[number][106]** 
+-   `blockNumber` **[number][106]** 
+
+## DecodedLogRecordInterface
+
+This interface represents an Ethereum log record
+with decoded data that are much easier to read
+and act upon.
+
+**Properties**
+
+-   `address` **[string][99]** 
+-   `event` **[string][99]** 
+-   `attributes` **[Array][102]&lt;{name: [string][99], type: [string][99], value: [string][99]}>** 
+
+## TransactionDataInterface
+
+Ethereum transaction data used when creating transaction, see for example
+[https://web3js.readthedocs.io/en/1.0/web3-eth-accounts.html#signtransaction][125]
+
+**Properties**
+
+-   `nonce` **([string][99] \| [number][106])?** 
+-   `chainId` **[string][99]?** 
+-   `from` **[string][99]?** 
+-   `to` **[string][99]** 
+-   `data` **[string][99]** 
+-   `value` **[string][99]?** 
+-   `gasPrice` **[string][99]?** 
+-   `gas` **([string][99] \| [number][106])** 
+
+## TxInterface
+
+Ethereum transaction data after TX was accepted by the network, see
+for example [http://web3js.readthedocs.io/en/1.0/web3-eth.html#gettransaction][126]
+
+**Properties**
+
+-   `hash` **[string][99]?** 
+-   `nonce` **([string][99] \| [number][106])?** 
+-   `blockHash` **[string][99]?** 
+-   `blockNumber` **[number][106]?** 
+-   `transactionIndex` **[number][106]?** 
+-   `from` **[string][99]?** 
+-   `to` **[string][99]?** 
+-   `value` **[string][99]?** 
+-   `gasPrice` **[string][99]?** 
+-   `gas` **[number][106]?** 
+-   `input` **[string][99]?** 
+
+## TxReceiptInterface
+
+Transaction receipt as returned by
+<a href="http://web3js.readthedocs.io/en/1.0/web3-eth.html#eth-gettransactionreceipt-return">getTransactionReceipt</a>.
+This raw data might be sometimes needed for additional processing.
+
+**Properties**
+
+-   `transactionHash` **[string][99]** 
+-   `blockNumber` **[number][106]** 
+-   `blockHash` **[string][99]** 
+-   `transactionIndex` **[number][106]** 
+-   `from` **[string][99]** 
+-   `to` **[string][99]** 
+-   `contractAddress` **any** 
+-   `cumulativeGasUsed` **[number][106]** 
+-   `gasUsed` **[number][106]** 
+-   `logs` **[Array][102]&lt;[RawLogRecordInterface][103]>** 
+-   `status` **[number][106]** 
+
+## AdaptedTxResultInterface
+
+A custom transaction result interface that informs
+about the transaction status, its age and decoded logs.
+
+**Properties**
+
+-   `transactionHash` **[string][99]** 
+-   `blockAge` **[number][106]** 
+-   `decodedLogs` **[Array][102]&lt;[DecodedLogRecordInterface][104]>** 
+-   `raw` **[TxReceiptInterface][127]** 
+
+## AdaptedTxResultsInterface
+
+A cummulative result of multiple transactions. We are
+computing how many of the transactions were already
+executed, how old are they (which might be useful for making
+assumptions about confirmations). This also contains the raw data.
+
+**Properties**
+
+-   `meta` **{total: [number][106], processed: [number][106], minBlockAge: [number][106], maxBlockAge: [number][106], allPassed: [boolean][128]}** 
+-   `meta.total` **[number][106]** 
+-   `meta.processed` **[number][106]** 
+-   `meta.minBlockAge` **[number][106]** 
+-   `meta.maxBlockAge` **[number][106]** 
+-   `meta.allPassed` **[boolean][128]** 
+-   `results` **{}?** 
+
+## WalletInterface
+
+Wallet abstraction interface. It assumes the following workflow:
+1\. libs user holds a json wallet
+2\. libs user unlocks the wallet abstraction with a password
+3\. libs user calls some business logic which internally uses `signAndSendTransaction`
+4\. libs user either locks the wallet (if she plans to use it again)
+4\. OR destroys the wallet object data by calling `destroy`
+
+`lock` should not remove the data necessary for unlocking the wallet again.
+`destroy` on the other hand should clean all data that may be exploited from memory
+
+**Properties**
+
+-   `unlock` **function (password: [string][99]): void** 
+-   `signAndSendTransaction` **function (transactionData: [TransactionDataInterface][129], onReceipt: function (receipt: [TxReceiptInterface][127]): void?): [Promise][108]&lt;[string][99]>** 
+-   `lock` **function (): void** 
+-   `destroy` **function (): void** 
+-   `getAddress` **function (): [string][99]** 
+
+## KeystoreV3Interface
+
+Interface for Ethereum keystore
+
+Description: [https://medium.com/@julien.m./what-is-an-ethereum-keystore-file-86c8c5917b97][130]
+
+Specification: [https://github.com/ethereum/wiki/wiki/Web3-Secret-Storage-Definition][131]
+
+**Properties**
+
+-   `version` **[number][106]** 
+-   `id` **[string][99]** 
+-   `address` **[string][99]** 
+-   `crypto` **{ciphertext: [string][99], cipherparams: {iv: [string][99]}, cipher: [string][99], kdf: [string][99], kdfparams: {dklen: [number][106], salt: [string][99], n: [number][106], r: [number][106], p: [number][106]}, mac: [string][99]}** 
+-   `crypto.ciphertext` **[string][99]** 
+-   `crypto.cipherparams` **{iv: [string][99]}** 
+-   `crypto.cipherparams.iv` **[string][99]** 
+-   `crypto.cipher` **[string][99]** 
+-   `crypto.kdf` **[string][99]** 
+-   `crypto.kdfparams` **{dklen: [number][106], salt: [string][99], n: [number][106], r: [number][106], p: [number][106]}** 
+-   `crypto.kdfparams.dklen` **[number][106]** 
+-   `crypto.kdfparams.salt` **[string][99]** 
+-   `crypto.kdfparams.n` **[number][106]** 
+-   `crypto.kdfparams.r` **[number][106]** 
+-   `crypto.kdfparams.p` **[number][106]** 
+-   `crypto.mac` **[string][99]** 
+
+## Storage
 
 Simple in-memory key value store that creates
 its keys with ethereum based sha3 hash function.
@@ -1055,9 +801,9 @@ timestamp is prepended to prevent collisions.
 
 **Parameters**
 
--   `data` **any** to be hashed
+-   `data` **[Object][100]** to be hashed
 
-Returns **[string][124]** resulting sha3 hash
+Returns **[string][99]** resulting sha3 hash
 
 ### create
 
@@ -1065,9 +811,9 @@ Adds new data to the in-memory storage.
 
 **Parameters**
 
--   `data` **any** 
+-   `data` **[Object][100]** 
 
-Returns **[string][124]** hash under which the data is stored
+Returns **[string][99]** hash under which the data is stored
 
 ### update
 
@@ -1075,8 +821,8 @@ Update data under certain key
 
 **Parameters**
 
--   `hash` **[string][124]** under which to store new data
--   `data` **any** 
+-   `hash` **[string][99]** under which to store new data
+-   `data` **[Object][100]** 
 
 ### get
 
@@ -1084,75 +830,57 @@ Retrieve data from a certain hash
 
 **Parameters**
 
--   `hash` **[string][124]** under which is the desired data
+-   `hash` **[string][99]** under which is the desired data
 
-Returns **any** 
+Returns **[Object][100]** 
 
 ## storageInstance
 
-Single instance of InMemoryStorage that should be used
+Single instance of Storage that should be used
 throughout the whole application.
 
-Type: [InMemoryStorage][156]
+Type: [Storage][132]
 
-## InMemoryBacked
+## InMemoryAccessor
 
-Dataset configured to store/retrieve data with the
-InMemoryStorage. Based on the configuration, it binds
-certain properties to the original object with InMemoryStorage
-based getters and setters. The whole dataset is stored under
-on hash.
+OffChainDataAccessorInterface based on a simple in-memory key-value
+storage.
 
-This might be used to mock a distributed network storage.
+### download
 
-**Parameters**
-
--   `hash` **[string][124]** optional hash from InMemoryStorage where the data is located
-
-### setHash
-
-Enables changing the hash of the underlying data during runtime
+Retrieves data stored under a hash derived from url `json://<hash>`
 
 **Parameters**
 
--   `hash` **[string][124]** 
+-   `url` **[string][99]** 
 
-### getHash
 
-Return current hash
+-   Throws **[Error][101]** When hash cannot be detected.
 
-Returns **[string][124]** hash
+Returns **[Promise][108]&lt;{}?>** 
 
-### changeHashTo
+### upload
 
-Copies the data to a different hash
-while not destroying the original data. The
-internal hash pointer is updated so the data
-is served from the new location.
+Stores data under some hash.
 
 **Parameters**
 
--   `newHash` **[string][124]** 
+-   `data` **{}** 
 
-### initialize
+Returns **[string][99]** Resulting url such as `json://<hash>`
 
-Initializes an empty data position in InMemoryStorage
-and creates a new hash.
+### update
 
-### bindProperties
-
-Creates getters and setters backed by InMemoryStorage
-for all passed fields using `defineProperty`. The fields
-are specified as an `options.fields` property and every key
-represents a single property.
+Changes data stored under certain hash derived from url such as `json://<hash>`
 
 **Parameters**
 
--   `options` **[Object][122]** `{fields: {[field]: fieldOptions}}`
--   `bindTo` **[Object][122]** Object to which the properties will be bound.
-    Typically the initiator of this operation.
+-   `url` **[string][99]** 
+-   `data` **{}** 
 
-## RemotelyBacked
+Returns **[string][99]** url
+
+## RemotelyBackedDataset
 
 Dataset ready to use various strategies for storing the data
 in a remote storage. Every field backed by this strategy should
@@ -1203,15 +931,15 @@ be synced from the remote storage (if the dataset is marked as deployed).
 
 **Parameters**
 
--   `options` **[Object][122]** `{fields: {[field]: fieldOptions}}`
--   `bindTo` **[Object][122]** Object to which the properties will be bound.
+-   `options` **[Object][100]** `{fields: {[field]: fieldOptions}}`
+-   `bindTo` **[Object][100]** Object to which the properties will be bound.
     Typically the initiator of this operation.
 
 ### isObsolete
 
 Is dataset marked as obsolete?
 
-Returns **[Boolean][147]** 
+Returns **[Boolean][128]** 
 
 ### markObsolete
 
@@ -1223,7 +951,7 @@ but merely serves as a flag to prevent further interaction with this object.
 
 Is dataset deployed to the remote storage?
 
-Returns **[Boolean][147]** 
+Returns **[Boolean][128]** 
 
 ### markDeployed
 
@@ -1238,10 +966,10 @@ was modified locally before, the modified value will be returned.
 
 **Parameters**
 
--   `property` **[string][124]** 
+-   `property` **[string][99]** 
 
 
--   Throws **[Error][136]** When dataset is marked as obsolete
+-   Throws **[Error][101]** When dataset is marked as obsolete
 
 Returns **any** property's current value
 
@@ -1253,7 +981,7 @@ serve the locally modified value.
 
 **Parameters**
 
--   `property` **[string][124]** 
+-   `property` **[string][99]** 
 -   `newValue` **any** 
 
 ### updateRemoteData
@@ -1264,624 +992,591 @@ to update multiple fields, it is called only once.
 
 **Parameters**
 
--   `wallet` **[WalletInterface][134]** that signs the transaction
--   `transactionOptions` **[Object][122]** passed to every remoteSetter, typically something like `{from: address, to: address}`
+-   `wallet` **[WalletInterface][116]** that signs the transaction
+-   `transactionOptions` **[Object][100]** passed to every remoteSetter, typically something like `{from: address, to: address}`
 
-Returns **[Array][127]&lt;any>** Results of remoteSetters, it would typically contain transaction IDs
-
-## WtLibsOptionsType
-
-General options for wt-libs-js. Holds all things necessary
-for successful setup of Winding Tree network.
-
-Type: {dataModelType: [DataModelType][138], dataModelOptions: [DataModelOptionsType][139]}
-
-**Properties**
-
--   `dataModelType` **[DataModelType][138]** 
--   `dataModelOptions` **[DataModelOptionsType][139]** 
-
-## WTLibs
-
-Main public interface of wt-libs-js.
-
-**Parameters**
-
--   `options` **[WtLibsOptionsType][157]** 
-
-### getWTIndex
-
-Get an instance of Winding Tree index from the underlying `data-model`.
-
-**Parameters**
-
--   `address` **[string][124]** of the Winding Tree index
-
-Returns **[Promise][125]&lt;[WTIndexInterface][140]>** 
-
-### getTransactionsStatus
-
-Get a transactions status from the underlying `data-model`
-
-**Parameters**
-
--   `transactionHashes` **[Array][127]&lt;[string][124]>** 
-
-Returns **[Promise][125]&lt;[AdaptedTxResultsInterface][128]>** 
+Returns **[Array][102]&lt;any>** Results of remoteSetters, it would typically contain transaction IDs
 
 ### createInstance
 
-Call this to create wt-libs-js instance. If `dataModelType` is not passed,
-`web3-swarm` is used as a default. That is subject to change.
+Generic factory method.
+
+## FieldDefType
+
+Definition of a data field that is stored off-chain.
+This may be recursive.
+
+Type: {name: [string][99], isStoragePointer: [boolean][128]?, fields: [Array][102]&lt;([FieldDefType][133] \| [string][99])>?}
+
+**Properties**
+
+-   `name` **[string][99]** 
+-   `isStoragePointer` **[boolean][128]?** 
+-   `fields` **[Array][102]&lt;([FieldDefType][133] \| [string][99])>?** 
+
+## StoragePointer
+
+`StoragePointer` serves as a representation of an
+off-chain document holding JSON data. This generic class
+does not enforce any protocol/schema and contains
+infrastructure code that helps to set up field definition
+and getters for every data field. It does not provide any
+means of writing data, its sole purpose is for reading.
+
+It is possible to use this recursively, so you can define
+a field as another storage pointer. The configuration is
+declarative and may look like this:
+
+    const pointer = StoragePointer.createInstance('some://url', ['name', 'description']);
+    pointer.ref; // contains 'some://url',
+    await pointer.contents.name;
+    await pointer.contents.description;
+
+Or in recursive cases:
+
+    const pointer = StoragePointer.createInstance('some://url', [
+      {
+        name: 'description',
+        isStoragePointer: true,
+        fields: ['name', 'description', 'location'],
+      },
+      'signature'
+    ]);
+    pointer.ref; // contains  'some://url'
+    await pointer.contents.signature;
+    const descPointer = await pointer.contents.description;
+    descPointer.ref; // contains whatever is written in a description property in a document located on 'some://url'
+    await descPointer.contents.name;
+
+Only a top-level properties have to be defined beforehand, so the `signature`
+field above may contain a complex JSON object.
 
 **Parameters**
 
--   `options` **[WtLibsOptionsType][157]** 
+-   `url` **[string][99]** where to look for the data
+-   `fields` **[Array][102]&lt;[FieldDefType][133]>** definition from which are generated getters
 
-Returns **[WTLibs][158]** WTLibs
+### \_genericGetter
 
-## AddHotelResponseInterface
+Lazy data getter. The contents file gets downloaded only
+once any data field is accessed for the first time. Also
+the recursive `StoragePointer`s are created here only
+after the contents of the data is known, because we need
+to know the url to be able to instantiate the appropariate
+`StoragePointer`.
 
-Response of the addHotel operation.
+This behaviour might change in a way that we are able to
+swap the StoragePointer implementation during runtime.
 
--   `address` holds the projected address of newly created hotel.
--   `transactionIds` contains an array of ids of related transactions
-    that had to be sent to the underlying networks. You can
-    use these ids to check on the asynchronous operation state.
+**Parameters**
 
-**Properties**
+-   `field` **[string][99]** 
 
--   `address` **[string][124]?** 
--   `transactionIds` **[Array][127]&lt;[string][124]>** 
+Returns **([StoragePointer][114] \| [Object][100])** 
 
-## LocationInterface
+### \_detectSchema
 
-Generic GPS location.
+Detects schema from an url, i. e.
+from `json://some-data`, detects `json`.
 
-**Properties**
+**Parameters**
 
--   `latitude` **[number][146]??** 
--   `longitude` **[number][146]??** 
+-   `url` **[string][99]** 
 
-## HotelInterface
+Returns **[string][99]?** 
 
-Contains hotel-related data.
+### \_getOffChainDataClient
 
--   `address` is the network address.
--   `url` holds a pointer to the off-chain storage
-    that is used internally to store data.
+Returns appropriate implementation of `OffChainDataAccessorInterface`
+based on schema. Uses `OffChainDataClient.getAccessor` factory method.
 
-**Properties**
+Returns **[Promise][108]&lt;[OffChainDataAccessorInterface][134]>** 
 
--   `address` **([Promise][125]&lt;[string][124]?> | [string][124]?)** 
--   `manager` **([Promise][125]&lt;[string][124]?> | [string][124]?)** 
--   `url` **([Promise][125]&lt;[string][124]?> | [string][124]?)** 
--   `location` **([Promise][125]&lt;[LocationInterface][159]?> | [LocationInterface][159]?)** 
--   `name` **([Promise][125]&lt;[string][124]?> | [string][124]?)** 
--   `description` **([Promise][125]&lt;[string][124]?> | [string][124]?)** 
--   `toPlainObject` **function (): [Promise][125]&lt;[Object][122]>** 
+### \_downloadFromStorage
 
-## RemoteHotelInterface
+Gets the data document via `OffChainDataAccessorInterface`.
+If nothing is returned, might return an empty object.
 
-**Extends HotelInterface**
+Returns **[Promise][108]&lt;{}>** 
 
-Adds network-related operations to a generic hotel data.
+### createInstance
 
-**Properties**
+Returns a new instance of StoragePointer.
 
--   `setLocalData` **function (newData: [HotelInterface][135]): [Promise][125]&lt;void>** 
--   `createOnNetwork` **function (wallet: [WalletInterface][134], transactionOptions: [Object][122]): [Promise][125]&lt;[Array][127]&lt;[string][124]>>** 
--   `updateOnNetwork` **function (wallet: [WalletInterface][134], transactionOptions: [Object][122]): [Promise][125]&lt;[Array][127]&lt;[string][124]>>** 
--   `removeFromNetwork` **function (wallet: [WalletInterface][134], transactionOptions: [Object][122]): [Promise][125]&lt;[Array][127]&lt;[string][124]>>** 
+Normalizes the `fields` format before creating the actual
+instance
 
-## WTIndexInterface
+**Parameters**
 
-WindingTree index interface that provides all methods
-necessary for interaction with the hotels. The real
-implementation might differ in speed and asynchronicity
-in various `data-model`s.
+-   `url` **[string][99]** where to look for data document. It has to include schema, i. e. `https://example.com/data`
+-   `fields` **[Array][102]&lt;([FieldDefType][133] \| [string][99])>** list of top-level fields in the referred document
 
-**Properties**
+Returns **[StoragePointer][114]** 
 
--   `addHotel` **function (wallet: [WalletInterface][134], data: [HotelInterface][135]): [Promise][125]&lt;[AddHotelResponseInterface][137]>** 
--   `getHotel` **function (address: [string][124]): [Promise][125]&lt;[HotelInterface][135]?>** 
--   `getAllHotels` **function (): [Promise][125]&lt;[Array][127]&lt;[HotelInterface][135]>>** 
--   `updateHotel` **function (wallet: [WalletInterface][134], hotel: [HotelInterface][135]): [Promise][125]&lt;[Array][127]&lt;[string][124]>>** 
--   `removeHotel` **function (wallet: [WalletInterface][134], hotel: [HotelInterface][135]): [Promise][125]&lt;[Array][127]&lt;[string][124]>>** 
+## Utils
 
-## DataModelAccessorInterface
+Collection of utility methods useful during
+communication with Ethereum network.
 
-Every `data-model`'s main package should implement this interface
-and provide the necessary methods.
+**Parameters**
 
-**Properties**
+-   `gasCoefficient` **[number][106]** 
+-   `web3` **Web3** 
 
--   `getWindingTreeIndex` **function (address: [string][124]): [Promise][125]&lt;[WTIndexInterface][140]>** 
--   `getTransactionsStatus` **function (transactionHashes: [Array][127]&lt;[string][124]>): [Promise][125]&lt;[AdaptedTxResultsInterface][128]>** 
--   `createWallet` **function (jsonWallet: [Object][122]): [Promise][125]&lt;[WalletInterface][134]>** 
+### isZeroAddress
 
-## RawLogRecordInterface
+Is address a zero address? Uses a bignumber.js test
 
-This interface represents raw ethereum transaction log object
-as returned by <a href="http://web3js.readthedocs.io/en/1.0/web3-eth.html#eth-getpastlogs-return">getPastLogs</a>.
-Sometimes you might need the raw data to do some additional processing.
+**Parameters**
 
-**Properties**
+-   `address` **[string][99]** 
 
--   `address` **[string][124]** 
--   `data` **[string][124]** 
--   `topics` **[Array][127]&lt;[string][124]>** 
--   `logIndex` **[number][146]** 
--   `transactionIndex` **[number][146]** 
--   `transactionHash` **[number][146]** 
--   `blockHash` **[number][146]** 
--   `blockNumber` **[number][146]** 
+Returns **[boolean][128]** 
 
-## DecodedLogRecordInterface
+### applyGasCoefficient
 
-This interface represents an Ethereum log record
-with decoded data that are much easier to read
-and act upon.
+Multiplies the gas with a previously configured `gasCoefficient`
 
-**Properties**
+**Parameters**
 
--   `address` **[string][124]** 
--   `event` **[string][124]** 
--   `attributes` **[Array][127]&lt;{name: [string][124], type: [string][124], value: [string][124]}>** 
+-   `gas` **[number][106]** 
 
-## TransactionDataInterface
+Returns **[number][106]** 
 
-Ethereum transaction data used when creating transaction, see for example
-[https://web3js.readthedocs.io/en/1.0/web3-eth-accounts.html#signtransaction][160]
+### determineDeployedContractFutureAddress
 
-**Properties**
+Determines the future address of a deployed contact if such
+contact is deployed in a transaction originating from `sender`
+with `nonce`. Uses `ethereumjs-util` implementation
+and always returns a checksum formatted Ethereum address.
 
--   `nonce` **([string][124] \| [number][146])?** 
--   `chainId` **[string][124]?** 
--   `from` **[string][124]?** 
--   `to` **[string][124]** 
--   `data` **[string][124]** 
--   `value` **[string][124]?** 
--   `gasPrice` **[string][124]?** 
--   `gas` **([string][124] \| [number][146])** 
+Type: [string][99]
 
-## TxInterface
+**Parameters**
 
-Ethereum transaction data after TX was accepted by the network, see
-for example [http://web3js.readthedocs.io/en/1.0/web3-eth.html#gettransaction][161]
+-   `sender` **[string][99]** 
+-   `nonce` **[number][106]** 
 
-**Properties**
+Returns **[string][99]** 
 
--   `hash` **[string][124]?** 
--   `nonce` **([string][124] \| [number][146])?** 
--   `blockHash` **[string][124]?** 
--   `blockNumber` **[number][146]?** 
--   `transactionIndex` **[number][146]?** 
--   `from` **[string][124]?** 
--   `to` **[string][124]?** 
--   `value` **[string][124]?** 
--   `gasPrice` **[string][124]?** 
--   `gas` **[number][146]?** 
--   `input` **[string][124]?** 
+### getCurrentWeb3Provider
 
-## TxReceiptInterface
+Proxy method for `web3.currentProvider`
 
-Transaction receipt as returned by
-<a href="http://web3js.readthedocs.io/en/1.0/web3-eth.html#eth-gettransactionreceipt-return">getTransactionReceipt</a>.
-This raw data might be sometimes needed for additional processing.
+Returns **[Object][100]** 
 
-**Properties**
+### getCurrentBlockNumber
 
--   `transactionHash` **[string][124]** 
--   `blockNumber` **[number][146]** 
--   `blockHash` **[string][124]** 
--   `transactionIndex` **[number][146]** 
--   `from` **[string][124]** 
--   `to` **[string][124]** 
--   `contractAddress` **any** 
--   `cumulativeGasUsed` **[number][146]** 
--   `gasUsed` **[number][146]** 
--   `logs` **[Array][127]&lt;[RawLogRecordInterface][142]>** 
--   `status` **[number][146]** 
+Proxy method for `web3.eth.getBlockNumber`
 
-## AdaptedTxResultInterface
+Returns **[Promise][108]&lt;[number][106]>** 
 
-A custom transaction result interface that informs
-about the transaction status, its age and decoded logs.
+### determineCurrentAddressNonce
 
-**Properties**
+Returns current number of transactions mined for given
+Ethereum address
 
--   `transactionHash` **[string][124]** 
--   `blockAge` **[number][146]** 
--   `decodedLogs` **[Array][127]&lt;[DecodedLogRecordInterface][143]>** 
--   `raw` **[TxReceiptInterface][133]** 
+**Parameters**
 
-## AdaptedTxResultsInterface
+-   `address` **[string][99]** 
 
-A cummulative result of multiple transactions. We are
-computing how many of the transactions were already
-executed, how old are they (which might be useful for making
-assumptions about confirmations). This also contains the raw data.
+Returns **[Promise][108]&lt;[number][106]>** number
 
-**Properties**
+### getTransactionReceipt
 
--   `meta` **{total: [number][146], processed: [number][146], minBlockAge: [number][146], maxBlockAge: [number][146], allPassed: [boolean][147]}** 
--   `meta.total` **[number][146]** 
--   `meta.processed` **[number][146]** 
--   `meta.minBlockAge` **[number][146]** 
--   `meta.maxBlockAge` **[number][146]** 
--   `meta.allPassed` **[boolean][147]** 
--   `results` **{}?** 
+Proxy method for `web3.eth.getTransactionReceipt`
 
-## WalletInterface
+**Parameters**
 
-Wallet abstraction interface. It assumes the following workflow:
-1\. libs user holds a json wallet
-2\. libs user unlocks the wallet abstraction with a password
-3\. libs user calls some business logic which internally uses `signAndSendTransaction`
-4\. libs user either locks the wallet (if she plans to use it again)
-4\. OR destroys the wallet object data by calling `destroy`
+-   `txHash` **[string][99]** 
 
-`lock` should not remove the data necessary for unlocking the wallet again.
-`destroy` on the other hand should clean all data that may be exploited from memory
+Returns **[TxReceiptInterface][127]** 
 
-**Properties**
+### getTransaction
 
--   `unlock` **function (password: [string][124]): void** 
--   `signAndSendTransaction` **function (transactionData: [TransactionDataInterface][132], onReceipt: function (receipt: [TxReceiptInterface][133]): void?): [Promise][125]&lt;[string][124]>** 
--   `lock` **function (): void** 
--   `destroy` **function (): void** 
--   `getAddress` **function (): [string][124]** 
+Proxy method for `web3.eth.getTransaction`
 
-## KeystoreV3Interface
+**Parameters**
 
-Interface for Ethereum keystore
+-   `txHash` **[string][99]** 
 
-Description: [https://medium.com/@julien.m./what-is-an-ethereum-keystore-file-86c8c5917b97][162]
+Returns **[Promise][108]&lt;[TxInterface][135]>** 
 
-Specification: [https://github.com/ethereum/wiki/wiki/Web3-Secret-Storage-Definition][163]
+### createInstance
 
-**Properties**
+Returns an initialized instance
 
--   `version` **[number][146]** 
--   `id` **[string][124]** 
--   `address` **[string][124]** 
--   `crypto` **{ciphertext: [string][124], cipherparams: {iv: [string][124]}, cipher: [string][124], kdf: [string][124], kdfparams: {dklen: [number][146], salt: [string][124], n: [number][146], r: [number][146], p: [number][146]}, mac: [string][124]}** 
--   `crypto.ciphertext` **[string][124]** 
--   `crypto.cipherparams` **{iv: [string][124]}** 
--   `crypto.cipherparams.iv` **[string][124]** 
--   `crypto.cipher` **[string][124]** 
--   `crypto.kdf` **[string][124]** 
--   `crypto.kdfparams` **{dklen: [number][146], salt: [string][124], n: [number][146], r: [number][146], p: [number][146]}** 
--   `crypto.kdfparams.dklen` **[number][146]** 
--   `crypto.kdfparams.salt` **[string][124]** 
--   `crypto.kdfparams.n` **[number][146]** 
--   `crypto.kdfparams.r` **[number][146]** 
--   `crypto.kdfparams.p` **[number][146]** 
--   `crypto.mac` **[string][124]** 
+**Parameters**
 
-[1]: #fulljsondatamodeloptionstype
+-   `gasCoefficient` **[number][106]** 
+-   `web3` **Web3** instance created by `new Web3(provider)`
 
-[2]: #fulljsondatamodel
+Returns **[Contracts][105]** 
 
-[3]: #getwindingtreeindex
+## Wallet
 
-[4]: #gettransactionsstatus
+Web3 based wallet implementation
 
-[5]: #createwallet
+**Parameters**
+
+-   `keystoreJsonV3` **[KeystoreV3Interface][110]** 
+
+### setWeb3
+
+Sets up an initialized Web3 instance for later use
+
+**Parameters**
+
+-   `web3` **Web3** 
+
+### isDestroyed
+
+It is not possible to do any operations on a destroyed
+wallet. Wallet is destroyed by calling the `destroy()` method.
+
+Returns **[boolean][128]** 
+
+### getAddress
+
+Returns the address passed in `keystoreJsonV3`
+in a checksummed format, e.g. prefixed with 0x
+and case-sensitive.
+
+-   Throws **[Error][101]** When wallet was destroyed.
+-   Throws **[Error][101]** When there's no keystore
+
+Returns **[string][99]** 
+
+### unlock
+
+Unlocks/decrypts the JSON wallet keystore. <strong>From now on
+there is a readable privateKey stored in memory!</strong>
+
+**Parameters**
+
+-   `password` **[string][99]** 
+
+
+-   Throws **[Error][101]** When wallet was destroyed.
+-   Throws **[Error][101]** When there is no web3 instance configured.
+
+### signAndSendTransaction
+
+Takes transaction data, signs them with an unlocked private key and sends them to
+the network. Resolves immediately after receiving a `transactionHash` event and optionally
+may run an `onReceipt` callback after receiving the `receipt` event.
+
+**Parameters**
+
+-   `transactionData` **[TransactionDataInterface][129]** 
+-   `onReceipt` **function (receipt: [TxReceiptInterface][127]): void?** 
+
+
+-   Throws **[Error][101]** When wallet was destroyed.
+-   Throws **[Error][101]** When there is no web3 instance configured.
+-   Throws **[Error][101]** When wallet is not unlocked.
+-   Throws **[Error][101]** When transaction.from does not match the wallet account.
+
+Returns **[Promise][108]&lt;[string][99]>** transaction hash
+
+### lock
+
+Locks the wallet, i. e. deletes the private key from memory.
+The original JSON keystore remains in the memory and can
+be unlocked again if necessary.
+
+This relies on the JS garbage collector, so please do not reference
+the internal variables of this class elsewhere.
+
+-   Throws **[Error][101]** When wallet was destroyed.
+
+### destroy
+
+Destroys the wallet. It first locks it, thus deleting
+the private key from memory and then removes from
+memory the JSON file.
+
+This relies on the JS garbage collector, so please do not reference
+the internal variables of this class elsewhere.
+
+-   Throws **[Error][101]** When wallet was destroyed.
+
+### createInstance
+
+Creates an initialized instance
+
+**Parameters**
+
+-   `keystoreJsonV3` **[KeystoreV3Interface][110]** 
+
+Returns **[Wallet][111]** 
+
+[1]: #contracts
+
+[2]: #__getinstance
+
+[3]: #getindexinstance
+
+[4]: #gethotelinstance
+
+[5]: #decodelogs
 
 [6]: #createinstance
 
-[7]: #jsonwtwallet
+[7]: #datamodeloptionstype
 
-[8]: #unlock
+[8]: #datamodel
 
-[9]: #getaddress
+[9]: #getwindingtreeindex
 
-[10]: #signandsendtransaction
+[10]: #gettransactionsstatus
 
-[11]: #lock
+[11]: #createwallet
 
-[12]: #destroy
+[12]: #createinstance-1
 
-[13]: #createinstance-1
+[13]: #onchainhotel
 
-[14]: #jsonwtindexdataprovider
+[14]: #initialize
 
-[15]: #addhotel
+[15]: #dataindex
 
-[16]: #gethotel
+[16]: #setlocaldata
 
-[17]: #updatehotel
+[17]: #toplainobject
 
-[18]: #removehotel
+[18]: #__editinfoonchain
 
-[19]: #getallhotels
+[19]: #createonchaindata
 
-[20]: #createinstance-2
+[20]: #updateonchaindata
 
-[21]: #datamodeltype
+[21]: #removeonchaindata
 
-[22]: #datamodeloptionstype
+[22]: #createinstance-2
 
-[23]: #datamodel
+[23]: #wtindex
 
-[24]: #getwindingtreeindex-1
+[24]: #addhotel
 
-[25]: #gettransactionsstatus-1
+[25]: #updatehotel
 
-[26]: #createinstance-3
+[26]: #removehotel
 
-[27]: #contracts
+[27]: #gethotel
 
-[28]: #__getinstance
+[28]: #getallhotels
 
-[29]: #getindexinstance
+[29]: #createinstance-3
 
-[30]: #gethotelinstance
+[30]: #wtlibsoptionstype
 
-[31]: #decodelogs
+[31]: #wtlibs
 
-[32]: #createinstance-4
+[32]: #getwtindex
 
-[33]: #ethbackedhotelprovider
+[33]: #gettransactionsstatus-1
 
-[34]: #initialize
+[34]: #createinstance-4
 
-[35]: #setlocaldata
+[35]: #addhotelresponseinterface
 
-[36]: #__editinfo
+[36]: #locationinterface
 
-[37]: #createonnetwork
+[37]: #hoteldataindex
 
-[38]: #updateonnetwork
+[38]: #hoteldescriptioninterface
 
-[39]: #removefromnetwork
+[39]: #hotelonchaindatainterface
 
-[40]: #utils
+[40]: #hotelinterface
 
-[41]: #iszeroaddress
+[41]: #wtindexinterface
 
-[42]: #applygascoefficient
+[42]: #offchaindataaccessorinterface
 
-[43]: #determinedeployedcontractfutureaddress
+[43]: #datamodelinterface
 
-[44]: #getcurrentweb3provider
+[44]: #rawlogrecordinterface
 
-[45]: #getcurrentblocknumber
+[45]: #decodedlogrecordinterface
 
-[46]: #determinecurrentaddressnonce
+[46]: #transactiondatainterface
 
-[47]: #gettransactionreceipt
+[47]: #txinterface
 
-[48]: #gettransaction
+[48]: #txreceiptinterface
 
-[49]: #createinstance-5
+[49]: #adaptedtxresultinterface
 
-[50]: #hotelproviderfactory
+[50]: #adaptedtxresultsinterface
 
-[51]: #gethotelinstance-1
+[51]: #walletinterface
 
-[52]: #createinstance-6
+[52]: #keystorev3interface
 
-[53]: #web3uridatamodeloptionstype
+[53]: #storage
 
-[54]: #web3uridatamodel
+[54]: #_computehash
 
-[55]: #getwindingtreeindex-2
+[55]: #create
 
-[56]: #gettransactionsstatus-2
+[56]: #update
 
-[57]: #createwallet-1
+[57]: #get
 
-[58]: #createinstance-7
+[58]: #storageinstance
 
-[59]: #jsonhotelprovider
+[59]: #inmemoryaccessor
 
-[60]: #initialize-1
+[60]: #download
 
-[61]: #setlocaldata-1
+[61]: #upload
 
-[62]: #createonnetwork-1
+[62]: #update-1
 
-[63]: #updateonnetwork-1
+[63]: #remotelybackeddataset
 
-[64]: #createinstance-8
+[64]: #bindproperties
 
-[65]: #web3wtwallet
+[65]: #isobsolete
 
-[66]: #setweb3
+[66]: #markobsolete
 
-[67]: #isdestroyed
+[67]: #isdeployed
 
-[68]: #getaddress-1
+[68]: #markdeployed
 
-[69]: #unlock-1
+[69]: #_genericgetter
 
-[70]: #signandsendtransaction-1
+[70]: #_genericsetter
 
-[71]: #lock-1
+[71]: #updateremotedata
 
-[72]: #destroy-1
+[72]: #createinstance-5
 
-[73]: #createinstance-9
+[73]: #fielddeftype
 
-[74]: #web3uriwtindexdataprovider
+[74]: #storagepointer
 
-[75]: #addhotel-1
+[75]: #_genericgetter-1
 
-[76]: #updatehotel-1
+[76]: #_detectschema
 
-[77]: #removehotel-1
+[77]: #_getoffchaindataclient
 
-[78]: #gethotel-1
+[78]: #_downloadfromstorage
 
-[79]: #getallhotels-1
+[79]: #createinstance-6
 
-[80]: #createinstance-10
+[80]: #utils
 
-[81]: #inmemorystorage
+[81]: #iszeroaddress
 
-[82]: #_computehash
+[82]: #applygascoefficient
 
-[83]: #create
+[83]: #determinedeployedcontractfutureaddress
 
-[84]: #update
+[84]: #getcurrentweb3provider
 
-[85]: #get
+[85]: #getcurrentblocknumber
 
-[86]: #storageinstance
+[86]: #determinecurrentaddressnonce
 
-[87]: #inmemorybacked
+[87]: #gettransactionreceipt
 
-[88]: #sethash
+[88]: #gettransaction
 
-[89]: #gethash
+[89]: #createinstance-7
 
-[90]: #changehashto
+[90]: #wallet
 
-[91]: #initialize-2
+[91]: #setweb3
 
-[92]: #bindproperties
+[92]: #isdestroyed
 
-[93]: #remotelybacked
+[93]: #getaddress
 
-[94]: #bindproperties-1
+[94]: #unlock
 
-[95]: #isobsolete
+[95]: #signandsendtransaction
 
-[96]: #markobsolete
+[96]: #lock
 
-[97]: #isdeployed
+[97]: #destroy
 
-[98]: #markdeployed
+[98]: #createinstance-8
 
-[99]: #_genericgetter
+[99]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String
 
-[100]: #_genericsetter
+[100]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
 
-[101]: #updateremotedata
+[101]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Error
 
-[102]: #wtlibsoptionstype
+[102]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array
 
-[103]: #wtlibs
+[103]: #rawlogrecordinterface
 
-[104]: #getwtindex
+[104]: #decodedlogrecordinterface
 
-[105]: #gettransactionsstatus-3
+[105]: #contracts
 
-[106]: #createinstance-11
+[106]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number
 
-[107]: #addhotelresponseinterface
+[107]: #datamodeloptionstype
 
-[108]: #locationinterface
+[108]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise
 
-[109]: #hotelinterface
+[109]: #adaptedtxresultsinterface
 
-[110]: #remotehotelinterface
+[110]: #keystorev3interface
 
-[111]: #wtindexinterface
+[111]: #wallet
 
-[112]: #datamodelaccessorinterface
+[112]: #datamodel
 
-[113]: #rawlogrecordinterface
+[113]: #utils
 
-[114]: #decodedlogrecordinterface
+[114]: #storagepointer
 
-[115]: #transactiondatainterface
+[115]: #hotelonchaindatainterface
 
-[116]: #txinterface
+[116]: #walletinterface
 
-[117]: #txreceiptinterface
+[117]: #onchainhotel
 
-[118]: #adaptedtxresultinterface
+[118]: #addhotelresponseinterface
 
-[119]: #adaptedtxresultsinterface
+[119]: #hotelinterface
 
-[120]: #walletinterface
+[120]: #wtindex
 
-[121]: #keystorev3interface
+[121]: #wtlibsoptionstype
 
-[122]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
+[122]: #wtindexinterface
 
-[123]: #fulljsondatamodeloptionstype
+[123]: #wtlibs
 
-[124]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String
+[124]: #locationinterface
 
-[125]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise
+[125]: https://web3js.readthedocs.io/en/1.0/web3-eth-accounts.html#signtransaction
 
-[126]: #jsonwtindexdataprovider
+[126]: http://web3js.readthedocs.io/en/1.0/web3-eth.html#gettransaction
 
-[127]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array
+[127]: #txreceiptinterface
 
-[128]: #adaptedtxresultsinterface
+[128]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean
 
-[129]: #keystorev3interface
+[129]: #transactiondatainterface
 
-[130]: #jsonwtwallet
+[130]: https://medium.com/@julien.m./what-is-an-ethereum-keystore-file-86c8c5917b97
 
-[131]: #fulljsondatamodel
+[131]: https://github.com/ethereum/wiki/wiki/Web3-Secret-Storage-Definition
 
-[132]: #transactiondatainterface
+[132]: #storage
 
-[133]: #txreceiptinterface
+[133]: #fielddeftype
 
-[134]: #walletinterface
+[134]: #offchaindataaccessorinterface
 
-[135]: #hotelinterface
-
-[136]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Error
-
-[137]: #addhotelresponseinterface
-
-[138]: #datamodeltype
-
-[139]: #datamodeloptionstype
-
-[140]: #wtindexinterface
-
-[141]: #datamodel
-
-[142]: #rawlogrecordinterface
-
-[143]: #decodedlogrecordinterface
-
-[144]: #contracts
-
-[145]: #utils
-
-[146]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number
-
-[147]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean
-
-[148]: #txinterface
-
-[149]: #remotehotelinterface
-
-[150]: #hotelproviderfactory
-
-[151]: #web3uridatamodeloptionstype
-
-[152]: #web3uriwtindexdataprovider
-
-[153]: #web3wtwallet
-
-[154]: #web3uridatamodel
-
-[155]: #jsonhotelprovider
-
-[156]: #inmemorystorage
-
-[157]: #wtlibsoptionstype
-
-[158]: #wtlibs
-
-[159]: #locationinterface
-
-[160]: https://web3js.readthedocs.io/en/1.0/web3-eth-accounts.html#signtransaction
-
-[161]: http://web3js.readthedocs.io/en/1.0/web3-eth.html#gettransaction
-
-[162]: https://medium.com/@julien.m./what-is-an-ethereum-keystore-file-86c8c5917b97
-
-[163]: https://github.com/ethereum/wiki/wiki/Web3-Secret-Storage-Definition
+[135]: #txinterface

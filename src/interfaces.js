@@ -1,5 +1,7 @@
 // @flow
 
+import StoragePointer from './storage-pointer';
+
 /**
  * Response of the addHotel operation.
  *
@@ -14,64 +16,70 @@ export interface AddHotelResponseInterface {
 }
 
 /**
- * Generic GPS location.
- */
-export interface LocationInterface {
-  latitude?: ?number;
-  longitude?: ?number
-}
-
-/**
- * Contains hotel-related data.
+ * Shape of data that is stored on-chain
+ * about every hotel.
  *
  * - `address` is the network address.
+ * - `manager` is the network address of hotel manager.
  * - `url` holds a pointer to the off-chain storage
  * that is used internally to store data.
  */
-export interface HotelInterface {
+export interface HotelOnChainDataInterface {
   address: Promise<?string> | ?string;
   manager: Promise<?string> | ?string;
-  url: Promise<?string> | ?string;
-  location: Promise<?LocationInterface> | ?LocationInterface;
-  name: Promise<?string> | ?string;
-  description: Promise<?string> | ?string;
-  toPlainObject(): Promise<Object>
+  url: Promise<?string> | ?string
 }
 
 /**
- * Adds network-related operations to a generic hotel data.
+ * Represents a hotel instance that can
+ * communicate with on-chain hotel representation
+ * and provides an access to offChain data via `dataIndex`
+ * property.
+ *
  */
-export interface RemoteHotelInterface extends HotelInterface {
-  setLocalData(newData: HotelInterface): Promise<void>;
-  createOnNetwork(wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>>;
-  updateOnNetwork(wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>>;
-  removeFromNetwork(wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>>
+export interface HotelInterface extends HotelOnChainDataInterface {
+  +dataIndex: Promise<StoragePointer>;
+
+  toPlainObject(): Promise<Object>;
+  setLocalData(newData: HotelOnChainDataInterface): Promise<void>;
+  createOnChainData(wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>>;
+  updateOnChainData(wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>>;
+  removeOnChainData(wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>>
 }
 
 /**
  * WindingTree index interface that provides all methods
- * necessary for interaction with the hotels. The real
- * implementation might differ in speed and asynchronicity
- * in various `data-model`s.
+ * necessary for interaction with the hotels.`
  */
 export interface WTIndexInterface {
-  addHotel(wallet: WalletInterface, data: HotelInterface): Promise<AddHotelResponseInterface>;
+  addHotel(wallet: WalletInterface, hotel: HotelOnChainDataInterface): Promise<AddHotelResponseInterface>;
   getHotel(address: string): Promise<?HotelInterface>;
   getAllHotels(): Promise<Array<HotelInterface>>;
-  // It is possible that this operation generates multiple transactions
+  // It is possible that this operation generates multiple transactions in the future
   updateHotel(wallet: WalletInterface, hotel: HotelInterface): Promise<Array<string>>;
-  // It is possible that this operation generates multiple transactions
+  // It is possible that this operation generates multiple transactions in the future
   removeHotel(wallet: WalletInterface, hotel: HotelInterface): Promise<Array<string>>
 }
 
 /**
- * Every `data-model`'s main package should implement this interface
- * and provide the necessary methods.
+ * Interface for an off-chain storage read.
  */
-export interface DataModelAccessorInterface {
+export interface OffChainDataAccessorInterface {
+  // Upload new dataset to an off-chain storage
+  upload(data: {[string]: Object}): Promise<string>;
+  // Change data on given url
+  update(url: string, data: {[string]: Object}): Promise<string>;
+  // Download content from given url
+  download(url: string): Promise<?{[string]: Object}>
+}
+
+/**
+ * Formalization of DataModel's public interface.
+ */
+export interface DataModelInterface {
   getWindingTreeIndex(address: string): Promise<WTIndexInterface>;
-  getTransactionsStatus (transactionHashes: Array<string>): Promise<AdaptedTxResultsInterface>;
-  createWallet (jsonWallet: Object): Promise<WalletInterface>
+  getTransactionsStatus(transactionHashes: Array<string>): Promise<AdaptedTxResultsInterface>;
+  createWallet(jsonWallet: Object): Promise<WalletInterface>
 }
 
 /**

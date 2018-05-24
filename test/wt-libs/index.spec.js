@@ -1,54 +1,46 @@
 import { assert } from 'chai';
 import sinon from 'sinon';
+import WTLibs from '../../src/index';
 import DataModel from '../../src/data-model';
-import testedDataModel from '../utils/data-model-definition';
 
-describe('WTLibs.dataModel', () => {
+describe('WTLibs', () => {
   describe('createInstance', () => {
-    it('should set type and options', () => {
-      const dataModel = DataModel.createInstance({ some: 'configoption' });
-      assert.equal(dataModel.options.some, 'configoption');
-    });
-  });
-
-  describe('__getDataModelAccessor', () => {
-    let createInstanceSpy;
+    let createDataModelSpy;
 
     beforeEach(() => {
-      createInstanceSpy = sinon.spy(testedDataModel.dataModelAccessor, 'createInstance');
+      createDataModelSpy = sinon.spy(DataModel, 'createInstance');
     });
 
     afterEach(() => {
-      createInstanceSpy.restore();
+      createDataModelSpy.restore();
     });
 
-    it('should create dataModelAccessor', () => {
-      const dataModel = DataModel.createInstance(testedDataModel.emptyConfig);
-      const dataModelAccessor = dataModel.__getDataModelAccessor();
-      assert.isDefined(dataModelAccessor);
-      assert.typeOf(dataModelAccessor, 'object');
-      assert.equal(createInstanceSpy.callCount, 1);
+    it('should initialize data model', () => {
+      const libs = WTLibs.createInstance();
+      assert.isDefined(libs.dataModel);
+      assert.equal(createDataModelSpy.callCount, 1);
     });
 
-    it('should re-use existing dataModelAccessor instance', () => {
-      const dataModel = DataModel.createInstance(testedDataModel.emptyConfig);
-      const dataModelAccessor = dataModel.__getDataModelAccessor();
-      assert.equal(createInstanceSpy.callCount, 1);
-      const dataModelAccessor2 = dataModel.__getDataModelAccessor();
-      assert.isDefined(dataModelAccessor2);
-      assert.typeOf(dataModelAccessor2, 'object');
-      assert.equal(createInstanceSpy.callCount, 1);
-      assert.equal(dataModelAccessor, dataModelAccessor2);
+    it('should pass data model options', () => {
+      const libs = WTLibs.createInstance({
+        dataModelOptions: {
+          random: '1234',
+        },
+      });
+      assert.isDefined(libs.dataModel);
+      assert.equal(createDataModelSpy.firstCall.args[0].random, '1234');
     });
   });
 
-  describe('getWindingTreeIndex', () => {
-    it('should ask current dataModelAccessor for a WTIndex instance', () => {
-      const wtIndexSpy = sinon.spy(testedDataModel.dataModelAccessor.prototype, 'getWindingTreeIndex');
-      let dataModel = DataModel.createInstance(testedDataModel.emptyConfig);
-      let index = dataModel.getWindingTreeIndex('random-address');
-      assert.isDefined(index);
-      assert.equal(wtIndexSpy.callCount, 1);
+  describe('getOffChainDataClient', () => {
+    it('should return OffChainDataClient', async () => {
+      const libs = WTLibs.createInstance({
+        dataModelOptions: {
+          random: '1234',
+        },
+      });
+      const accessor = await libs.getOffChainDataClient('json');
+      assert.isDefined(accessor);
     });
   });
 });

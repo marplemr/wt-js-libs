@@ -1,12 +1,12 @@
 // @flow
 import Web3 from 'web3';
 import ethJsUtil from 'ethereumjs-util';
-import type { WalletInterface, TxReceiptInterface, KeystoreV3Interface, TransactionDataInterface } from '../../interfaces';
+import type { WalletInterface, TxReceiptInterface, KeystoreV3Interface, TransactionDataInterface } from './interfaces';
 
 /**
  * Web3 based wallet implementation
  */
-class Web3WTWallet implements WalletInterface {
+class Wallet implements WalletInterface {
   __destroyedFlag: boolean;
   __jsonWallet: ?KeystoreV3Interface;
   __account: ?Object;
@@ -15,8 +15,8 @@ class Web3WTWallet implements WalletInterface {
   /**
    * Creates an initialized instance
    */
-  static createInstance (keystoreJsonV3: KeystoreV3Interface): Web3WTWallet {
-    return new Web3WTWallet(keystoreJsonV3);
+  static createInstance (keystoreJsonV3: KeystoreV3Interface): Wallet {
+    return new Wallet(keystoreJsonV3);
   }
 
   constructor (keystoreJsonV3: KeystoreV3Interface) {
@@ -157,4 +157,4 @@ class Web3WTWallet implements WalletInterface {
   }
 }
 
-export default Web3WTWallet;
+export default Wallet;
