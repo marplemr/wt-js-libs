@@ -58,6 +58,6 @@ export interface HotelDescriptionInterface {
   currency?: Promise<?string> | ?string;
   images?: Promise<?Array<string>> | ?Array<string>;
   amenities?: Promise<?Array<string>> | ?Array<string>;
-  created_at: Promise<?string> | ?string;
-  updated_at: Promise<?string> | ?string
+  createdAt: Promise<?string> | ?string;
+  updatedAt: Promise<?string> | ?string
 }
