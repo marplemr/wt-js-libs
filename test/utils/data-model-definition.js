@@ -1,11 +1,20 @@
 import offChainData from './data/off-chain-data.json';
-import { storageInstance } from '../../src/off-chain-data-accessors/in-memory';
+import InMemoryAccessor, { storageInstance } from '../../src/off-chain-data-accessors/in-memory';
 
 export const Web3UriBackedDataModel = {
   emptyConfig: {},
   withDataSource: () => ({
     dataModelOptions: {
       provider: 'http://localhost:8545',
+    },
+    offChainDataOptions: {
+      accessors: {
+        json: {
+          create: () => {
+            return new InMemoryAccessor();
+          },
+        },
+      },
     },
   }),
   indexAddress: '0x8c2373842d5ea4ce4baf53f4175e5e42a364c59c',

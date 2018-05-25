@@ -1,16 +1,35 @@
 // @flow
 import type { OffChainDataAccessorInterface } from './interfaces';
-import InMemoryAccessor from './off-chain-data-accessors/in-memory';
+
+export type OffChainDataClientOptionsType = {
+  accessors: {[schema: string]: {
+    options: Object;
+    create: (options: Object) => OffChainDataAccessorInterface
+  }}
+};
+
+let offChainDataOptions: OffChainDataClientOptionsType;
 
 class OffChainDataClient {
-  // TODO drop swith, use pre-configured accessor map
+  accessors: Object;
+
+  static setup (options: OffChainDataClientOptionsType) {
+    offChainDataOptions = options || {};
+    if (!offChainDataOptions.accessors) {
+      offChainDataOptions.accessors = {};
+    }
+  }
+
+  static __reset () {
+    offChainDataOptions.accessors = {};
+  }
+
   static async getAccessor (schema: ?string): Promise<OffChainDataAccessorInterface> {
-    switch (schema) {
-    case 'json':
-      return new InMemoryAccessor();
-    default:
+    if (!schema || !offChainDataOptions.accessors[schema]) {
       throw new Error(`Unsupported data storage type: ${schema || 'null'}`);
     }
+    const accessor = offChainDataOptions.accessors[schema];
+    return accessor.create(accessor.options);
   }
 }
 

@@ -2,6 +2,7 @@ import { assert } from 'chai';
 import sinon from 'sinon';
 import WTLibs from '../../src/index';
 import DataModel from '../../src/data-model';
+import OffChainDataClient from '../../src/off-chain-data-client';
 
 describe('WTLibs', () => {
   describe('createInstance', () => {
@@ -38,9 +39,19 @@ describe('WTLibs', () => {
         dataModelOptions: {
           random: '1234',
         },
+        offChainDataOptions: {
+          accessors: {
+            json: {
+              create: () => {
+                return true;
+              },
+            },
+          },
+        },
       });
       const accessor = await libs.getOffChainDataClient('json');
       assert.isDefined(accessor);
+      OffChainDataClient.__reset();
     });
   });
 });

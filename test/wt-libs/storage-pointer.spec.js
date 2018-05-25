@@ -2,8 +2,25 @@ import { assert } from 'chai';
 import sinon from 'sinon';
 import StoragePointer from '../../src/storage-pointer';
 import OffChainDataClient from '../../src/off-chain-data-client';
+import InMemoryAccessor from '../../src/off-chain-data-accessors/in-memory';
 
 describe('WTLibs.StoragePointer', () => {
+  beforeEach(() => {
+    OffChainDataClient.setup({
+      accessors: {
+        json: {
+          create: () => {
+            return new InMemoryAccessor();
+          },
+        },
+      },
+    });
+  });
+
+  afterEach(() => {
+    OffChainDataClient.__reset();
+  });
+
   it('should normalize fields option', () => {
     const pointer = StoragePointer.createInstance('json://url', ['some', 'fields', { name: 'field' }]);
     assert.equal(pointer.__fields.length, 3);
