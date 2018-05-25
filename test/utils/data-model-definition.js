@@ -1,5 +1,5 @@
 import offChainData from './data/off-chain-data.json';
-import InMemoryAccessor, { storageInstance } from '../../src/off-chain-data-accessors/in-memory';
+import { accessor as InMemoryAccessor, storageInstance } from '@windingtree/off-chain-accessor-in-memory';
 
 export const Web3UriBackedDataModel = {
   emptyConfig: {},

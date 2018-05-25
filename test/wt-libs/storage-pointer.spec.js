@@ -2,7 +2,7 @@ import { assert } from 'chai';
 import sinon from 'sinon';
 import StoragePointer from '../../src/storage-pointer';
 import OffChainDataClient from '../../src/off-chain-data-client';
-import InMemoryAccessor from '../../src/off-chain-data-accessors/in-memory';
+import { accessor as InMemoryAccessor } from '@windingtree/off-chain-accessor-in-memory';
 
 describe('WTLibs.StoragePointer', () => {
   beforeEach(() => {
@@ -83,7 +83,7 @@ describe('WTLibs.StoragePointer', () => {
     const pointer = StoragePointer.createInstance('json://url', ['some', 'fields']);
     assert.isUndefined(pointer.__accessor);
     await pointer.contents.some;
-    assert.equal(pointer.__accessor.constructor.name, 'InMemoryAccessor');
+    assert.isDefined(pointer.__accessor);
   });
 
   it('should reuse OffChainDataAccessor instance', async () => {
