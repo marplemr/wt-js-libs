@@ -1,5 +1,7 @@
 // @flow
 
+import BigNumber from 'bignumber.js';
+
 import StoragePointer from './storage-pointer';
 
 /**
@@ -30,6 +32,13 @@ export interface HotelOnChainDataInterface {
   url: Promise<?string> | ?string
 }
 
+export interface TransactionOptionsInterface {
+  from: string;
+  to?: string;
+  gas?: number;
+  value?: number | string | BigNumber
+}
+
 /**
  * Represents a hotel instance that can
  * communicate with on-chain hotel representation
@@ -42,9 +51,9 @@ export interface HotelInterface extends HotelOnChainDataInterface {
 
   toPlainObject(): Promise<Object>;
   setLocalData(newData: HotelOnChainDataInterface): Promise<void>;
-  createOnChainData(wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>>;
-  updateOnChainData(wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>>;
-  removeOnChainData(wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>>
+  createOnChainData(wallet: WalletInterface, transactionOptions: TransactionOptionsInterface): Promise<Array<string>>;
+  updateOnChainData(wallet: WalletInterface, transactionOptions: TransactionOptionsInterface): Promise<Array<string>>;
+  removeOnChainData(wallet: WalletInterface, transactionOptions: TransactionOptionsInterface): Promise<Array<string>>
 }
 
 /**

@@ -1,5 +1,5 @@
 // @flow
-import type { WalletInterface, HotelInterface, HotelOnChainDataInterface } from '../interfaces';
+import type { TransactionOptionsInterface, WalletInterface, HotelInterface, HotelOnChainDataInterface } from '../interfaces';
 import Utils from '../utils';
 import Contracts from '../contracts';
 import RemotelyBackedDataset from '../remotely-backed-dataset';
@@ -163,10 +163,10 @@ class OnChainHotel implements HotelInterface {
    * Updates url on-chain. Used internally as a remoteSetter for `url` property.
    *
    * @param {WalletInterface} wallet that signs the transaction
-   * @param {Object} transactionOptions usually contains from and to. Gas is automatically computed.
+   * @param {TransactionOptionsInterface} transactionOptions usually contains from and to. Gas is automatically computed.
    * @return {Promise<string>} resulting transaction hash
    */
-  async __editInfoOnChain (wallet: WalletInterface, transactionOptions: Object): Promise<string> {
+  async __editInfoOnChain (wallet: WalletInterface, transactionOptions: TransactionOptionsInterface): Promise<string> {
     const data = (await this.__getContractInstance()).methods.editInfo(await this.url).encodeABI();
     const estimate = await this.indexContract.methods.callHotel(this.address, data).estimateGas(transactionOptions);
     const txData = this.indexContract.methods.callHotel(this.address, data).encodeABI();
@@ -195,10 +195,10 @@ class OnChainHotel implements HotelInterface {
    * Returns once the transaction is signed and sent to network by `wallet`.
    *
    * @param {WalletInterface} wallet that signs the transaction
-   * @param {Object} transactionOptions usually contains from and to. Gas is automatically computed.
+   * @param {TransactionOptionsInterface} transactionOptions usually contains from and to. Gas is automatically computed.
    * @return {Promise<Array<string>>} list of resulting transaction hashes
    */
-  async createOnChainData (wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>> {
+  async createOnChainData (wallet: WalletInterface, transactionOptions: TransactionOptionsInterface): Promise<Array<string>> {
     // Pre-compute hotel address, we need to use index for it's creating the contract
     this.address = this.web3Utils.determineDeployedContractFutureAddress(
       this.indexContract.options.address,
@@ -231,12 +231,12 @@ class OnChainHotel implements HotelInterface {
    * dataset.
    *
    * @param {WalletInterface} wallet that signs the transaction
-   * @param {Object} transactionOptions usually contains from and to. Gas is automatically computed.
+   * @param {TransactionOptionsInterface} transactionOptions usually contains from and to. Gas is automatically computed.
    * @throws {Error} When the underlying contract is not yet deployed.
    * @throws {Error} When url is empty.
    * @return {Promise<Array<string>>} List of transaction hashes
    */
-  async updateOnChainData (wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>> {
+  async updateOnChainData (wallet: WalletInterface, transactionOptions: TransactionOptionsInterface): Promise<Array<string>> {
     // pre-check if contract is available at all and fail fast
     await this.__getContractInstance();
     if (!(await this.url)) {
@@ -252,11 +252,11 @@ class OnChainHotel implements HotelInterface {
    * Winding Tree index contract.
    *
    * @param {WalletInterface} wallet that signs the transaction
-   * @param {Object} transactionOptions usually contains from and to. Gas is automatically computed.
+   * @param {TransactionOptionsInterface} transactionOptions usually contains from and to. Gas is automatically computed.
    * @throws {Error} When the underlying contract is not yet deployed.
    * @return {Promise<Array<string>>} List of transaction hashes
    */
-  async removeOnChainData (wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>> {
+  async removeOnChainData (wallet: WalletInterface, transactionOptions: TransactionOptionsInterface): Promise<Array<string>> {
     if (!this.onChainDataset.isDeployed()) {
       throw new Error('Cannot remove hotel: not deployed');
     }
