@@ -1,6 +1,7 @@
 // @flow
 
 import type { DataModelOptionsType } from './data-model';
+import type { OffChainDataClientOptionsType } from './off-chain-data-client';
 import type { WTIndexInterface, AdaptedTxResultsInterface, OffChainDataAccessorInterface, WalletInterface, KeystoreV3Interface } from './interfaces';
 import DataModel from './data-model';
 import OffChainDataClient from './off-chain-data-client';
@@ -12,7 +13,8 @@ import OffChainDataClient from './off-chain-data-client';
  * @type WtLibsOptionsType
  */
 type WtLibsOptionsType = {
-  dataModelOptions: DataModelOptionsType
+  dataModelOptions: DataModelOptionsType;
+  offChainDataOptions: OffChainDataClientOptionsType
 };
 
 /**
@@ -20,6 +22,7 @@ type WtLibsOptionsType = {
  */
 class WTLibs {
   dataModel: DataModel;
+  offChainDataClient: OffChainDataClient;
   options: WtLibsOptionsType;
 
   /**
@@ -34,6 +37,7 @@ class WTLibs {
   constructor (options: WtLibsOptionsType) {
     this.options = options || {};
     this.dataModel = DataModel.createInstance(this.options.dataModelOptions);
+    OffChainDataClient.setup(this.options.offChainDataOptions);
   }
 
   /**

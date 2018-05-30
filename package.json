@@ -8,7 +8,7 @@
   },
   "scripts": {
     "flow": "flow",
-    "lint": "eslint src test test-build",
+    "lint": "eslint src test",
     "test": "rimraf .nyc_output .nyc_coverage && ./test/utils/scripts/localtestnet.sh",
     "test-runner": "nyc --clean=false --reporter=text mocha \"test/**/*.spec.js\" --timeout 20000 --require babel-register --require babel-polyfill",
     "coverage": "nyc report --reporter=text-lcov | coveralls",
@@ -38,6 +38,7 @@
   },
   "dependencies": {
     "@windingtree/lif-token": "^0.1.2-erc827",
+    "@windingtree/off-chain-accessor-in-memory": "^1.0.0",
     "@windingtree/wt-contracts": "^0.2.0",
     "bignumber.js": "^3.0.1",
     "ethereumjs-util": "^5.1.5",
