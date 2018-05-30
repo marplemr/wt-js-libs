@@ -32,6 +32,14 @@ export interface HotelOnChainDataInterface {
   url: Promise<?string> | ?string
 }
 
+/**
+ * Ethereum transaction options that are passed from an external user.
+ * It has to contain `from` and usually would contain `to` as well.
+ *
+ * This copies the structure of https://web3js.readthedocs.io/en/1.0/web3-eth-contract.html#contract-estimategas
+ * as it might be used as a base for gas estimation prior to actually
+ * sending a transaction.
+ */
 export interface TransactionOptionsInterface {
   from: string;
   to?: string;

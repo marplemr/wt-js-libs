@@ -62,7 +62,6 @@ class WTIndex implements WTIndexInterface {
       await hotel.setLocalData(hotelData);
       const transactionIds = await hotel.createOnChainData(wallet, {
         from: hotelManager,
-        to: this.address,
       });
       return {
         address: await hotel.address,
@@ -90,7 +89,6 @@ class WTIndex implements WTIndexInterface {
       // We need to separate calls to be able to properly catch exceptions
       const updatedHotel = await hotel.updateOnChainData(wallet, { // eslint-disable-line flowtype/no-weak-types
         from: hotelManager,
-        to: this.address,
       });
       return updatedHotel;
     } catch (err) {
@@ -117,7 +115,6 @@ class WTIndex implements WTIndexInterface {
       // We need to separate calls to be able to properly catch exceptions
       const result = await hotel.removeOnChainData(wallet, { // eslint-disable-line flowtype/no-weak-types
         from: hotelManager,
-        to: this.address,
       });
       return result;
     } catch (err) {

@@ -163,7 +163,7 @@ class OnChainHotel implements HotelInterface {
    * Updates url on-chain. Used internally as a remoteSetter for `url` property.
    *
    * @param {WalletInterface} wallet that signs the transaction
-   * @param {TransactionOptionsInterface} transactionOptions usually contains from and to. Gas is automatically computed.
+   * @param {TransactionOptionsInterface} options object, only `from` property is currently used, all others are ignored in this implementation
    * @return {Promise<string>} resulting transaction hash
    */
   async __editInfoOnChain (wallet: WalletInterface, transactionOptions: TransactionOptionsInterface): Promise<string> {
@@ -195,7 +195,7 @@ class OnChainHotel implements HotelInterface {
    * Returns once the transaction is signed and sent to network by `wallet`.
    *
    * @param {WalletInterface} wallet that signs the transaction
-   * @param {TransactionOptionsInterface} transactionOptions usually contains from and to. Gas is automatically computed.
+   * @param {TransactionOptionsInterface} options object, only `from` property is currently used, all others are ignored in this implementation
    * @return {Promise<Array<string>>} list of resulting transaction hashes
    */
   async createOnChainData (wallet: WalletInterface, transactionOptions: TransactionOptionsInterface): Promise<Array<string>> {
@@ -231,7 +231,7 @@ class OnChainHotel implements HotelInterface {
    * dataset.
    *
    * @param {WalletInterface} wallet that signs the transaction
-   * @param {TransactionOptionsInterface} transactionOptions usually contains from and to. Gas is automatically computed.
+   * @param {TransactionOptionsInterface} options object that is passed to all remote data setters
    * @throws {Error} When the underlying contract is not yet deployed.
    * @throws {Error} When url is empty.
    * @return {Promise<Array<string>>} List of transaction hashes
@@ -252,7 +252,7 @@ class OnChainHotel implements HotelInterface {
    * Winding Tree index contract.
    *
    * @param {WalletInterface} wallet that signs the transaction
-   * @param {TransactionOptionsInterface} transactionOptions usually contains from and to. Gas is automatically computed.
+   * @param {TransactionOptionsInterface} options object, only `from` property is currently used, all others are ignored in this implementation
    * @throws {Error} When the underlying contract is not yet deployed.
    * @return {Promise<Array<string>>} List of transaction hashes
    */
