@@ -1,5 +1,7 @@
 // @flow
 
+import BigNumber from 'bignumber.js';
+
 import StoragePointer from './storage-pointer';
 
 /**
@@ -31,6 +33,21 @@ export interface HotelOnChainDataInterface {
 }
 
 /**
+ * Ethereum transaction options that are passed from an external user.
+ * It has to contain `from` and usually would contain `to` as well.
+ *
+ * This copies the structure of https://web3js.readthedocs.io/en/1.0/web3-eth-contract.html#contract-estimategas
+ * as it might be used as a base for gas estimation prior to actually
+ * sending a transaction.
+ */
+export interface TransactionOptionsInterface {
+  from: string;
+  to?: string;
+  gas?: number;
+  value?: number | string | BigNumber
+}
+
+/**
  * Represents a hotel instance that can
  * communicate with on-chain hotel representation
  * and provides an access to offChain data via `dataIndex`
@@ -42,9 +59,9 @@ export interface HotelInterface extends HotelOnChainDataInterface {
 
   toPlainObject(): Promise<Object>;
   setLocalData(newData: HotelOnChainDataInterface): Promise<void>;
-  createOnChainData(wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>>;
-  updateOnChainData(wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>>;
-  removeOnChainData(wallet: WalletInterface, transactionOptions: Object): Promise<Array<string>>
+  createOnChainData(wallet: WalletInterface, transactionOptions: TransactionOptionsInterface): Promise<Array<string>>;
+  updateOnChainData(wallet: WalletInterface, transactionOptions: TransactionOptionsInterface): Promise<Array<string>>;
+  removeOnChainData(wallet: WalletInterface, transactionOptions: TransactionOptionsInterface): Promise<Array<string>>
 }
 
 /**

@@ -50,15 +50,18 @@ class WTIndex implements WTIndexInterface {
    */
   async addHotel (wallet: WalletInterface, hotelData: HotelOnChainDataInterface): Promise<AddHotelResponseInterface> {
     // TODO validate hotelData.url format schema://more-data
-    if (!hotelData.url) {
+    if (!await hotelData.url) {
       throw new Error('Cannot add hotel: Missing url');
     }
+    const hotelManager = await hotelData.manager;
+    if (!hotelManager) {
+      throw new Error('Cannot add hotel: Missing manager');
+    }
     try {
-      const hotel = await this.__createHotelInstance();
+      const hotel: HotelInterface = await this.__createHotelInstance();
       await hotel.setLocalData(hotelData);
       const transactionIds = await hotel.createOnChainData(wallet, {
-        from: hotelData.manager,
-        to: this.address,
+        from: hotelManager,
       });
       return {
         address: await hotel.address,
@@ -79,13 +82,13 @@ class WTIndex implements WTIndexInterface {
    */
   async updateHotel (wallet: WalletInterface, hotel: HotelInterface): Promise<Array<string>> {
     try {
-      if (!(await hotel.manager)) {
+      const hotelManager = await hotel.manager;
+      if (!hotelManager) {
         throw new Error('Cannot update hotel without manager.');
       }
       // We need to separate calls to be able to properly catch exceptions
       const updatedHotel = await hotel.updateOnChainData(wallet, { // eslint-disable-line flowtype/no-weak-types
-        from: await hotel.manager,
-        to: this.address,
+        from: hotelManager,
       });
       return updatedHotel;
     } catch (err) {
@@ -105,10 +108,13 @@ class WTIndex implements WTIndexInterface {
    */
   async removeHotel (wallet: WalletInterface, hotel: HotelInterface): Promise<Array<string>> {
     try {
+      const hotelManager = await hotel.manager;
+      if (!hotelManager) {
+        throw new Error('Cannot update hotel without manager.');
+      }
       // We need to separate calls to be able to properly catch exceptions
       const result = await hotel.removeOnChainData(wallet, { // eslint-disable-line flowtype/no-weak-types
-        from: await hotel.manager,
-        to: this.address,
+        from: hotelManager,
       });
       return result;
     } catch (err) {
