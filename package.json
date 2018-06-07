@@ -90,6 +90,6 @@
     "webpack-node-externals": "^1.7.2"
   },
   "engines": {
-    "node": ">=8.9.4"
+    "node": ">=10.3.0"
   }
 }
