@@ -1,5 +1,5 @@
 // @flow
-import type { OffChainDataAccessorInterface } from './interfaces';
+import type { OffChainDataAdapterInterface } from './interfaces';
 import OffChainDataClient from './off-chain-data-client';
 
 /**
@@ -59,7 +59,7 @@ class StoragePointer {
   __downloaded: boolean;
   __data: ?{[string]: Object};
   __fields: Array<FieldDefType>;
-  __accessor: OffChainDataAccessorInterface;
+  __adapter: OffChainDataAdapterInterface;
 
   /**
    * Returns a new instance of StoragePointer.
@@ -92,7 +92,7 @@ class StoragePointer {
 
   /**
    * Detects schema from the url, based on that instantiates an appropriate
-   * `OffChainDataAccessorInterface` implementation and sets up all data
+   * `OffChainDataAdapterInterface` implementation and sets up all data
    * getters.
    *
    * @param  {string} url where to look for the data
@@ -159,23 +159,23 @@ class StoragePointer {
   }
 
   /**
-   * Returns appropriate implementation of `OffChainDataAccessorInterface`
-   * based on schema. Uses `OffChainDataClient.getAccessor` factory method.
+   * Returns appropriate implementation of `OffChainDataAdapterInterface`
+   * based on schema. Uses `OffChainDataClient.getAdapter` factory method.
    */
-  async _getOffChainDataClient (): Promise<OffChainDataAccessorInterface> {
-    if (!this.__accessor) {
-      this.__accessor = await OffChainDataClient.getAccessor(this._detectSchema(this.ref));
+  async _getOffChainDataClient (): Promise<OffChainDataAdapterInterface> {
+    if (!this.__adapter) {
+      this.__adapter = await OffChainDataClient.getAdapter(this._detectSchema(this.ref));
     }
-    return this.__accessor;
+    return this.__adapter;
   }
 
   /**
-   * Gets the data document via `OffChainDataAccessorInterface`.
+   * Gets the data document via `OffChainDataAdapterInterface`.
    * If nothing is returned, might return an empty object.
    */
   async _downloadFromStorage (): Promise<{[string]: Object}> {
-    const accessor = await this._getOffChainDataClient();
-    const result = await accessor.download(this.ref);
+    const adapter = await this._getOffChainDataClient();
+    const result = await adapter.download(this.ref);
     this.__downloaded = true;
     return result || {};
   }
