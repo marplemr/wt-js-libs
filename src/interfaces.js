@@ -81,7 +81,7 @@ export interface WTIndexInterface {
 /**
  * Interface for an off-chain storage read.
  */
-export interface OffChainDataAccessorInterface {
+export interface OffChainDataAdapterInterface {
   // Upload new dataset to an off-chain storage
   upload(data: {[string]: Object}): Promise<string>;
   // Change data on given url
