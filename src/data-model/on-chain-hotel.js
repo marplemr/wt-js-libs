@@ -109,7 +109,6 @@ class OnChainHotel implements HotelInterface {
               'currency',
               'images',
               'amenities',
-              'createdAt',
               'updatedAt',
             ],
           },
