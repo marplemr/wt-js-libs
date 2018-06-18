@@ -40,19 +40,19 @@ describe('WTLibs.StoragePointer', () => {
     }
   });
 
-  it('should throw on an empty url', () => {
+  it('should throw on an empty uri', () => {
     try {
       StoragePointer.createInstance('');
       throw new Error('should have never been called');
     } catch (e) {
-      assert.match(e.message, /without url/i);
+      assert.match(e.message, /without uri/i);
     }
 
     try {
       StoragePointer.createInstance();
       throw new Error('should have never been called');
     } catch (e) {
-      assert.match(e.message, /without url/i);
+      assert.match(e.message, /without uri/i);
     }
   });
 
@@ -197,7 +197,7 @@ describe('WTLibs.StoragePointer', () => {
     }
   });
 
-  it('should throw if StoragePointer cannot be set up due to bad url format', async () => {
+  it('should throw if StoragePointer cannot be set up due to bad uri format', async () => {
     try {
       const pointer = StoragePointer.createInstance('jsonxxurl', [{
         name: 'sp',

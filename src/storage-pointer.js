@@ -67,13 +67,13 @@ class StoragePointer {
    * Normalizes the `fields` format before creating the actual
    * instance
    *
-   * @param {string} url where to look for data document. It has to include schema, i. e. `https://example.com/data`
+   * @param {string} uri where to look for data document. It has to include schema, i. e. `https://example.com/data`
    * @param {Array<FieldDefType | string>} fields list of top-level fields in the referred document
-   * @throw {Error} if url is not defined
+   * @throw {Error} if uri is not defined
    */
-  static createInstance (url: ?string, fields: ?Array<FieldDefType | string>): StoragePointer {
-    if (!url) {
-      throw new Error('Cannot instantiate StoragePointer without url');
+  static createInstance (uri: ?string, fields: ?Array<FieldDefType | string>): StoragePointer {
+    if (!uri) {
+      throw new Error('Cannot instantiate StoragePointer without uri');
     }
     fields = fields || [];
     const normalizedFieldDef = [];
@@ -87,19 +87,19 @@ class StoragePointer {
         normalizedFieldDef.push(fieldDef);
       }
     }
-    return new StoragePointer(url, normalizedFieldDef);
+    return new StoragePointer(uri, normalizedFieldDef);
   }
 
   /**
-   * Detects schema from the url, based on that instantiates an appropriate
+   * Detects schema from the uri, based on that instantiates an appropriate
    * `OffChainDataAdapterInterface` implementation and sets up all data
    * getters.
    *
-   * @param  {string} url where to look for the data
+   * @param  {string} uri where to look for the data
    * @param  {Array<FieldDefType>} fields definition from which are generated getters
    */
-  constructor (url: string, fields: Array<FieldDefType>) {
-    this.ref = url;
+  constructor (uri: string, fields: Array<FieldDefType>) {
+    this.ref = uri;
     this.contents = {};
     this.__storagePointers = {};
     this.__downloaded = false;
@@ -123,7 +123,7 @@ class StoragePointer {
    * once any data field is accessed for the first time. Also
    * the recursive `StoragePointer`s are created here only
    * after the contents of the data is known, because we need
-   * to know the url to be able to instantiate the appropariate
+   * to know the uri to be able to instantiate the appropariate
    * `StoragePointer`.
    *
    * This behaviour might change in a way that we are able to
@@ -150,11 +150,11 @@ class StoragePointer {
   }
 
   /**
-   * Detects schema from an url, i. e.
+   * Detects schema from an uri, i. e.
    * from `json://some-data`, detects `json`.
    */
-  _detectSchema (url: string): ?string {
-    const matchResult = url.match(/(\w+):\/\//i);
+  _detectSchema (uri: string): ?string {
+    const matchResult = uri.match(/(\w+):\/\//i);
     return matchResult ? matchResult[1] : null;
   }
 
