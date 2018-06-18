@@ -119,6 +119,22 @@ class StoragePointer {
   }
 
   /**
+   * Drops all existing data and gets ready to update
+   * the data from remote storage. Optionally can even
+   * change the type of remote storage based on a `newUri`.
+   */
+  reset (newUri: ?string) {
+    if (newUri) {
+      this.ref = newUri;
+    }
+    this.contents = {};
+    this.__storagePointers = {};
+    this.__downloaded = false;
+    this.__data = null;
+    this.__adapter = null;
+  }
+
+  /**
    * Lazy data getter. The contents file gets downloaded only
    * once any data field is accessed for the first time. Also
    * the recursive `StoragePointer`s are created here only

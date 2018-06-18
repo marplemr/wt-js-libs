@@ -85,6 +85,27 @@ describe('WTLibs.data-model.OnChainHotel', () => {
       assert.equal(storagePointerSpy.callCount, 1);
       storagePointerSpy.restore();
     });
+
+    it('should drop current StoragePointer instance when url changes', async () => {
+      const storagePointerSpy = sinon.spy(StoragePointer, 'createInstance');
+      const provider = await OnChainHotel.createInstance(utilsStub, contractsStub, indexContractStub, 'fake-address');
+      provider.dataUri = 'json://something-new';
+      await provider.dataIndex;
+      assert.equal(storagePointerSpy.callCount, 1);
+      const storagePointerResetSpy = sinon.spy(provider._dataIndex, 'reset');
+      await provider.dataIndex;
+      assert.equal(storagePointerSpy.callCount, 1);
+      assert.equal(storagePointerResetSpy.callCount, 0);
+      // TODO check with setter as well, wait for #136
+      provider.setLocalData({
+        dataUri: 'json://something-completely-different',
+      });
+      await provider.dataIndex;
+      assert.equal(storagePointerResetSpy.callCount, 1);
+      assert.equal(storagePointerSpy.callCount, 1);
+      storagePointerSpy.restore();
+      storagePointerResetSpy.restore();
+    });
   });
 
   describe('setLocalData', () => {

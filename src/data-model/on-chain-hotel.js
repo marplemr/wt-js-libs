@@ -130,6 +130,10 @@ class OnChainHotel implements HotelInterface {
     }
     if (newData.dataUri) {
       this.dataUri = newData.dataUri;
+      // TODO fix for other approaches on changing dataUri, wait for #136 that implements a setter
+      if (this._dataIndex) {
+        this._dataIndex.reset(newData.dataUri);
+      }
     }
   }
 
