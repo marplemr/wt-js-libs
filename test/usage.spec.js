@@ -32,7 +32,7 @@ describe('WTLibs usage', () => {
         },
       });
       const dataUri = await jsonClient.upload({
-        description: descUrl,
+        descriptionUri: descUrl,
       });
       const result = await index.addHotel(wallet, {
         manager: '0xd39ca7d186a37bb6bf48ae8abfeb4c687dc8f906',
@@ -50,7 +50,7 @@ describe('WTLibs usage', () => {
       assert.equal((await hotel.manager).toLowerCase(), '0xd39ca7d186a37bb6bf48ae8abfeb4c687dc8f906');
       assert.equal((await hotel.dataUri).toLowerCase(), dataUri);
       const dataIndex = await hotel.dataIndex;
-      const description = await dataIndex.contents.description;
+      const description = await dataIndex.contents.descriptionUri;
       assert.equal(await description.contents.name, 'Premium hotel');
 
       // We're removing the hotel to ensure clean slate after this test is run.
@@ -134,7 +134,7 @@ describe('WTLibs usage', () => {
       const hotelDataIndex = await hotel.dataIndex;
       assert.equal(hotelDataIndex.ref, await hotel.dataUri);
       assert.isDefined(hotelDataIndex.contents);
-      const descriptionContents = await hotelDataIndex.contents.description;
+      const descriptionContents = await hotelDataIndex.contents.descriptionUri;
       assert.isDefined(descriptionContents.contents);
       assert.isDefined(descriptionContents.ref);
       assert.equal(await descriptionContents.contents.name, 'First hotel');
