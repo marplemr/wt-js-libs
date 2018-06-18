@@ -7,7 +7,7 @@ import StoragePointer from '../storage-pointer';
 
 /**
  * Wrapper class for a hotel backed by a smart contract on
- * Ethereum that's holding `url` pointer to its data.
+ * Ethereum that's holding `dataUri` pointer to its data.
  *
  * It provides an accessor to such data in a form of
  * `StoragePointer` instance under `dataIndex` property.
@@ -19,7 +19,7 @@ class OnChainHotel implements HotelInterface {
   address: Promise<?string> | ?string;
 
   // provided by eth backed dataset
-  url: Promise<?string> | ?string;
+  dataUri: Promise<?string> | ?string;
   manager: Promise<?string> | ?string;
   
   web3Utils: Utils;
@@ -28,7 +28,7 @@ class OnChainHotel implements HotelInterface {
   contractInstance: Object;
   onChainDataset: RemotelyBackedDataset;
 
-  // Representation of data stored on url
+  // Representation of data stored on dataUri
   _dataIndex: StoragePointer;
 
   /**
@@ -64,9 +64,9 @@ class OnChainHotel implements HotelInterface {
     this.onChainDataset = RemotelyBackedDataset.createInstance();
     this.onChainDataset.bindProperties({
       fields: {
-        url: {
+        dataUri: {
           remoteGetter: async (): Promise<?string> => {
-            return (await this.__getContractInstance()).methods.url().call();
+            return (await this.__getContractInstance()).methods.dataUri().call();
           },
           remoteSetter: this.__editInfoOnChain.bind(this),
         },
@@ -84,17 +84,17 @@ class OnChainHotel implements HotelInterface {
 
   /**
    * Async getter for `StoragePointer` instance.
-   * Since it has to eventually access the `url`
+   * Since it has to eventually access the `dataUri`
    * field stored on-chain, it is lazy loaded.
    * Any data structure that is accessed by StoragePointer
    * instance has for now be known beforehand, thus the whole
-   * data format of hotel data on `url` is specified here.
+   * data format of hotel data on `dataUri` is specified here.
    *
    */
   get dataIndex (): Promise<StoragePointer> {
     return (async () => {
       if (!this._dataIndex) {
-        this._dataIndex = StoragePointer.createInstance(await this.url, [
+        this._dataIndex = StoragePointer.createInstance(await this.dataUri, [
           {
             name: 'description',
             isStoragePointer: true,
@@ -119,7 +119,7 @@ class OnChainHotel implements HotelInterface {
   }
 
   /**
-   * Update manager and url properties. Url can never be nulled. Manager
+   * Update manager and dataUri properties. dataUri can never be nulled. Manager
    * can never be nulled. Manager can be changed only for an un-deployed
    * contract (without address).
    * @param {HotelOnChainDataInterface} newData
@@ -128,8 +128,8 @@ class OnChainHotel implements HotelInterface {
     if (newData.manager && !this.address) {
       this.manager = newData.manager;
     }
-    if (newData.url) {
-      this.url = newData.url;
+    if (newData.dataUri) {
+      this.dataUri = newData.dataUri;
     }
   }
 
@@ -143,7 +143,7 @@ class OnChainHotel implements HotelInterface {
   async toPlainObject (): Promise<HotelOnChainDataInterface> {
     return {
       manager: await this.manager,
-      url: await this.url,
+      dataUri: await this.dataUri,
       address: this.address,
     };
   }
@@ -159,14 +159,14 @@ class OnChainHotel implements HotelInterface {
   }
 
   /**
-   * Updates url on-chain. Used internally as a remoteSetter for `url` property.
+   * Updates dataUri on-chain. Used internally as a remoteSetter for `dataUri` property.
    *
    * @param {WalletInterface} wallet that signs the transaction
    * @param {TransactionOptionsInterface} options object, only `from` property is currently used, all others are ignored in this implementation
    * @return {Promise<string>} resulting transaction hash
    */
   async __editInfoOnChain (wallet: WalletInterface, transactionOptions: TransactionOptionsInterface): Promise<string> {
-    const data = (await this.__getContractInstance()).methods.editInfo(await this.url).encodeABI();
+    const data = (await this.__getContractInstance()).methods.editInfo(await this.dataUri).encodeABI();
     const estimate = await this.indexContract.methods.callHotel(this.address, data).estimateGas(transactionOptions);
     const txData = this.indexContract.methods.callHotel(this.address, data).encodeABI();
     const transactionData = {
@@ -204,9 +204,9 @@ class OnChainHotel implements HotelInterface {
       await this.web3Utils.determineCurrentAddressNonce(this.indexContract.options.address)
     );
     // Create hotel on-network
-    const url = await this.url;
-    const estimate = await this.indexContract.methods.registerHotel(url).estimateGas(transactionOptions);
-    const data = this.indexContract.methods.registerHotel(url).encodeABI();
+    const dataUri = await this.dataUri;
+    const estimate = await this.indexContract.methods.registerHotel(dataUri).estimateGas(transactionOptions);
+    const data = this.indexContract.methods.registerHotel(dataUri).encodeABI();
     const transactionData = {
       nonce: await this.web3Utils.determineCurrentAddressNonce(transactionOptions.from),
       data: data,
@@ -232,14 +232,14 @@ class OnChainHotel implements HotelInterface {
    * @param {WalletInterface} wallet that signs the transaction
    * @param {TransactionOptionsInterface} options object that is passed to all remote data setters
    * @throws {Error} When the underlying contract is not yet deployed.
-   * @throws {Error} When url is empty.
+   * @throws {Error} When dataUri is empty.
    * @return {Promise<Array<string>>} List of transaction hashes
    */
   async updateOnChainData (wallet: WalletInterface, transactionOptions: TransactionOptionsInterface): Promise<Array<string>> {
     // pre-check if contract is available at all and fail fast
     await this.__getContractInstance();
-    if (!(await this.url)) {
-      throw new Error('Cannot set url when it is not provided');
+    if (!(await this.dataUri)) {
+      throw new Error('Cannot set dataUri when it is not provided');
     }
     // We have to clone options for each dataset as they may get modified
     // along the way

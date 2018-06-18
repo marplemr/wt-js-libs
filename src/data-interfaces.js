@@ -1,6 +1,6 @@
 // @flow
 /**
- * Index file for more data urls. This is the
+ * Index file for more data URIs. This is the
  * initial document that blockchain is pointing to.
  */
 export interface HotelDataIndex {

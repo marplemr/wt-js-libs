@@ -19,7 +19,7 @@ describe('WTLibs.data-model.OnChainHotel', () => {
     contractsStub = {
       getHotelInstance: sinon.stub().resolves({
         methods: {
-          url: urlStub,
+          dataUri: urlStub,
           manager: managerStub,
           editInfo: helpers.stubContractMethodResult('info-edited'),
         },
@@ -46,12 +46,12 @@ describe('WTLibs.data-model.OnChainHotel', () => {
   });
 
   describe('initialize', () => {
-    it('should setup url and manager fields', async () => {
+    it('should setup dataUri and manager fields', async () => {
       const provider = new OnChainHotel(utilsStub, contractsStub, indexContractStub);
-      assert.isUndefined(provider.url);
+      assert.isUndefined(provider.dataUri);
       assert.isUndefined(provider.manager);
       await provider.initialize();
-      assert.isDefined(provider.url);
+      assert.isDefined(provider.dataUri);
       assert.isDefined(provider.manager);
       assert.isFalse(provider.onChainDataset.isDeployed());
     });
@@ -66,7 +66,7 @@ describe('WTLibs.data-model.OnChainHotel', () => {
     it('should setup StoragePointer during the first access', async () => {
       const storagePointerSpy = sinon.spy(StoragePointer, 'createInstance');
       const provider = await OnChainHotel.createInstance(utilsStub, contractsStub, indexContractStub, 'fake-address');
-      provider.url = 'json://something-new';
+      provider.dataUri = 'json://something-new';
       assert.equal(storagePointerSpy.callCount, 0);
       await provider.dataIndex;
       assert.equal(storagePointerSpy.callCount, 1);
@@ -77,7 +77,7 @@ describe('WTLibs.data-model.OnChainHotel', () => {
     it('should reuse StoragePointer instance in successive calls', async () => {
       const storagePointerSpy = sinon.spy(StoragePointer, 'createInstance');
       const provider = await OnChainHotel.createInstance(utilsStub, contractsStub, indexContractStub, 'fake-address');
-      provider.url = 'json://something-new';
+      provider.dataUri = 'json://something-new';
       assert.equal(storagePointerSpy.callCount, 0);
       await provider.dataIndex;
       assert.equal(storagePointerSpy.callCount, 1);
@@ -88,20 +88,20 @@ describe('WTLibs.data-model.OnChainHotel', () => {
   });
 
   describe('setLocalData', () => {
-    it('should set url', async () => {
+    it('should set dataUri', async () => {
       const provider = await OnChainHotel.createInstance(utilsStub, contractsStub, indexContractStub);
-      await provider.setLocalData({ url: 'new-url' });
-      assert.equal(await provider.url, 'new-url');
-      await provider.setLocalData({ url: 'another-url' });
-      assert.equal(await provider.url, 'another-url');
+      await provider.setLocalData({ dataUri: 'new-url' });
+      assert.equal(await provider.dataUri, 'new-url');
+      await provider.setLocalData({ dataUri: 'another-url' });
+      assert.equal(await provider.dataUri, 'another-url');
     });
 
-    it('should never null url', async () => {
+    it('should never null dataUri', async () => {
       const provider = await OnChainHotel.createInstance(utilsStub, contractsStub, indexContractStub);
-      await provider.setLocalData({ url: 'new-url' });
-      assert.equal(await provider.url, 'new-url');
-      await provider.setLocalData({ url: null });
-      assert.equal(await provider.url, 'new-url');
+      await provider.setLocalData({ dataUri: 'new-url' });
+      assert.equal(await provider.dataUri, 'new-url');
+      await provider.setLocalData({ dataUri: null });
+      assert.equal(await provider.dataUri, 'new-url');
     });
 
     it('should set manager only when not yet deployed', async () => {
@@ -125,19 +125,19 @@ describe('WTLibs.data-model.OnChainHotel', () => {
   describe('toPlainObject', () => {
     it('should return a plain JS object', async () => {
       const provider = await OnChainHotel.createInstance(utilsStub, contractsStub, indexContractStub);
-      await provider.setLocalData({ url: 'some-url', manager: 'some-manager' });
+      await provider.setLocalData({ dataUri: 'some-url', manager: 'some-manager' });
       const plainHotel = await provider.toPlainObject();
-      assert.equal(plainHotel.url, 'some-url');
+      assert.equal(plainHotel.dataUri, 'some-url');
       assert.equal(plainHotel.manager, 'some-manager');
       assert.isUndefined(plainHotel.toPlainObject);
     });
   });
 
   describe('remote data definition', () => {
-    it('should setup remoteGetter for url', async () => {
+    it('should setup remoteGetter for dataUri', async () => {
       const provider = await OnChainHotel.createInstance(utilsStub, contractsStub, indexContractStub, 'fake-address');
       assert.equal(urlStub().call.callCount, 0);
-      await provider.url;
+      await provider.dataUri;
       assert.equal(urlStub().call.callCount, 1);
     });
 
@@ -197,7 +197,7 @@ describe('WTLibs.data-model.OnChainHotel', () => {
     let provider;
     beforeEach(async () => {
       provider = await OnChainHotel.createInstance(utilsStub, contractsStub, indexContractStub, 'fake-address');
-      provider.url = 'something new';
+      provider.dataUri = 'something new';
     });
 
     it('should throw on an undeployed contract', async () => {
@@ -210,13 +210,13 @@ describe('WTLibs.data-model.OnChainHotel', () => {
       }
     });
 
-    it('should throw when updating hotel without url', async () => {
+    it('should throw when updating hotel without dataUri', async () => {
       try {
-        provider.url = null;
+        provider.dataUri = null;
         await provider.updateOnChainData(walletStub, {});
         throw new Error('should not have been called');
       } catch (e) {
-        assert.match(e.message, /cannot set url when it is not provided/i);
+        assert.match(e.message, /cannot set dataUri when it is not provided/i);
       }
     });
 
